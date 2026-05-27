@@ -16,15 +16,19 @@ bounded retry-and-fix stabilisation loop, then raises human-review PRs.
 
 1. [Package Structure](#package-structure)
 2. [End-to-End Data Flow](#end-to-end-data-flow)
-3. [Class-by-Class Breakdown](#class-by-class-breakdown)
+   3. [Class-by-Class Breakdown](#class-by-class-breakdown)
    - [Kafka Layer](#kafka-layer)
    - [Agent Layer](#agent-layer)
    - [Execution Layer](#execution-layer)
    - [Service Layer](#service-layer)
+     - [E2ECoverageAnalyzer](#e2ecoverageanalyzer)
+     - [RepoContextService](#repocontextservice)
+     - [TestPrService](#testprservice)
    - [Config Layer](#config-layer)
 4. [Strategy Decision Logic (Full Detail)](#strategy-decision-logic-full-detail)
-5. [RepoContextService Deep Dive](#repocontextservice-deep-dive)
-6. [StabilizationLoop Deep Dive](#stabilizationloop-deep-dive)
+5. [Two-Phase Coverage Assessment](#two-phase-coverage-assessment)
+6. [RepoContextService Deep Dive](#repocontextservice-deep-dive)
+7. [StabilizationLoop Deep Dive](#stabilizationloop-deep-dive)
 7. [Kafka Topics](#kafka-topics)
 8. [API Endpoints](#api-endpoints)
 9. [Configuration](#configuration)
@@ -56,7 +60,8 @@ nz/co/eroad/qaisystem/
 │   ├── StabilizationLoop.java             ← Run → fail → fix (max 3× bounded loop)
 │   └── RepoContext.java                   ← Value object: context extracted from target repo
 ├── service/
-│   ├── RepoContextService.java            ← Clones target repo, scans test conventions
+│   ├── E2ECoverageAnalyzer.java           ← Scans cloned test repo; produces GOOD/PARTIAL/NONE coverage level
+│   ├── RepoContextService.java            ← Clones target repo, builds coverage index, scans test conventions
 │   └── TestPrService.java                 ← Simulates creating GitHub/GitLab PRs
 └── controller/
     └── StrategyController.java            ← /status, /approve-bdd, /refresh-context
@@ -70,18 +75,24 @@ nz/co/eroad/qaisystem/
   Kafka: ImpactResultsQueue
           │  ImpactEnvelope JSON
           ▼
-  ┌─────────────────────────────────────────────────────────────────────┐
-  │ ImpactResultsConsumer                                               │
-  │  deserialise → strategyAgent.decide(envelope)                       │
-  └──────────────────────────────┬──────────────────────────────────────┘
-                                 │
-                                 ▼
-  ┌─────────────────────────────────────────────────────────────────────┐
-  │ StrategyAgent.decide(ImpactEnvelope)                                │
-  │                                                                     │
-  │  computeDecision(envelope)  → SKIP | UPDATE_TESTS | CREATE_TESTS   │
-  │  buildStrategy(...)         → TestStrategy (requirements, types)    │
-  │  applyFallbackRules(...)    → may set fullRegression / expandedScope│
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ ImpactResultsConsumer                                               │
+   │  deserialise → strategyAgent.decide(envelope)                       │
+   └──────────────────────────────┬──────────────────────────────────────┘
+                                  │
+                                  ▼
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ StrategyAgent.decide(ImpactEnvelope)                                │
+   │                                                                     │
+   │  ① e2eCoverageAnalyzer.analyze(envelope)                            │
+   │       ├─ repoContextService.getCoverageIndex()                       │
+   │       ├─ if index empty → propagate UNKNOWN (no repo configured)    │
+   │       └─ if index present → scan: GOOD / PARTIAL / NONE             │
+   │                                                                     │
+   │  ② computeDecision(envelope, realCoverage)                          │
+   │       → SKIP | UPDATE_TESTS | CREATE_TESTS                          │
+   │  ③ buildStrategy(...)       → TestStrategy                          │
+   │  ④ applyFallbackRules(...)  → may set fullRegression/expandedScope  │
   │                                                                     │
   │        ┌──────────┬─────────────────┬─────────────────────┐        │
   │     SKIP          UPDATE_TESTS       CREATE_TESTS           │        │
@@ -366,6 +377,52 @@ Key convenience methods:
 
 ### Service Layer
 
+#### E2ECoverageAnalyzer
+**`service/E2ECoverageAnalyzer.java`**
+
+Produces the **real** integration/E2E coverage assessment by cross-referencing the impacted
+components against the **coverage index** built by `RepoContextService`. This class replaces
+the `UNKNOWN`-level report from impact-service with a concrete `GOOD / PARTIAL / NONE` level
+before `StrategyAgent` makes its decision.
+
+**Main method: `analyze(ImpactEnvelope envelope)`**
+
+```
+1. coverageIndex = repoContextService.getCoverageIndex()
+   (component name → list of test files that reference it)
+
+2. Filter envelope.impactedComponents to integration-testable types:
+   CONTROLLER, SERVICE, REPOSITORY, CONFIG
+
+3. If no testable components → return GOOD (nothing needs integration tests)
+
+4. If coverageIndex is empty (no test repo configured):
+   → propagate the UNKNOWN report from impact-service (conservative fallback)
+
+5. For each testable component:
+   tests = coverageIndex.get(componentName)
+   if tests non-empty  → add to testedComponents + collect to existingTestFiles
+   if tests empty      → add to untestedComponents
+
+6. Derive coverage level:
+   uncovered empty          → GOOD
+   covered >= uncovered     → PARTIAL
+   otherwise                → NONE
+
+7. Return CoverageReport with source=REPO_SCAN
+```
+
+**Coverage level definitions:**
+
+| Level | Meaning |
+|-------|---------|
+| `GOOD` | All changed integration-testable components already have integration/E2E tests in the repo |
+| `PARTIAL` | Some components are covered; at least half are covered |
+| `NONE` | No integration/E2E tests found for any of the changed components |
+| `UNKNOWN` | No test repo configured — `RepoContextService` returned an empty index |
+
+---
+
 #### RepoContextService
 **`service/RepoContextService.java`**
 
@@ -428,11 +485,13 @@ everything else → `modules.api`.
 
 ## Strategy Decision Logic (Full Detail)
 
-`StrategyAgent.computeDecision(envelope)` — evaluated in this exact priority order:
+`StrategyAgent.computeDecision(envelope, coverage)` — `coverage` comes from **E2ECoverageAnalyzer**
+(real repo scan), **not** from the UNKNOWN-level report in the ImpactEnvelope.
+Evaluated in this exact priority order:
 
 ```
-1. coverage.level == NONE AND missingCoverageAreas not empty
-       → CREATE_TESTS   ← hard override, no further rules checked
+1. coverage.level == NONE AND coverage.untestedComponents not empty
+       → CREATE_TESTS   ← hard override: repo confirmed zero integration tests exist
 
 2. ALL change types are CONFIGURATION_CHANGE or DEPENDENCY_UPDATE
    AND riskLevel == LOW
@@ -447,12 +506,19 @@ everything else → `modules.api`.
 5. NEW_FEATURE in detectedChangeTypes
        → CREATE_TESTS
 
-6. existingTestFiles not empty  (PR includes test file modifications)
+6. coverage.level == PARTIAL
+       → UPDATE_TESTS   ← some tests exist; extend them rather than creating from scratch
+
+7. existingTestFiles not empty  (PR itself includes test file modifications)
        → UPDATE_TESTS
 
-7. (default)
+8. (default)
        → CREATE_TESTS
 ```
+
+> **Note on UNKNOWN level:** When no test repo is configured, coverage stays `UNKNOWN`.
+> The strategy then falls through to rules 4–8 — so it still creates tests, just without
+> knowing which ones already exist.
 
 **Fallback rules applied after the base decision:**
 
@@ -465,6 +531,32 @@ if riskLevel == HIGH or CRITICAL:
     testAreasTocover += all transitiveDependencies
     testAreasTocover += all impactedComponent names
 ```
+
+---
+
+## Two-Phase Coverage Assessment
+
+This section explains the architectural choice of splitting coverage assessment across two services.
+
+```
+ impact-service                          strategy-service
+      │                                       │
+      │  Has: PR diff + component types       │  Has: cloned test repo
+      │  No:  test repo access               │  Has: coverage index (inverted)
+      │                                       │
+      │  Phase 1 output:                      │  Phase 2 output:
+      │  CoverageReport(                      │  CoverageReport(
+      │    level=UNKNOWN,         ──Kafka──►  │    level=GOOD/PARTIAL/NONE,
+      │    untestedComponents=[…],            │    testedComponents=[…],
+      │    requiredTestTypes=[…]              │    untestedComponents=[…],
+      │  )                                    │    existingTestFiles=[…]
+      │                                       │  )
+```
+
+**Why not just check the repo in impact-service?**
+impact-service is designed to be stateless and fast — it runs as a streaming processor.
+Cloning a git repo at startup and keeping it fresh would make it stateful and slow.
+strategy-service already owns the repo lifecycle, so coverage analysis naturally belongs there.
 
 ---
 
@@ -481,6 +573,7 @@ if riskLevel == HIGH or CRITICAL:
   else:
     cloneOrPull()     ← git clone (shallow --depth 1) or git pull
     refreshCache()    ← scan three module directories
+                         builds coverage index per module, then merges
 ```
 
 `POST /api/strategy/refresh-context` calls `refresh()` which repeats `cloneOrPull()` +
@@ -518,6 +611,55 @@ For `API`, `UI`, and `MOBILE` module paths:
 5. Detect `baseTestClass` (first `class X extends Y` found across first 10 files)
 6. Detect `testNamingConvention` (`Test*.java` prefix if majority, else `*Test.java` suffix)
 7. Load up to 3 `sampleTests` (skipping files >6000 chars)
+
+### Coverage Index Building
+
+In addition to context scanning, `refreshCache()` calls `buildCoverageIndex(modulePath)` for each
+module and merges the results into a single `coverageIndex` map.
+
+**What is the coverage index?**
+```
+coverageIndex: Map<String, List<String>>
+  key   = component name (e.g. "PaymentController", "OrderService")
+  value = list of integration/E2E test file names that reference this component
+```
+This is an **inverted index** — instead of "test files → what they test", it's
+"component name → which test files test it". This structure makes lookup O(1):
+`coverageIndex.get("PaymentController")` immediately returns all tests covering it.
+
+**How integration/E2E files are identified (`isIntegrationOrE2eFile`):**
+
+| Detection method | Signal | Priority |
+|-----------------|--------|----------|
+| File extension `.feature` | Gherkin file = always integration/E2E | Strong (filename) |
+| Filename contains `IT`, `IntTest`, `IntegrationTest`, `E2ETest`, `AcceptanceTest` | Naming convention | Strong (filename) |
+| Content contains `@SpringBootTest` | Boots full Spring context → integration | Content |
+| Content contains `@IntegrationTest` | Explicit annotation | Content |
+| Content contains `RestAssured`, `MockMvc`, `WebTestClient`, `TestRestTemplate` | HTTP-level assertion → not a unit test | Content |
+
+> Unit tests (JUnit + Mockito only, no Spring context) are **not** indexed.
+> They don't catch integration bugs and would flood the index with noise.
+
+**How component names are extracted (`extractClassReferences`):**
+
+The coverage indexer uses a `PascalCase` regex `\b([A-Z][a-zA-Z0-9]{2,})\b` to extract
+every class-name reference from the test file. For example:
+
+```java
+// In PaymentServiceIT.java:
+@Autowired PaymentService paymentService;
+RestAssured.given().post("/api/payments")...
+```
+Extracts: `PaymentService`, `RestAssured`, `Autowired`, ...
+
+The `EXCLUDED_NAMES` set filters out ~80 known Java/framework names that are not real
+application components: `String`, `List`, `Autowired`, `SpringBootTest`, `RestAssured`, etc.
+What remains are application-specific class names like `PaymentService`, `PaymentController`.
+
+**Why PascalCase?**
+Java class names are always PascalCase. By matching this pattern, the indexer can identify
+component references without parsing the full AST. It is a heuristic (not 100% precise),
+but correct for the most common naming patterns in enterprise Java codebases.
 
 ### Agent Instructions
 

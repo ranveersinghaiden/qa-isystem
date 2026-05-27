@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>QA-ISystem Architecture Reference</title>
+  <style>
+
+html {
+color: #1a1a1a;
+background-color: #fdfdfd;
+}
+body {
+margin: 0 auto;
+max-width: 36em;
+padding-left: 50px;
+padding-right: 50px;
+padding-top: 50px;
+padding-bottom: 50px;
+hyphens: auto;
+overflow-wrap: break-word;
+text-rendering: optimizeLegibility;
+font-kerning: normal;
+}
+@media (max-width: 600px) {
+body {
+font-size: 0.9em;
+padding: 12px;
+}
+h1 {
+font-size: 1.8em;
+}
+}
+@media print {
+html {
+background-color: white;
+}
+body {
+background-color: transparent;
+color: black;
+font-size: 12pt;
+}
+p, h2, h3 {
+orphans: 3;
+widows: 3;
+}
+h2, h3, h4 {
+page-break-after: avoid;
+}
+}
+p {
+margin: 1em 0;
+}
+a {
+color: #1a1a1a;
+}
+a:visited {
+color: #1a1a1a;
+}
+img {
+max-width: 100%;
+}
+svg {
+height: auto;
+max-width: 100%;
+}
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.4em;
+}
+h5, h6 {
+font-size: 1em;
+font-style: italic;
+}
+h6 {
+font-weight: normal;
+}
+ol, ul {
+padding-left: 1.7em;
+margin-top: 1em;
+}
+li > ol, li > ul {
+margin-top: 0;
+}
+blockquote {
+margin: 1em 0 1em 1.7em;
+padding-left: 1em;
+border-left: 2px solid #e6e6e6;
+color: #606060;
+}
+code {
+white-space: pre-wrap;
+font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+font-size: 85%;
+margin: 0;
+hyphens: manual;
+}
+pre {
+margin: 1em 0;
+overflow: auto;
+}
+pre code {
+padding: 0;
+overflow: visible;
+overflow-wrap: normal;
+}
+.sourceCode {
+background-color: transparent;
+overflow: visible;
+}
+hr {
+border: none;
+border-top: 1px solid #1a1a1a;
+height: 1px;
+margin: 1em 0;
+}
+table {
+margin: 1em 0;
+border-collapse: collapse;
+width: 100%;
+overflow-x: auto;
+display: block;
+font-variant-numeric: lining-nums tabular-nums;
+}
+table caption {
+margin-bottom: 0.75em;
+}
+tbody {
+margin-top: 0.5em;
+border-top: 1px solid #1a1a1a;
+border-bottom: 1px solid #1a1a1a;
+}
+th {
+border-top: 1px solid #1a1a1a;
+padding: 0.25em 0.5em 0.25em 0.5em;
+}
+td {
+padding: 0.125em 0.5em 0.25em 0.5em;
+}
+header {
+margin-bottom: 4em;
+text-align: center;
+}
+#TOC li {
+list-style: none;
+}
+#TOC ul {
+padding-left: 1.3em;
+}
+#TOC > ul {
+padding-left: 0;
+}
+#TOC a:not(:hover) {
+text-decoration: none;
+}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">QA-ISystem Architecture Reference</h1>
+</header>
+<h1 id="qa-isystem-complete-architecture-design-reference">QA-ISystem:
+Complete Architecture &amp; Design Reference</h1>
+<blockquote>
+<p><strong>Audience:</strong> This document is written for someone who
+is new to coding and solution design. Every concept is explained from
+first principles before diving into how it is applied here.</p>
+</blockquote>
+<hr />
+<h2 id="what-problem-does-this-system-solve">1. What Problem Does This
+System Solve?</h2>
+<p>When a developer writes new code and opens a Pull Request (PR),
+someone (or something) needs to answer:</p>
+<blockquote>
+<p><em>“Does the test suite need updating? And if so, what tests should
+be written?”</em></p>
+</blockquote>
+<p>Traditionally, a human QA engineer looks at the changed code, figures
+out which components were affected, checks whether they are covered by
+tests, writes BDD scenarios, generates test code, runs it, fixes it, and
+opens a PR. This process can take hours to days.</p>
+<p><strong>QA-ISystem automates this entire workflow:</strong></p>
+<ol type="1">
+<li>A PR is submitted → the system receives it</li>
+<li>The system analyses the code change (which files changed, what kind
+of change, how risky it is)</li>
+<li>It checks whether the changed components already have integration or
+end-to-end tests</li>
+<li>It makes a decision: skip / update existing tests / create new
+tests</li>
+<li>It generates BDD (Gherkin) scenarios for human review</li>
+<li>After human approval, it generates executable test code</li>
+<li>It runs the test, self-heals minor failures, and opens a final
+PR</li>
+</ol>
+<hr />
+<h2 id="system-overview">2. System Overview</h2>
+<p>The system is split into <strong>three microservices</strong> and one
+<strong>shared library</strong> (<code>common</code>). Each service runs
+independently and communicates via <strong>Apache Kafka</strong> (a
+message queue).</p>
+<pre><code>  Developer opens PR
+        │
+        ▼
+┌──────────────────┐       Kafka: FeatureUpdatesQueue
+│   pr-service     │ ─────────────────────────────────────────►
+│   port 8080      │
+└──────────────────┘
+
+                          ┌──────────────────────────────────┐
+                          │         impact-service            │
+                          │         port 8081                 │
+                          │                                   │
+                          │  Parse diff → graph → risk score  │
+                          │  → identify components needing    │
+                          │    integration tests              │
+                          └──────────────────────────────────┘
+                                         │
+                       Kafka: ImpactResultsQueue
+                                         │
+                                         ▼
+                          ┌──────────────────────────────────┐
+                          │       strategy-service            │
+                          │       port 8082                   │
+                          │                                   │
+                          │  Scan test repo → real coverage   │
+                          │  → decision → BDD generation →    │
+                          │  code generation → stabilisation  │
+                          └──────────────────────────────────┘</code></pre>
+<hr />
+<h2 id="what-is-apache-kafka-and-why-is-it-used-here">3. What Is Apache
+Kafka and Why Is It Used Here?</h2>
+<p><strong>Apache Kafka</strong> is a distributed message queue. Think
+of it like a post box: one service puts a message in, another service
+picks it up — but they don’t need to be running at the same time or at
+the same speed.</p>
+<h3 id="why-kafka-instead-of-direct-http-calls">Why Kafka instead of
+direct HTTP calls?</h3>
+<table>
+<colgroup>
+<col style="width: 47%" />
+<col style="width: 52%" />
+</colgroup>
+<thead>
+<tr>
+<th>Option</th>
+<th>Problem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pr-service calls impact-service directly</td>
+<td>If impact-service is slow or down, pr-service hangs and the
+developer’s webhook request times out</td>
+</tr>
+<tr>
+<td>Impact-service calls strategy-service directly</td>
+<td>Same coupling: one slow step blocks everything</td>
+</tr>
+<tr>
+<td><strong>Kafka between each step</strong></td>
+<td>Each service processes at its own pace. A slow strategy-service does
+not block a fast impact-service. Each service can have multiple
+consumers in parallel. Messages are durable — if strategy-service
+crashes, it picks up where it left off</td>
+</tr>
+</tbody>
+</table>
+<h3 id="key-kafka-concepts-used-here">Key Kafka concepts used here</h3>
+<table>
+<colgroup>
+<col style="width: 21%" />
+<col style="width: 78%" />
+</colgroup>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning in this system</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Topic</strong></td>
+<td>A named queue. <code>FeatureUpdatesQueue</code>,
+<code>ImpactResultsQueue</code>, <code>TestScriptsQueue</code></td>
+</tr>
+<tr>
+<td><strong>Producer</strong></td>
+<td>A service that puts messages in a topic</td>
+</tr>
+<tr>
+<td><strong>Consumer</strong></td>
+<td>A service that reads messages from a topic</td>
+</tr>
+<tr>
+<td><strong>Consumer group</strong></td>
+<td>Multiple instances of the same service that share the work
+(e.g. <code>impact-service-group</code> with 3 threads)</td>
+</tr>
+<tr>
+<td><strong>Partition key</strong></td>
+<td>Messages with the same key (e.g. <code>prId</code>) go to the same
+partition and are processed in order</td>
+</tr>
+<tr>
+<td><strong>Manual ack</strong></td>
+<td>The consumer explicitly tells Kafka “I have processed this message”
+(<code>AckMode.MANUAL_IMMEDIATE</code>). If the service crashes before
+acking, Kafka re-delivers the message</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="the-common-module">4. The <code>common</code> Module</h2>
+<p>The <code>common</code> module is a shared Java library (JAR) that is
+compiled once and used as a dependency by all three services. It
+contains all the <strong>data models</strong> — plain Java objects that
+carry information between services.</p>
+<h3 id="why-share-models">Why share models?</h3>
+<p>If each service had its own definition of <code>PullRequest</code>,
+they might disagree on field names or types. A shared
+<code>common</code> module means they all speak the same language.</p>
+<h3 id="key-models">Key models</h3>
+<h4 id="pullrequest"><code>PullRequest</code></h4>
+<p>The input to the system. Represents a code change that a developer
+wants reviewed.</p>
+<pre><code>PullRequest
+├── prId            &quot;PR-A1B2C3D4&quot;
+├── title           &quot;feat: Add payment gateway&quot;
+├── author          &quot;dev@example.com&quot;
+├── repositoryName  &quot;payment-service&quot;
+├── sourceBranch    &quot;feature/payments&quot;
+├── targetBranch    &quot;main&quot;
+├── rawDiffContent  &quot;diff --git a/src/PaymentService.java ...&quot;
+└── diffs           List&lt;GitDiff&gt;  (pre-parsed, optional)</code></pre>
+<h4 id="gitdiff"><code>GitDiff</code></h4>
+<p>Represents one changed file. A PR touching 5 files produces 5
+<code>GitDiff</code> objects.</p>
+<pre><code>GitDiff
+├── filePath        &quot;src/main/java/PaymentService.java&quot;
+├── diffType        ADDED | MODIFIED | DELETED | RENAMED
+├── linesAdded      45
+├── linesDeleted    12
+├── isTestFile      false
+└── hunks           List&lt;DiffHunk&gt;
+                      └── lines: List&lt;DiffLine&gt;
+                                  ├── type: ADDED | REMOVED | CONTEXT
+                                  └── content: the actual line of code</code></pre>
+<h4 id="impactenvelope"><code>ImpactEnvelope</code></h4>
+<p>The output of <code>impact-service</code>. Contains everything the
+strategy layer needs.</p>
+<pre><code>ImpactEnvelope
+├── envelopeId            (UUID)
+├── prId
+├── impactedComponents    List&lt;ImpactedComponent&gt;
+│     └── componentName, filePath, type (CONTROLLER/SERVICE/...), impactScore, callers, callees
+├── detectedChangeTypes   List&lt;ChangeType&gt;  (API_CHANGE, BUG_FIX, SECURITY_FIX, ...)
+├── overallRiskScore      0.0 – 1.0
+├── riskLevel             LOW | MEDIUM | HIGH | CRITICAL
+├── coverageReport        CoverageReport (level=UNKNOWN at this point)
+├── suggestedTestAreas    List&lt;String&gt;  (component names needing coverage)
+└── changesSummary        Human-readable one-line description</code></pre>
+<h4 id="coveragereport"><code>CoverageReport</code></h4>
+<p>The two-phase coverage model — starts UNKNOWN in impact-service, gets
+resolved to real data in strategy-service.</p>
+<pre><code>CoverageReport
+├── source            UNKNOWN | REPO_SCAN
+├── level             GOOD | PARTIAL | NONE | UNKNOWN
+├── coverageRatio     0.0 – 1.0  (meaningful only after REPO_SCAN)
+├── testedComponents  List of component names WITH existing integration tests
+├── untestedComponents List of component names WITHOUT integration tests
+├── requiredTestTypes  [&quot;API&quot;, &quot;INTEGRATION&quot;, &quot;E2E&quot;]
+├── existingTestFiles  List of test filenames found in the repo
+└── requiresNewTests  boolean</code></pre>
+<hr />
+<h2 id="pr-service-phase-0-ingestion">5. pr-service — Phase 0:
+Ingestion</h2>
+<p><strong>Port:</strong> 8080 | <strong>Role:</strong> Receive PR
+events, validate, enrich, publish to Kafka</p>
+<h3 id="what-it-does">What it does</h3>
+<ol type="1">
+<li>Developer (or CI webhook) sends a POST request with PR details</li>
+<li>Service validates required fields (title, author, repository
+name)</li>
+<li>Service fills in defaults for optional fields (prId, targetBranch,
+timestamps)</li>
+<li>Service publishes the enriched <code>PullRequest</code> as JSON to
+<code>FeatureUpdatesQueue</code></li>
+</ol>
+<h3 id="design-decisions">Design decisions</h3>
+<p><strong>Why a separate service for just “receive and
+forward”?</strong></p>
+<p>This service acts as a <strong>gateway</strong>. It: - Protects the
+rest of the system from invalid input - Decouples the external caller
+(webhook, CI) from the internal implementation - Can be scaled
+independently if PR volume is high</p>
+<p><strong>No custom Kafka configuration needed here.</strong>
+pr-service only produces messages (never consumes). Spring Boot
+auto-creates a <code>KafkaTemplate</code> from the YAML config, with no
+custom beans required. This is intentional simplicity — only services
+that <em>consume</em> Kafka messages need the manual-ack container
+setup.</p>
+<h3 id="classes">Classes</h3>
+<table>
+<colgroup>
+<col style="width: 53%" />
+<col style="width: 46%" />
+</colgroup>
+<thead>
+<tr>
+<th>Class</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PrServiceApplication</code></td>
+<td>Spring Boot entry point — starts the application</td>
+</tr>
+<tr>
+<td><code>PRController</code></td>
+<td>HTTP layer: 4 endpoints (<code>/webhook</code>,
+<code>/submit</code>, <code>/demo</code>, <code>/health</code>)</td>
+</tr>
+<tr>
+<td><code>PRService</code></td>
+<td>Business logic: enrich + validate + publish</td>
+</tr>
+<tr>
+<td><code>FeatureUpdatesProducer</code></td>
+<td>Kafka layer: serialise + send to
+<code>FeatureUpdatesQueue</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="endpoint-summary">Endpoint summary</h3>
+<table>
+<colgroup>
+<col style="width: 37%" />
+<col style="width: 37%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Use case</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /api/pr/webhook</code></td>
+<td>GitHub webhook integration</td>
+<td>Lenient — no strict validation</td>
+</tr>
+<tr>
+<td><code>POST /api/pr/submit</code></td>
+<td>Programmatic submission</td>
+<td>Strict <code>@Valid</code> annotation enforcement</td>
+</tr>
+<tr>
+<td><code>POST /api/pr/demo</code></td>
+<td>Quick local testing</td>
+<td>Uses a built-in JWT auth sample PR</td>
+</tr>
+<tr>
+<td><code>GET /api/pr/health</code></td>
+<td>Health check</td>
+<td>Returns <code>{&quot;status&quot;:&quot;UP&quot;}</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="impact-service-phase-1-deterministic-analysis">6. impact-service
+— Phase 1: Deterministic Analysis</h2>
+<p><strong>Port:</strong> 8081 | <strong>Role:</strong> Parse the diff,
+classify the change, score risk, identify coverage gaps</p>
+<blockquote>
+<p><strong>No AI here.</strong> Every step is a deterministic algorithm.
+The same diff always produces the same output.</p>
+</blockquote>
+<h3 id="the-5-step-pipeline">The 5-step pipeline</h3>
+<pre><code>PullRequest  →  [GitDiffParser]  →  [DependencyGraph]  →  [ChangeTypeDetector]
+             →  [RiskScorer]     →  [TestCoverageService]  →  ImpactEnvelope</code></pre>
+<h3 id="step-1-gitdiffparser-reading-the-raw-diff">Step 1: GitDiffParser
+— Reading the raw diff</h3>
+<p>A <strong>git diff</strong> is a plain-text format that shows what
+changed in a file. Example:</p>
+<pre><code>diff --git a/src/PaymentService.java b/src/PaymentService.java
+@@ -10,6 +10,8 @@ public class PaymentService {
+     private final PaymentRepository repo;
++    private final AuditService audit;
++
+     public void processPayment(Payment p) {</code></pre>
+<p>The parser reads this line by line: - <code>diff --git</code> → start
+of a new file - <code>@@ ... @@</code> → start of a hunk (a changed
+region within the file) - Line starting with <code>+</code> → added line
+- Line starting with <code>-</code> → removed line - Line starting with
+space → unchanged context line</p>
+<p><strong>Output:</strong> A structured
+<code>List&lt;GitDiff&gt;</code> where each diff has typed hunks and
+lines, plus metadata like <code>linesAdded</code>,
+<code>linesDeleted</code>, and whether it is a test file.</p>
+<h3 id="step-2-dependencygraph-who-depends-on-what">Step 2:
+DependencyGraph — Who depends on what?</h3>
+<p>For every changed file, <code>DependencyGraph</code> extracts Java
+<code>import</code> statements from the changed lines and builds a map
+of:</p>
+<pre><code>ClassName → [classesItImports]</code></pre>
+<p>It then identifies <strong>callers</strong> — other changed classes
+that import this one. A class with many callers has a wider impact
+(“blast radius”) and gets a higher impact score.</p>
+<p><strong>ComponentType detection</strong> (from file path
+keywords):</p>
+<table>
+<thead>
+<tr>
+<th>Path keyword</th>
+<th>ComponentType</th>
+<th>Significance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>controller</code></td>
+<td>CONTROLLER</td>
+<td>HTTP endpoint — highest user-facing risk</td>
+</tr>
+<tr>
+<td><code>service</code></td>
+<td>SERVICE</td>
+<td>Business logic</td>
+</tr>
+<tr>
+<td><code>repositor</code> or <code>dao</code></td>
+<td>REPOSITORY</td>
+<td>Database access</td>
+</tr>
+<tr>
+<td><code>model</code>, <code>entity</code>, <code>dto</code></td>
+<td>MODEL</td>
+<td>Data structure</td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td>CONFIG</td>
+<td>System configuration</td>
+</tr>
+<tr>
+<td><code>test</code> or <code>spec</code></td>
+<td>TEST</td>
+<td>Test file</td>
+</tr>
+<tr>
+<td><code>util</code> or <code>helper</code></td>
+<td>UTILITY</td>
+<td>Helper code</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Impact score formula:</strong></p>
+<pre><code>base         = min(1.0, (linesAdded + linesDeleted) / 200)
+callerBonus  = min(0.3, numberOfCallers × 0.1)
+impactScore  = min(1.0, base + callerBonus)</code></pre>
+<h3 id="step-3-changetypedetector-what-kind-of-change-is-this">Step 3:
+ChangeTypeDetector — What kind of change is this?</h3>
+<p>Uses regex patterns on file paths and diff content to classify the
+change. Multiple types can be detected per PR.</p>
+<p><strong>File path patterns:</strong></p>
+<table>
+<thead>
+<tr>
+<th>File path matches</th>
+<th>ChangeType</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>application.yml</code>, <code>.env</code>,
+<code>config/</code></td>
+<td><code>CONFIGURATION_CHANGE</code></td>
+</tr>
+<tr>
+<td><code>pom.xml</code>, <code>build.gradle</code>,
+<code>package.json</code></td>
+<td><code>DEPENDENCY_UPDATE</code></td>
+</tr>
+<tr>
+<td><code>migration</code>, <code>flyway</code>, <code>liquibase</code>,
+<code>.sql</code></td>
+<td><code>DATABASE_CHANGE</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Content keyword patterns (applied to changed lines
+only):</strong></p>
+<table>
+<colgroup>
+<col style="width: 59%" />
+<col style="width: 40%" />
+</colgroup>
+<thead>
+<tr>
+<th>Keywords found</th>
+<th>ChangeType</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TODO</code>, <code>FIXME</code>, <code>bug</code>,
+<code>fix</code>, <code>patch</code></td>
+<td><code>BUG_FIX</code></td>
+</tr>
+<tr>
+<td><code>@Deprecated</code>, <code>rename</code>,
+<code>refactor</code></td>
+<td><code>REFACTORING</code></td>
+</tr>
+<tr>
+<td><code>security</code>, <code>auth</code>, <code>token</code>,
+<code>password</code>, <code>secret</code></td>
+<td><code>SECURITY_FIX</code></td>
+</tr>
+<tr>
+<td><code>performance</code>, <code>cache</code>, <code>async</code>,
+<code>parallel</code></td>
+<td><code>PERFORMANCE_IMPROVEMENT</code></td>
+</tr>
+<tr>
+<td><code>@RestController</code>, <code>@GetMapping</code>,
+<code>@PostMapping</code>, etc.</td>
+<td><code>API_CHANGE</code></td>
+</tr>
+<tr>
+<td><code>migration</code>, <code>ALTER TABLE</code>,
+<code>CREATE TABLE</code>, <code>flyway</code></td>
+<td><code>DATABASE_CHANGE</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Special rules:</strong> - New file that is not a test →
+<code>NEW_FEATURE</code> - Deleted file → <code>REFACTORING</code> -
+More than 50 lines deleted → <code>BREAKING_CHANGE</code> - Nothing
+detected → default <code>NEW_FEATURE</code></p>
+<h3 id="step-4-riskscorer-how-risky-is-this-change">Step 4: RiskScorer —
+How risky is this change?</h3>
+<p>Produces a normalised score from <strong>0.0</strong> (safe) to
+<strong>1.0</strong> (maximum risk), using four weighted factors:</p>
+<pre><code>riskScore = (0.25 × churnScore)
+          + (0.30 × changeTypeScore)
+          + (0.25 × componentScore)
+          + (0.20 × coverageScore)</code></pre>
+<p><strong>Factor 1: Churn score (25%)</strong></p>
+<pre><code>churnScore = min(1.0, (linesAdded + linesDeleted) / 300)</code></pre>
+<p>More lines changed = more things that could go wrong. 300 lines
+saturates the score.</p>
+<p><strong>Factor 2: Change type severity (30%)</strong> Average
+severity across detected change types:</p>
+<table>
+<thead>
+<tr>
+<th>ChangeType</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BREAKING_CHANGE</td>
+<td>1.0</td>
+</tr>
+<tr>
+<td>SECURITY_FIX</td>
+<td>0.9</td>
+</tr>
+<tr>
+<td>DATABASE_CHANGE</td>
+<td>0.8</td>
+</tr>
+<tr>
+<td>API_CHANGE</td>
+<td>0.7</td>
+</tr>
+<tr>
+<td>DEPENDENCY_UPDATE</td>
+<td>0.6</td>
+</tr>
+<tr>
+<td>NEW_FEATURE / BUG_FIX</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>PERFORMANCE_IMPROVEMENT</td>
+<td>0.4</td>
+</tr>
+<tr>
+<td>CONFIGURATION_CHANGE / REFACTORING</td>
+<td>0.3</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Factor 3: Component criticality (25%)</strong> Average per
+component type, plus a bonus for wide blast radius:</p>
+<table>
+<thead>
+<tr>
+<th>ComponentType</th>
+<th>Weight</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CONTROLLER</td>
+<td>0.8</td>
+</tr>
+<tr>
+<td>REPOSITORY</td>
+<td>0.7</td>
+</tr>
+<tr>
+<td>SERVICE</td>
+<td>0.6</td>
+</tr>
+<tr>
+<td>CONFIG</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td>MODEL</td>
+<td>0.4</td>
+</tr>
+<tr>
+<td>TEST</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td>default</td>
+<td>0.3</td>
+</tr>
+</tbody>
+</table>
+<p>Caller bonus: <code>min(0.2, avgCallers × 0.05)</code> — a class
+called by many others is riskier to change.</p>
+<p><strong>Factor 4: Coverage uncertainty (20%)</strong></p>
+<pre><code>integrationTestable = count of CONTROLLER + SERVICE + REPOSITORY components
+nonTestComponents   = all components except TEST and UTILITY
+coverageScore       = min(0.9, integrationTestable / nonTestComponents × 0.9)</code></pre>
+<p>The more integration-testable components changed, the higher the
+coverage uncertainty. Capped at 0.9 — never declares maximum risk
+without a real repo scan.</p>
+<p><strong>Risk levels:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Score</th>
+<th>Level</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>≥ 0.9</td>
+<td>CRITICAL</td>
+</tr>
+<tr>
+<td>≥ 0.7</td>
+<td>HIGH</td>
+</tr>
+<tr>
+<td>≥ 0.4</td>
+<td>MEDIUM</td>
+</tr>
+<tr>
+<td>&lt; 0.4</td>
+<td>LOW</td>
+</tr>
+</tbody>
+</table>
+<h3 id="step-5-testcoverageservice-which-components-need-integration-tests">Step
+5: TestCoverageService — Which components need integration tests?</h3>
+<p>This is Phase 1 of a <strong>two-phase coverage
+assessment</strong>.</p>
+<p><strong>What it does:</strong> Looks at each impacted component and
+asks: “Is this the kind of component that should have an integration or
+end-to-end test?” It does NOT check whether a test already exists.</p>
+<p><strong>Why not check for existing tests here?</strong>
+impact-service has no access to the test repository. Cloning a repo at
+every PR event would make the service slow and stateful. The test repo
+check is done in strategy-service (Phase 2).</p>
+<p><strong>Which component types need integration tests?</strong></p>
+<table>
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 52%" />
+<col style="width: 17%" />
+</colgroup>
+<thead>
+<tr>
+<th>ComponentType</th>
+<th>Needs integration test?</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CONTROLLER</td>
+<td>✅ Yes → API/E2E tests</td>
+<td>Exposes HTTP endpoints used by real clients</td>
+</tr>
+<tr>
+<td>SERVICE</td>
+<td>✅ Yes → INTEGRATION tests</td>
+<td>Contains business logic with side effects</td>
+</tr>
+<tr>
+<td>REPOSITORY</td>
+<td>✅ Yes → INTEGRATION tests (real DB)</td>
+<td>SQL queries must be tested against a real database</td>
+</tr>
+<tr>
+<td>CONFIG</td>
+<td>✅ Yes → SMOKE tests</td>
+<td>Misconfiguration can bring down the whole service</td>
+</tr>
+<tr>
+<td>MODEL</td>
+<td>❌ No</td>
+<td>Data structures — covered by unit tests in the PR</td>
+</tr>
+<tr>
+<td>UTILITY</td>
+<td>❌ No</td>
+<td>Pure functions — covered by unit tests</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Required test type determination
+(<code>resolveRequiredTestTypes</code>):</strong></p>
+<table>
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 59%" />
+</colgroup>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Test type added</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Any CONTROLLER in changed components</td>
+<td><code>API</code></td>
+</tr>
+<tr>
+<td>Any SERVICE or REPOSITORY in changed components</td>
+<td><code>INTEGRATION</code></td>
+</tr>
+<tr>
+<td>Diff contains DB keywords (flyway, ALTER TABLE, etc.)</td>
+<td><code>INTEGRATION</code></td>
+</tr>
+<tr>
+<td>Diff contains security keywords (auth, oauth, jwt, token)</td>
+<td><code>E2E</code></td>
+</tr>
+<tr>
+<td>Nothing matched</td>
+<td><code>API</code> (safe default)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Output:</strong> <code>CoverageReport</code> with
+<code>level=UNKNOWN</code>, <code>source=UNKNOWN</code>,
+<code>untestedComponents=[…]</code>,
+<code>requiredTestTypes=[…]</code>.</p>
+<hr />
+<h2 id="strategy-service-phases-26-strategy-generation-execution">7.
+strategy-service — Phases 2–6: Strategy, Generation, Execution</h2>
+<p><strong>Port:</strong> 8082 | <strong>Role:</strong> Real coverage
+check → decision → BDD generation → code generation → stabilisation</p>
+<p>This is the most complex service. It owns the only intelligent
+decision-making in the system (though it is rule-based, not AI/LLM).</p>
+<h3 id="repocontextservice-cloning-and-indexing-the-test-repository">7.1
+RepoContextService — Cloning and Indexing the Test Repository</h3>
+<p><code>RepoContextService</code> runs on startup and keeps a local
+clone of the target test repository fresh. It has two roles: 1.
+<strong>Context provider</strong> — extracts coding conventions for the
+test code generators 2. <strong>Coverage index builder</strong> — scans
+which components already have integration/E2E tests</p>
+<h4 id="git-operations-without-credential-prompts">Git operations
+(without credential prompts)</h4>
+<p>Every git command is run via <code>ProcessBuilder</code> with three
+layers of credential protection:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>git <span class="op">-</span>c credential<span class="op">.</span><span class="fu">helper</span><span class="op">=</span>  <span class="op">{</span>command<span class="op">}</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co">// environment variables:</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>GIT_TERMINAL_PROMPT<span class="op">=</span><span class="dv">0</span>    <span class="co">// no terminal prompt</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>GIT_ASKPASS<span class="op">=</span>echo         <span class="co">// any askpass program returns empty</span></span></code></pre></div>
+<p>For token-based authentication, the token is embedded in the HTTPS
+URL:</p>
+<pre><code>https://github.com/org/repo
+→ https://{username}:{token}@github.com/org/repo</code></pre>
+<h4 id="coverage-index-the-inverted-index">Coverage index — the inverted
+index</h4>
+<p>After cloning, <code>buildCoverageIndex(modulePath)</code> scans all
+integration/E2E test files and builds an <strong>inverted
+index</strong>.</p>
+<p><strong>What is an inverted index?</strong> A normal index maps
+documents → words (like a table of contents). An inverted index maps
+words → documents (like a book’s index at the back).</p>
+<p>Here, the “words” are component names and the “documents” are test
+files:</p>
+<pre><code>coverageIndex:
+  &quot;PaymentController&quot; → [&quot;PaymentControllerIT.java&quot;, &quot;CheckoutE2ETest.java&quot;]
+  &quot;OrderService&quot;      → [&quot;OrderServiceIntTest.java&quot;]
+  &quot;UserRepository&quot;    → [&quot;UserRepositoryIT.java&quot;]</code></pre>
+<p>This structure makes the coverage check <strong>O(1)</strong> —
+instead of scanning every test file for every component, a single map
+lookup tells you instantly which tests cover a component.</p>
+<p><strong>Why not just search for the class name across all test files
+at query time?</strong> With 500 test files and 50 changed components,
+that would be 25,000 string searches on every single PR. Building once
+at startup and looking up at query time is dramatically faster.</p>
+<h4 id="integratione2e-test-identification-heuristics">Integration/E2E
+test identification heuristics</h4>
+<p><code>isIntegrationOrE2eFile(Path file)</code> must distinguish
+integration tests from unit tests. This matters because unit tests
+(Mockito + no Spring context) do NOT validate database queries, HTTP
+contracts, or multi-layer flows.</p>
+<p><strong>Detection criteria (any one match makes it
+integration/E2E):</strong></p>
+<table>
+<colgroup>
+<col style="width: 36%" />
+<col style="width: 63%" />
+</colgroup>
+<thead>
+<tr>
+<th>Signal</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.feature</code> extension</td>
+<td>Gherkin file — always an acceptance/E2E test</td>
+</tr>
+<tr>
+<td>Filename ends in <code>IT</code> or <code>IntegrationTest</code> or
+<code>IntTest</code></td>
+<td>Naming convention widely used in Java projects</td>
+</tr>
+<tr>
+<td>Filename ends in <code>E2ETest</code> or
+<code>AcceptanceTest</code></td>
+<td>Explicit end-to-end naming</td>
+</tr>
+<tr>
+<td>Content has <code>@SpringBootTest</code></td>
+<td>Boots the full application context — not a unit test</td>
+</tr>
+<tr>
+<td>Content has <code>@IntegrationTest</code></td>
+<td>Explicit annotation</td>
+</tr>
+<tr>
+<td>Content has <code>RestAssured</code></td>
+<td>HTTP-level testing library — always integration or E2E</td>
+</tr>
+<tr>
+<td>Content has <code>MockMvc</code></td>
+<td>Spring MVC test — exercises HTTP layer</td>
+</tr>
+<tr>
+<td>Content has <code>WebTestClient</code></td>
+<td>Reactive HTTP test — exercises HTTP layer</td>
+</tr>
+<tr>
+<td>Content has <code>TestRestTemplate</code></td>
+<td>Spring Boot integration HTTP client</td>
+</tr>
+</tbody>
+</table>
+<h4 id="pascalcase-extraction-why-use-class-names">PascalCase extraction
+— why use class names?</h4>
+<p><code>extractClassReferences(Path file)</code> uses the regex
+<code>\b([A-Z][a-zA-Z0-9]{2,})\b</code> to find all PascalCase words in
+a test file. In Java, all class names are PascalCase. By matching this
+pattern, the indexer finds every class the test references without
+needing to parse the full Java syntax tree.</p>
+<p><strong>Why PascalCase specifically?</strong> - Variables in Java are
+<code>camelCase</code> — they start lowercase - Constants are
+<code>ALL_CAPS_WITH_UNDERSCORES</code> — the regex won’t match - Class
+names are <code>PascalCase</code> — they start with an uppercase
+letter</p>
+<p>So <code>\b([A-Z][a-zA-Z0-9]{2,})\b</code> captures <em>exactly</em>
+the class names (plus annotations without <code>@</code>, which is fine
+because annotations are filtered or used as-is).</p>
+<p><strong>The <code>EXCLUDED_NAMES</code> filter (~80 entries)
+removes:</strong> - Core Java classes: <code>String</code>,
+<code>List</code>, <code>Map</code>, <code>Optional</code>, etc. -
+JUnit/TestNG annotations: <code>Test</code>, <code>BeforeEach</code>,
+<code>AfterEach</code>, etc. - Spring annotations:
+<code>Autowired</code>, <code>SpringBootTest</code>,
+<code>MockBean</code>, etc. - BDD framework words: <code>Given</code>,
+<code>When</code>, <code>Then</code>, <code>Feature</code>,
+<code>Scenario</code>, etc. - HTTP/testing libraries:
+<code>RestAssured</code>, <code>MockMvc</code>, <code>HttpStatus</code>,
+<code>MediaType</code>, etc.</p>
+<p>What remains after exclusion: application-specific class names like
+<code>PaymentController</code>, <code>OrderService</code>,
+<code>UserRepository</code> — exactly what we want.</p>
+<p><strong>Why hard-code the exclusion list rather than using AST
+parsing?</strong> Full AST parsing (with a library like JavaParser)
+would be 50–100× slower and add a heavy dependency. The exclusion list
+is fast, deterministic, and covers 95% of cases. The 5% of edge cases (a
+class named <code>Given</code> in the application) are acceptable false
+positives that do not cause incorrect coverage decisions — they just
+slightly reduce the precision of the index.</p>
+<h3 id="e2ecoverageanalyzer-phase-2-coverage-assessment">7.2
+E2ECoverageAnalyzer — Phase 2 Coverage Assessment</h3>
+<p><code>E2ECoverageAnalyzer</code> receives the
+<code>ImpactEnvelope</code> (which carries the
+<code>UNKNOWN</code>-level <code>CoverageReport</code> from
+impact-service) and replaces it with a <strong>real</strong>
+assessment.</p>
+<pre><code>analyze(envelope):
+  index = repoContextService.getCoverageIndex()
+
+  testableComponents = envelope.impactedComponents
+    .filter(CONTROLLER | SERVICE | REPOSITORY | CONFIG)
+
+  if testableComponents.isEmpty() → GOOD (nothing needs integration tests)
+
+  if index.isEmpty() → UNKNOWN (no repo configured, propagate from impact-service)
+
+  for each component in testableComponents:
+    tests = index.get(componentName)
+    if tests not empty → covered
+    else               → uncovered
+
+  level:
+    all covered   → GOOD
+    ≥ half covered → PARTIAL
+    none covered   → NONE</code></pre>
+<p><strong>Coverage level definitions:</strong></p>
+<table>
+<colgroup>
+<col style="width: 18%" />
+<col style="width: 23%" />
+<col style="width: 57%" />
+</colgroup>
+<thead>
+<tr>
+<th>Level</th>
+<th>Meaning</th>
+<th>StrategyAgent response</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GOOD</code></td>
+<td>All testable components have integration tests</td>
+<td>Follow other rules (may SKIP)</td>
+</tr>
+<tr>
+<td><code>PARTIAL</code></td>
+<td>Some components covered, some not</td>
+<td>UPDATE_TESTS</td>
+</tr>
+<tr>
+<td><code>NONE</code></td>
+<td>No integration tests found for any component</td>
+<td>Force CREATE_TESTS</td>
+</tr>
+<tr>
+<td><code>UNKNOWN</code></td>
+<td>No test repo configured</td>
+<td>Conservative — follow other rules</td>
+</tr>
+</tbody>
+</table>
+<h3 id="strategyagent-the-decision-maker">7.3 StrategyAgent — The
+Decision Maker</h3>
+<p><code>StrategyAgent.decide(envelope)</code> is called once per PR. It
+first calls <code>E2ECoverageAnalyzer</code> to get the real coverage
+level, then applies a prioritised decision tree.</p>
+<p><strong>Decision tree (evaluated top to bottom, first match
+wins):</strong></p>
+<table>
+<colgroup>
+<col style="width: 27%" />
+<col style="width: 30%" />
+<col style="width: 27%" />
+<col style="width: 13%" />
+</colgroup>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Condition</th>
+<th>Decision</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>coverage.level == NONE</code> AND
+<code>untestedComponents</code> not empty</td>
+<td><code>CREATE_TESTS</code></td>
+<td>Repo confirmed: zero tests exist</td>
+</tr>
+<tr>
+<td>2</td>
+<td>All changes are config/dependency AND risk is LOW</td>
+<td><code>SKIP</code></td>
+<td>Infra changes don’t need new tests</td>
+</tr>
+<tr>
+<td>3</td>
+<td>PR only changes test files</td>
+<td><code>SKIP</code></td>
+<td>Developer already handled it</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Risk is HIGH or CRITICAL</td>
+<td><code>CREATE_TESTS</code></td>
+<td>Too risky to skip test generation</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>NEW_FEATURE</code> detected</td>
+<td><code>CREATE_TESTS</code></td>
+<td>New features need new tests</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>coverage.level == PARTIAL</code></td>
+<td><code>UPDATE_TESTS</code></td>
+<td>Extend existing tests</td>
+</tr>
+<tr>
+<td>7</td>
+<td>PR includes test file changes</td>
+<td><code>UPDATE_TESTS</code></td>
+<td>PR touched tests, extend them</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Default</td>
+<td><code>CREATE_TESTS</code></td>
+<td>Safe default</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Fallback rules (applied after the base
+decision):</strong></p>
+<table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 39%" />
+<col style="width: 34%" />
+</colgroup>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Trigger</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full regression</td>
+<td><code>confidenceScore &lt; 0.4</code></td>
+<td>Sets <code>fullRegressionRequired=true</code></td>
+</tr>
+<tr>
+<td>Expanded scope</td>
+<td><code>risk == HIGH or CRITICAL</code></td>
+<td>Adds transitive dependencies to test areas</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Confidence score formula:</strong></p>
+<pre><code>base       = min(1.0, filesChanged / 10.0)
+confidence = min(1.0, (base + overallRiskScore) / 2.0)</code></pre>
+<h3 id="bddgenerator-creating-human-readable-test-scenarios">7.4
+BddGenerator — Creating Human-Readable Test Scenarios</h3>
+<p><code>BddGenerator</code> takes the <code>TestStrategy</code> and
+produces <strong>BDD (Behaviour-Driven Development) scenarios</strong>
+in Gherkin syntax.</p>
+<p><strong>What is Gherkin?</strong> Gherkin is a plain-English format
+for describing test scenarios:</p>
+<pre><code>Feature: Payment processing
+  Scenario: Successful payment
+    Given the system is running
+    And a valid user session exists
+    When the client calls PaymentController
+    Then response status is 200
+    And response body contains expected data</code></pre>
+<p>For each <code>TestRequirement</code>, <code>BddGenerator</code>
+creates up to 3 scenarios:</p>
+<table>
+<colgroup>
+<col style="width: 29%" />
+<col style="width: 19%" />
+<col style="width: 51%" />
+</colgroup>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Type</th>
+<th>When generated</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Successful operation (happy path)</td>
+<td><code>Scenario</code></td>
+<td>Always</td>
+</tr>
+<tr>
+<td>Error handling (negative case)</td>
+<td><code>Scenario</code></td>
+<td>Always</td>
+</tr>
+<tr>
+<td>Boundary testing</td>
+<td><code>Scenario Outline</code></td>
+<td>Only when <code>API_CHANGE</code> detected</td>
+</tr>
+</tbody>
+</table>
+<p>Tags added automatically: - <code>@api</code> / <code>@ui</code> /
+<code>@mobile</code> (test type) - <code>@pr-{prId}</code>
+(traceability) - <code>@auto-generated</code> (marks it as
+machine-generated) - <code>@smoke</code> (if HIGH or CRITICAL risk)</p>
+<p>The BDD PR is a <strong>human review gate</strong> —
+<code>TestPrService.createBddPr()</code> logs the full Gherkin to the
+console as a PR payload. Code generation only starts after a human calls
+<code>POST /api/strategy/approve-bdd</code>.</p>
+<h3 id="codegenservice-test-code-generation">7.5 CodegenService — Test
+Code Generation</h3>
+<p><code>CodegenService</code> routes each BDD scenario to the
+appropriate test runner:</p>
+<table>
+<colgroup>
+<col style="width: 27%" />
+<col style="width: 20%" />
+<col style="width: 27%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th><code>testType</code></th>
+<th>Runner</th>
+<th>Framework</th>
+<th>Libraries</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>API</code></td>
+<td><code>ApiTestRunner</code></td>
+<td>RestAssured + JUnit 5</td>
+<td><code>rest-assured</code>, <code>assertj</code></td>
+</tr>
+<tr>
+<td><code>UI</code></td>
+<td><code>UITestRunner</code></td>
+<td>Selenium + ChromeDriver</td>
+<td><code>selenium-java</code></td>
+</tr>
+<tr>
+<td><code>MOBILE</code></td>
+<td><code>MobileTestRunner</code></td>
+<td>Appium + AndroidDriver</td>
+<td><code>java-client</code> (Appium)</td>
+</tr>
+</tbody>
+</table>
+<p>Each runner generates a Java source file as a string. The file
+includes: 1. Repo-specific package name (from <code>RepoContext</code>)
+2. Common imports found in ≥50% of existing test files 3.
+<code>extends {baseTestClass}</code> if a base class was detected in the
+repo 4. Agent instruction comments (from
+<code>.github/agents/*.md</code>) 5. <code>@Test</code> methods with
+<code>GIVEN/WHEN/THEN</code> comments and assertions from BDD steps</p>
+<p><strong>BDD step → assertion translation (API runner):</strong></p>
+<table>
+<thead>
+<tr>
+<th>BDD <code>then</code> step contains</th>
+<th>Generated Java assertion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&quot;200&quot;</code></td>
+<td><code>.statusCode().isEqualTo(200)</code></td>
+</tr>
+<tr>
+<td><code>&quot;4xx&quot;</code> or <code>&quot;5xx&quot;</code></td>
+<td><code>.statusCode().isGreaterThanOrEqualTo(400)</code></td>
+</tr>
+<tr>
+<td><code>&quot;2000ms&quot;</code></td>
+<td><code>response.time().isLessThan(2000L)</code></td>
+</tr>
+<tr>
+<td>anything else</td>
+<td><code>// {step}</code> (placeholder comment for human fill-in)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="stabilizationloop-run-fail-fix">7.6 StabilizationLoop — Run,
+Fail, Fix</h3>
+<p>The generated test code is not perfect. It may fail because of timing
+issues, wrong base URLs, or missing null checks.
+<code>StabilizationLoop</code> automates the repair cycle.</p>
+<p><strong>The loop:</strong></p>
+<pre><code>for attempt = 1 to maxRetries (default 3):
+  result = testExecutionEngine.execute(script, attempt)
+  if PASSED:
+    mark script as PASSED
+    create final PR
+    return
+  if attempt &lt; maxRetries:
+    apply fix for this attempt
+    wait retryDelayMs (default 2000ms)
+
+mark script as ABANDONED
+create final PR (for human review)</code></pre>
+<p><strong>Three progressive fixes:</strong></p>
+<p><strong>Attempt 1 — Timeout and connection fixes</strong> Applied
+when error contains <code>&quot;Connection refused&quot;</code>,
+<code>&quot;503&quot;</code>, or <code>&quot;timeout&quot;</code>. - Adds
+<code>RestAssured.config</code> with
+<code>http.connection.timeout=5000ms</code> and
+<code>socket.timeout=10000ms</code> - Adds
+<code>@Timeout(value=30, unit=SECONDS)</code> to the <code>@Test</code>
+annotation - Injects missing <code>TimeUnit</code> and
+<code>Timeout</code> imports</p>
+<p><strong>Attempt 2 — Retry wrapper and null guards</strong> Builds on
+attempt 1, then: - If error contains <code>&quot;AssertionError&quot;</code>:
+wraps the <code>// THEN</code> block in a 3-iteration retry loop with
+<code>Thread.sleep(1000)</code> - Always adds
+<code>assertThat(response).isNotNull()</code> before the status code
+assertion</p>
+<p><strong>Attempt 3 — Minimal smoke test</strong> Abandons the original
+test entirely and generates a fresh, minimal class:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co">// AUTO-STABILIZED: Simplified smoke test (original failed 2 attempts)</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co">// Original error: {errorMessage}</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> <span class="op">{</span>OriginalClass<span class="op">}</span>_Stabilized <span class="op">{</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">void</span> <span class="fu">smokeTest</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>        <span class="bu">Response</span> response <span class="op">=</span> <span class="fu">given</span><span class="op">().</span><span class="fu">when</span><span class="op">().</span><span class="fu">get</span><span class="op">(</span><span class="st">&quot;/api/v1/health&quot;</span><span class="op">).</span><span class="fu">then</span><span class="op">().</span><span class="fu">extract</span><span class="op">().</span><span class="fu">response</span><span class="op">();</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>        <span class="fu">assertThat</span><span class="op">(</span>response<span class="op">.</span><span class="fu">statusCode</span><span class="op">()).</span><span class="fu">isBetween</span><span class="op">(</span><span class="dv">100</span><span class="op">,</span> <span class="dv">599</span><span class="op">);</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><strong>The loop always creates a final PR</strong> — even on
+<code>ABANDONED</code>, a <code>⚠️ [NEEDS REVIEW]</code> PR is raised so
+a human can see and fix the partial code.</p>
+<hr />
+<h2 id="the-two-phase-coverage-assessment-in-depth">8. The Two-Phase
+Coverage Assessment — In Depth</h2>
+<p>This is the central architectural pattern of the system, worth
+understanding thoroughly.</p>
+<h3 id="the-problem-it-solves">The problem it solves</h3>
+<p>The question <em>“does <code>PaymentController</code> have
+integration test coverage?”</em> requires: 1. Knowing what
+<code>PaymentController</code> is (from the PR diff) 2. Scanning the
+test repository to find tests that cover it</p>
+<p>The PR diff is in <code>impact-service</code>. The test repository
+clone is in <code>strategy-service</code>. They are separate services
+and should not be coupled.</p>
+<h3 id="phase-1-in-impact-service">Phase 1 in impact-service</h3>
+<p><code>TestCoverageService.assess(components, diffs)</code> runs
+inside <code>ImpactEngine</code> and produces a
+<code>CoverageReport</code> with <code>level=UNKNOWN</code>. It
+identifies <em>which types of components need integration tests</em> (by
+their <code>ComponentType</code>) but cannot say whether those tests
+exist:</p>
+<pre><code>Input:  [PaymentController (CONTROLLER), JwtToken (MODEL), PaymentService (SERVICE)]
+
+Filter: CONTROLLER → needs integration test
+        MODEL      → does NOT need integration test (unit test only)
+        SERVICE    → needs integration test
+
+Output: CoverageReport(
+          level=UNKNOWN,
+          untestedComponents=[&quot;PaymentController&quot;, &quot;PaymentService&quot;],
+          requiredTestTypes=[&quot;API&quot;, &quot;INTEGRATION&quot;, &quot;E2E&quot;]
+        )</code></pre>
+<p>This is published in the <code>ImpactEnvelope</code> to
+<code>ImpactResultsQueue</code>.</p>
+<h3 id="phase-2-in-strategy-service">Phase 2 in strategy-service</h3>
+<p><code>E2ECoverageAnalyzer.analyze(envelope)</code> runs inside
+<code>StrategyAgent.decide()</code> and replaces the UNKNOWN report with
+a real assessment using the inverted coverage index:</p>
+<pre><code>coverageIndex contains:
+  &quot;PaymentService&quot; → [&quot;PaymentServiceIT.java&quot;]
+  (no entry for &quot;PaymentController&quot;)
+
+untestedComponents from Phase 1: [&quot;PaymentController&quot;, &quot;PaymentService&quot;]
+
+For &quot;PaymentController&quot;: coverageIndex.get(&quot;PaymentController&quot;) = empty → UNCOVERED
+For &quot;PaymentService&quot;:    coverageIndex.get(&quot;PaymentService&quot;)    = [...] → COVERED
+
+covered   = [&quot;PaymentService&quot;]    (1 component)
+uncovered = [&quot;PaymentController&quot;] (1 component)
+
+covered &gt;= uncovered → PARTIAL
+
+Output: CoverageReport(
+          source=REPO_SCAN,
+          level=PARTIAL,
+          coverageRatio=0.5,
+          testedComponents=[&quot;PaymentService&quot;],
+          untestedComponents=[&quot;PaymentController&quot;],
+          existingTestFiles=[&quot;PaymentServiceIT.java&quot;]
+        )</code></pre>
+<p><code>StrategyAgent</code> then uses this real coverage level: -
+<code>PARTIAL</code> → <code>UPDATE_TESTS</code> (PaymentService tests
+exist; create coverage for PaymentController)</p>
+<hr />
+<h2 id="kafka-manual-acknowledgement-why-it-matters">9. Kafka Manual
+Acknowledgement — Why It Matters</h2>
+<p>impact-service and strategy-service consume Kafka messages with
+<code>AckMode.MANUAL_IMMEDIATE</code>.</p>
+<p><strong>What this means:</strong> After processing a message, the
+consumer explicitly calls <code>ack.acknowledge()</code> to tell Kafka
+“I have finished processing this message, advance my offset.”</p>
+<p><strong>Why not use auto-commit?</strong> With auto-commit, Kafka
+automatically advances the offset after a configurable interval. If the
+service crashes <em>after</em> the offset was advanced but
+<em>before</em> processing completed, the message is lost — no
+retry.</p>
+<p>With manual ack, if the service crashes before calling
+<code>ack.acknowledge()</code>, Kafka re-delivers the message on
+restart.</p>
+<p><strong>The consequence that required custom
+<code>KafkaConfig.java</code>:</strong> Spring Boot auto-configuration
+does <strong>not</strong> create a
+<code>kafkaListenerContainerFactory</code> bean when manual
+acknowledgement is configured. Without this bean,
+<code>@KafkaListener</code> cannot start — resulting in the error:</p>
+<pre><code>A component required a bean named &#39;kafkaListenerContainerFactory&#39; that could not be found.</code></pre>
+<p>Solution: explicit <code>KafkaConfig.java</code> in both
+impact-service and strategy-service:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode java"><code class="sourceCode java"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="at">@Bean</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> ConcurrentKafkaListenerContainerFactory<span class="op">&lt;</span><span class="bu">String</span><span class="op">,</span> <span class="bu">String</span><span class="op">&gt;</span> <span class="fu">kafkaListenerContainerFactory</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    ConcurrentKafkaListenerContainerFactory<span class="op">&lt;</span><span class="bu">String</span><span class="op">,</span> <span class="bu">String</span><span class="op">&gt;</span> factory <span class="op">=</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>        <span class="kw">new</span> ConcurrentKafkaListenerContainerFactory<span class="op">&lt;&gt;();</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    factory<span class="op">.</span><span class="fu">setConsumerFactory</span><span class="op">(</span><span class="fu">consumerFactory</span><span class="op">());</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    factory<span class="op">.</span><span class="fu">getContainerProperties</span><span class="op">().</span><span class="fu">setAckMode</span><span class="op">(</span>ContainerProperties<span class="op">.</span><span class="fu">AckMode</span><span class="op">.</span><span class="fu">MANUAL_IMMEDIATE</span><span class="op">);</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    factory<span class="op">.</span><span class="fu">setConcurrency</span><span class="op">(</span><span class="dv">3</span><span class="op">);</span>  <span class="co">// 3 parallel consumer threads</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> factory<span class="op">;</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Why <code>concurrency=3</code>? Three parallel threads allow the
+service to process up to 3 PR envelopes simultaneously. With a single
+thread, slow PRs (large diffs, many components) would delay all
+subsequent PRs in the queue.</p>
+<hr />
+<h2 id="multi-module-maven-build">10. Multi-Module Maven Build</h2>
+<p>The project uses Apache Maven with a <strong>parent POM</strong> at
+the root and four child modules.</p>
+<pre><code>QA-ISystem/                 ← parent pom.xml (groupId: nz.co.eroad, version: 0.0.1-SNAPSHOT)
+├── common/                 ← shared models JAR
+├── pr-service/             ← depends on common
+├── impact-service/         ← depends on common
+└── strategy-service/       ← depends on common</code></pre>
+<p><strong>Critical build order:</strong> <code>common</code> must be
+compiled and installed to the local Maven cache
+(<code>~/.m2/repository</code>) BEFORE the dependent services compile.
+The parent POM’s <code>&lt;modules&gt;</code> section defines this
+order.</p>
+<p><strong>Build command:</strong></p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> QA-ISystem</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> clean install <span class="at">-pl</span> common <span class="kw">&amp;&amp;</span> <span class="ex">mvn</span> clean package <span class="at">-pl</span> pr-service,impact-service,strategy-service <span class="at">-am</span></span></code></pre></div>
+<p>Or simpler (builds all modules in dependency order):</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="ex">mvn</span> clean install</span></code></pre></div>
+<p><strong>Package namespace:</strong>
+<code>nz.co.eroad.qaisystem</code> — all classes in all modules use this
+as their root package. This aligns with the company’s domain-based
+package naming convention.</p>
+<hr />
+<h2 id="docker-compose-setup">11. Docker Compose Setup</h2>
+<div class="sourceCode" id="cb28"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">services</span><span class="kw">:</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">qa-zookeeper</span><span class="kw">:</span><span class="co">   # Kafka&#39;s metadata coordinator (required by Kafka)</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">qa-kafka</span><span class="kw">:</span><span class="co">       # The message broker (Kafka)</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">pr-service</span><span class="kw">:</span><span class="co">     # port 8080</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">impact-service</span><span class="kw">:</span><span class="co"> # port 8081</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">strategy-service</span><span class="kw">:</span><span class="co"> # port 8082</span></span></code></pre></div>
+<p>All three services depend on <code>qa-kafka</code>. Kafka depends on
+<code>qa-zookeeper</code>. Environment variables at the Docker Compose
+level configure Kafka bootstrap addresses so each service can connect to
+the message broker inside the Docker network.</p>
+<hr />
+<h2 id="testing-the-system-locally">12. Testing the System Locally</h2>
+<h3 id="quick-path-no-repo-configured">Quick path (no repo
+configured)</h3>
+<div class="sourceCode" id="cb29"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Start Kafka</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker-compose</span> up <span class="at">-d</span> qa-zookeeper qa-kafka</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Start all services (in separate terminals)</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> impact-service <span class="kw">&amp;&amp;</span> <span class="ex">mvn</span> spring-boot:run</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> pr-service <span class="kw">&amp;&amp;</span> <span class="ex">mvn</span> spring-boot:run</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> strategy-service <span class="kw">&amp;&amp;</span> <span class="ex">mvn</span> spring-boot:run</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Send a demo PR</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-X</span> POST http://localhost:8080/api/pr/demo</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Watch logs in each service terminal</span></span></code></pre></div>
+<h3 id="with-a-real-test-repo">With a real test repo</h3>
+<div class="sourceCode" id="cb30"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set environment variables before starting strategy-service</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">TARGET_REPO_TOKEN</span><span class="op">=</span>ghp_your_token_here</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">TARGET_REPO_USERNAME</span><span class="op">=</span>your_github_username</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Edit strategy-service/src/main/resources/application.yaml:</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a><span class="co"># aiqa:</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="co">#   target-repo:</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a><span class="co">#     url: &quot;https://github.com/your-org/your-test-repo&quot;</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="co">#     branch: main</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="co">#     modules:</span></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a><span class="co">#       api: tests/api</span></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a><span class="co">#       ui: tests/ui</span></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a><span class="co">#       mobile: tests/mobile</span></span></code></pre></div>
+<h3 id="approving-bdd-scenarios-triggering-code-generation">Approving
+BDD scenarios (triggering code generation)</h3>
+<p>After the strategy-service processes a PR, it logs BDD scenarios to
+the console. Copy the JSON from the log and call:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-X</span> POST http://localhost:8082/api/strategy/approve-bdd <span class="dt">\</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-H</span> <span class="st">&quot;Content-Type: application/json&quot;</span> <span class="dt">\</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-d</span> <span class="st">&#39;{...BDD JSON from log...}&#39;</span></span></code></pre></div>
+<hr />
+<h2 id="summary-of-heuristics-and-why-they-were-chosen">13. Summary of
+Heuristics and Why They Were Chosen</h2>
+<table>
+<colgroup>
+<col style="width: 29%" />
+<col style="width: 18%" />
+<col style="width: 51%" />
+</colgroup>
+<thead>
+<tr>
+<th>Heuristic</th>
+<th>Where</th>
+<th>Why this approach</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PascalCase regex for class names</td>
+<td><code>RepoContextService.extractClassReferences</code></td>
+<td>Java class names are always PascalCase. Faster than full AST
+parsing; 95%+ precision for enterprise Java</td>
+</tr>
+<tr>
+<td>Inverted index (component → test files)</td>
+<td><code>RepoContextService.buildCoverageIndex</code></td>
+<td>O(1) lookup per component at query time vs O(n×m) search at every
+PR</td>
+</tr>
+<tr>
+<td>Integration test detection via filename patterns first, content
+second</td>
+<td><code>RepoContextService.isIntegrationOrE2eFile</code></td>
+<td>Filename conventions are faster. Content scan only for projects that
+don’t follow naming conventions</td>
+</tr>
+<tr>
+<td>ComponentType from file path keywords</td>
+<td><code>DependencyGraph.detectComponentType</code></td>
+<td>Java project structure is highly conventional (controllers go in
+<code>controller/</code>, etc.). Works for 90%+ of enterprise Spring
+Boot projects</td>
+</tr>
+<tr>
+<td>Change type detection via regex on changed lines only</td>
+<td><code>ChangeTypeDetector</code></td>
+<td>Only changed lines are semantically relevant. Scanning unchanged
+context lines would produce false positives</td>
+</tr>
+<tr>
+<td>Risk score capped at 0.9 for coverage factor</td>
+<td><code>RiskScorer.calculateCoverageScore</code></td>
+<td>Declaring maximum risk without confirmed test absence is
+overconfident. Repo scan (Phase 2) provides the real signal</td>
+</tr>
+<tr>
+<td>Coverage level PARTIAL when covered ≥ uncovered</td>
+<td><code>E2ECoverageAnalyzer</code></td>
+<td>Asymmetric threshold is intentional: if more than half is covered,
+updating is cheaper than creating from scratch</td>
+</tr>
+<tr>
+<td>Stabilisation: attempt 3 simplifies to smoke test</td>
+<td><code>StabilizationLoop</code></td>
+<td>Generated code may be too brittle for the test environment. A smoke
+test that just checks reachability is better than abandoning silently
+with no PR</td>
+</tr>
+<tr>
+<td>60/80/95% pass probability simulation</td>
+<td><code>TestExecutionEngine</code></td>
+<td>Represents realistic first-run flakiness. Real implementation would
+compile and execute the Java code via JUnit Platform Launcher</td>
+</tr>
+<tr>
+<td><code>acks=all</code> on Kafka producer</td>
+<td>All producers</td>
+<td>Ensures the Kafka leader AND all replicas have received the message
+before acknowledging. Prevents message loss on broker failure</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="class-reference-table">14. Class Reference Table</h2>
+<h3 id="common-module">common module</h3>
+<table>
+<colgroup>
+<col style="width: 31%" />
+<col style="width: 40%" />
+<col style="width: 27%" />
+</colgroup>
+<thead>
+<tr>
+<th>Class</th>
+<th>Package</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PullRequest</code></td>
+<td>model</td>
+<td>Input: PR details from developer</td>
+</tr>
+<tr>
+<td><code>GitDiff</code></td>
+<td>model</td>
+<td>One changed file with line-level detail</td>
+</tr>
+<tr>
+<td><code>ImpactEnvelope</code></td>
+<td>model</td>
+<td>Output of impact-service; input of strategy-service</td>
+</tr>
+<tr>
+<td><code>ImpactEnvelope.ImpactedComponent</code></td>
+<td>model (nested)</td>
+<td>One changed class with type, score, callers</td>
+</tr>
+<tr>
+<td><code>ImpactEnvelope.ChangeType</code></td>
+<td>model (enum)</td>
+<td>API_CHANGE, BUG_FIX, SECURITY_FIX, …</td>
+</tr>
+<tr>
+<td><code>ImpactEnvelope.RiskLevel</code></td>
+<td>model (enum)</td>
+<td>LOW, MEDIUM, HIGH, CRITICAL</td>
+</tr>
+<tr>
+<td><code>CoverageReport</code></td>
+<td>model</td>
+<td>Two-phase coverage assessment</td>
+</tr>
+<tr>
+<td><code>CoverageReport.CoverageLevel</code></td>
+<td>model (enum)</td>
+<td>GOOD, PARTIAL, NONE, UNKNOWN</td>
+</tr>
+<tr>
+<td><code>CoverageReport.CoverageSource</code></td>
+<td>model (enum)</td>
+<td>REPO_SCAN, UNKNOWN</td>
+</tr>
+<tr>
+<td><code>TestStrategy</code></td>
+<td>model</td>
+<td>Decision + requirements from StrategyAgent</td>
+</tr>
+<tr>
+<td><code>BddScenario</code></td>
+<td>model</td>
+<td>Gherkin scenarios for BDD review PR</td>
+</tr>
+<tr>
+<td><code>TestScript</code></td>
+<td>model</td>
+<td>Generated test code + metadata</td>
+</tr>
+<tr>
+<td><code>TestResult</code></td>
+<td>model</td>
+<td>Execution result from StabilizationLoop</td>
+</tr>
+</tbody>
+</table>
+<h3 id="pr-service">pr-service</h3>
+<table>
+<colgroup>
+<col style="width: 31%" />
+<col style="width: 40%" />
+<col style="width: 27%" />
+</colgroup>
+<thead>
+<tr>
+<th>Class</th>
+<th>Package</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PrServiceApplication</code></td>
+<td>pr</td>
+<td>Spring Boot entry point</td>
+</tr>
+<tr>
+<td><code>PRController</code></td>
+<td>controller</td>
+<td>HTTP: /webhook, /submit, /demo, /health</td>
+</tr>
+<tr>
+<td><code>PRService</code></td>
+<td>service</td>
+<td>Enrich + validate + publish</td>
+</tr>
+<tr>
+<td><code>FeatureUpdatesProducer</code></td>
+<td>kafka</td>
+<td>Serialise + send to FeatureUpdatesQueue</td>
+</tr>
+</tbody>
+</table>
+<h3 id="impact-service">impact-service</h3>
+<table>
+<colgroup>
+<col style="width: 31%" />
+<col style="width: 40%" />
+<col style="width: 27%" />
+</colgroup>
+<thead>
+<tr>
+<th>Class</th>
+<th>Package</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ImpactServiceApplication</code></td>
+<td>impact</td>
+<td>Spring Boot entry point</td>
+</tr>
+<tr>
+<td><code>KafkaConfig</code></td>
+<td>config</td>
+<td>Explicit consumer/producer/factory beans</td>
+</tr>
+<tr>
+<td><code>FeatureUpdatesConsumer</code></td>
+<td>kafka</td>
+<td>Consume PullRequest → trigger ImpactEngine</td>
+</tr>
+<tr>
+<td><code>ImpactResultsProducer</code></td>
+<td>kafka</td>
+<td>Publish ImpactEnvelope to ImpactResultsQueue</td>
+</tr>
+<tr>
+<td><code>ImpactEngine</code></td>
+<td>engine</td>
+<td>Orchestrate 5-step pipeline</td>
+</tr>
+<tr>
+<td><code>GitDiffParser</code></td>
+<td>engine</td>
+<td>Raw unified diff → List<GitDiff></td>
+</tr>
+<tr>
+<td><code>DependencyGraph</code></td>
+<td>engine</td>
+<td>Import graph + component typing</td>
+</tr>
+<tr>
+<td><code>ChangeTypeDetector</code></td>
+<td>engine</td>
+<td>Regex-based change classification</td>
+</tr>
+<tr>
+<td><code>RiskScorer</code></td>
+<td>engine</td>
+<td>Weighted score → RiskLevel</td>
+</tr>
+<tr>
+<td><code>TestCoverageService</code></td>
+<td>service</td>
+<td>Phase 1 coverage: identify components by type → UNKNOWN</td>
+</tr>
+<tr>
+<td><code>ImpactController</code></td>
+<td>controller</td>
+<td>REST: /analyze (sync), /status</td>
+</tr>
+</tbody>
+</table>
+<h3 id="strategy-service">strategy-service</h3>
+<table>
+<colgroup>
+<col style="width: 31%" />
+<col style="width: 40%" />
+<col style="width: 27%" />
+</colgroup>
+<thead>
+<tr>
+<th>Class</th>
+<th>Package</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>StrategyServiceApplication</code></td>
+<td>strategy</td>
+<td>Spring Boot entry point</td>
+</tr>
+<tr>
+<td><code>KafkaConfig</code></td>
+<td>config</td>
+<td>Explicit consumer/producer/factory beans</td>
+</tr>
+<tr>
+<td><code>TargetRepoProperties</code></td>
+<td>config</td>
+<td>Typed binding for aiqa.target-repo YAML</td>
+</tr>
+<tr>
+<td><code>ImpactResultsConsumer</code></td>
+<td>kafka</td>
+<td>Consume ImpactEnvelope → trigger StrategyAgent</td>
+</tr>
+<tr>
+<td><code>TestScriptsConsumer</code></td>
+<td>kafka</td>
+<td>Consume BddScenario → trigger CodegenService</td>
+</tr>
+<tr>
+<td><code>TestScriptsProducer</code></td>
+<td>kafka</td>
+<td>Publish BddScenario to TestScriptsQueue</td>
+</tr>
+<tr>
+<td><code>StrategyAgent</code></td>
+<td>agent</td>
+<td>Decision tree + fallback rules</td>
+</tr>
+<tr>
+<td><code>BddGenerator</code></td>
+<td>agent</td>
+<td>Template-based Gherkin scenario builder</td>
+</tr>
+<tr>
+<td><code>CodegenService</code></td>
+<td>execution</td>
+<td>Route BDD scenario to correct runner</td>
+</tr>
+<tr>
+<td><code>ApiTestRunner</code></td>
+<td>execution</td>
+<td>Generate RestAssured + JUnit 5 test code</td>
+</tr>
+<tr>
+<td><code>UITestRunner</code></td>
+<td>execution</td>
+<td>Generate Selenium test code</td>
+</tr>
+<tr>
+<td><code>MobileTestRunner</code></td>
+<td>execution</td>
+<td>Generate Appium test code</td>
+</tr>
+<tr>
+<td><code>TestExecutionEngine</code></td>
+<td>execution</td>
+<td>Simulate (or run) the generated test</td>
+</tr>
+<tr>
+<td><code>StabilizationLoop</code></td>
+<td>execution</td>
+<td>Bounded run → fail → fix cycle (max 3 retries)</td>
+</tr>
+<tr>
+<td><code>RepoContext</code></td>
+<td>execution</td>
+<td>Value object: conventions extracted from test repo</td>
+</tr>
+<tr>
+<td><code>E2ECoverageAnalyzer</code></td>
+<td>service</td>
+<td>Phase 2 coverage: scan repo index → GOOD/PARTIAL/NONE</td>
+</tr>
+<tr>
+<td><code>RepoContextService</code></td>
+<td>service</td>
+<td>Clone test repo + build coverage index + extract conventions</td>
+</tr>
+<tr>
+<td><code>TestPrService</code></td>
+<td>service</td>
+<td>Simulate GitHub PR creation (real API call in production)</td>
+</tr>
+<tr>
+<td><code>StrategyController</code></td>
+<td>controller</td>
+<td>REST: /status, /approve-bdd, /refresh-context</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

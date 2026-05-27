@@ -41,7 +41,7 @@ nz/co/eroad/qaisystem/
 │   ├── ChangeTypeDetector.java         ← Regex-based change classification
 │   └── RiskScorer.java                 ← Weighted risk score (0.0–1.0) → RiskLevel
 ├── service/
-│   └── TestCoverageService.java        ← PR-diff-based coverage gap detection
+│   └── TestCoverageService.java        ← Identifies components needing integration/E2E tests by type; level=UNKNOWN
 └── controller/
     └── ImpactController.java           ← Synchronous REST endpoints for debugging
 ```
@@ -83,9 +83,13 @@ nz/co/eroad/qaisystem/
   │        └─► double riskScore (0.0–1.0)                     │
   │            RiskLevel  (LOW / MEDIUM / HIGH / CRITICAL)    │
   │                                                           │
-  │  Step 5 ─ TestCoverageService                             │
-  │    components + diffs                                     │
-  │        └─► CoverageReport  (ratio, level, missing areas)  │
+   │  Step 5 ─ TestCoverageService                             │
+   │    components + diffs                                     │
+   │        └─► CoverageReport  (level=UNKNOWN, source=UNKNOWN │
+   │                             untestedComponents,            │
+   │                             requiredTestTypes)             │
+   │    ⚠ Does NOT check the test repo — level is intentionally│
+   │      UNKNOWN until strategy-service performs the scan.    │
   │                                                           │
   │  Assemble ImpactEnvelope ──────────────────────────────►  │
   └───────────────────────────────────────────────────────────┘
@@ -273,7 +277,7 @@ score = (0.25 × churnScore)
 | Churn | 25% | `min(1.0, totalLines / 300)` — 300 lines → max |
 | Change type severity | 30% | Average across all types: BREAKING=1.0, SECURITY=0.9, DB=0.8, API=0.7, DEPENDENCY=0.6, NEW_FEATURE/BUG_FIX=0.5, PERFORMANCE=0.4, CONFIG/REFACTORING=0.3 |
 | Component criticality | 25% | Type-weighted avg: CONTROLLER=0.8, REPO=0.7, SERVICE=0.6, CONFIG=0.5, MODEL=0.4, TEST=0.1, default=0.3 + caller bonus `min(0.2, avgCallers×0.05)` |
-| Coverage gap | 20% | `max(0.1, 0.9 − ratio×0.8)` where `ratio = testFiles/srcFiles` in diff |
+| Coverage gap | 20% | `min(0.9, integrationTestableComponents / nonTestComponents × 0.9)` — more CONTROLLER/SERVICE/REPOSITORY components = more integration-coverage uncertainty = higher risk. Capped at 0.9 because actual test existence is unknown until E2ECoverageAnalyzer scans the repo. |
 
 **Risk levels (configurable thresholds):**
 
@@ -301,87 +305,129 @@ debugging, and the `/api/impact/analyze` call from the root README:
 
 ## How TestCoverageService Works
 
-### Short answer: it does NOT connect to any external repo
+### Short answer: it identifies *which components need integration tests* — not whether they have them
 
-`TestCoverageService` is **entirely self-contained within the PR diff**. It does
-not clone a repo, call GitHub, or read the filesystem. All its inputs are:
-- `List<ImpactedComponent>` — produced by `DependencyGraph`
-- `List<GitDiff>` — produced by `GitDiffParser`
+`TestCoverageService` **does not connect to any repo, call GitHub, or read the filesystem**.
+Its sole job is to look at the impacted components from the PR diff and answer:
+*"Which of these components are the kind of thing that needs integration or E2E tests?"*
 
-Both of those come solely from the `rawDiffContent` string in the `PullRequest`.
+The **actual test coverage check** (does a test already exist in the test repo?) is done
+downstream in `strategy-service` by `E2ECoverageAnalyzer`, which has access to the cloned
+test repository.
+
+### Two-phase coverage design
+
+```
+Phase 1 (impact-service / TestCoverageService):
+  ─ No test repo access
+  ─ Filter components by type (CONTROLLER, SERVICE, REPOSITORY, CONFIG)
+  ─ Set level = UNKNOWN, source = UNKNOWN
+  ─ Populate untestedComponents and requiredTestTypes
+  ─ Publish ImpactEnvelope with this UNKNOWN report to Kafka
+
+Phase 2 (strategy-service / E2ECoverageAnalyzer):
+  ─ Has cloned test repo (via RepoContextService)
+  ─ Scans test repo for integration/E2E tests referencing each component name
+  ─ Replaces UNKNOWN with real level: GOOD / PARTIAL / NONE
+  ─ Populates testedComponents and existingTestFiles
+  ─ StrategyAgent then makes its CREATE/UPDATE/SKIP decision with real data
+```
 
 ### Algorithm
 
 ```
 assess(components, diffs)
   │
-  ├─ srcFiles  = count diffs where isTestFile == false
-  ├─ testFiles = count diffs where isTestFile == true
+  ├─ needsIntegrationTest = components filtered by INTEGRATION_TEST_REQUIRED types:
+  │     CONTROLLER  → needs API and/or E2E tests
+  │     SERVICE     → needs INTEGRATION tests
+  │     REPOSITORY  → needs INTEGRATION tests (real DB)
+  │     CONFIG      → needs SMOKE tests
+  │  (MODEL and UTILITY are excluded — covered by unit tests in the PR)
   │
-  ├─ coverageRatio = testFiles / srcFiles  (0.0 if no src files)
+  ├─ requiredTestTypes = resolveRequiredTestTypes(components, diffs):
+  │     hasControllers        → add "API"
+  │     hasServices/Repos     → add "INTEGRATION"
+  │     diff contains DB keywords (flyway, migration, ALTER TABLE, ...)
+  │                           → add "INTEGRATION"
+  │     diff contains security keywords (auth, oauth, jwt, token, ...)
+  │                           → add "E2E"
+  │     (empty result)        → default "API"
   │
-  ├─ CoverageLevel:
-  │     ratio ≥ 0.80  →  GOOD
-  │     ratio ≥ 0.20  →  PARTIAL
-  │     ratio  < 0.20  →  NONE
-  │
-  └─ missingCoverageAreas:
-       for each non-TEST ImpactedComponent:
-         search diffs for a file whose path contains any of:
-           <componentName>Test
-           <componentName>Spec
-           <componentName>IT
-         if NONE found → add componentName to missingCoverageAreas
+  └─ return CoverageReport:
+       source            = UNKNOWN
+       level             = UNKNOWN  ← real assessment deferred to E2ECoverageAnalyzer
+       coverageRatio     = 0.0
+       testedComponents  = []        ← unknown until repo scan
+       untestedComponents = needsIntegrationTest
+       requiredTestTypes  = requiredTestTypes
+       existingTestFiles  = []       ← unknown until repo scan
+       requiresNewTests   = !needsIntegrationTest.isEmpty()
 ```
 
 ### Concrete example
 
-PR diff contains three files:
+PR diff contains:
 ```
-src/PaymentService.java       (ADDED — srcFile)
-src/PaymentController.java    (MODIFIED — srcFile)
-test/PaymentServiceTest.java  (ADDED — testFile)
+src/PaymentController.java    (ADDED — CONTROLLER type)
+src/PaymentService.java       (ADDED — SERVICE type)
+src/JwtToken.java             (ADDED — MODEL type)
 ```
 
-| Component | Matching test in diff? | In missingCoverageAreas? |
-|-----------|----------------------|--------------------------|
-| `PaymentService` | ✅ `PaymentServiceTest.java` | No |
-| `PaymentController` | ❌ nothing | **Yes** |
+| Component | Type | Needs integration test? | In untestedComponents? |
+|-----------|------|------------------------|------------------------|
+| `PaymentController` | CONTROLLER | ✅ Yes (API/E2E) | **Yes** |
+| `PaymentService` | SERVICE | ✅ Yes (INTEGRATION) | **Yes** |
+| `JwtToken` | MODEL | ❌ No (unit test suffices) | No |
 
+Phase 1 output from TestCoverageService:
 ```json
 {
-  "level": "PARTIAL",
-  "coverageRatio": 0.33,
-  "existingTestFiles": ["test/PaymentServiceTest.java"],
-  "missingCoverageAreas": ["PaymentController"],
+  "source": "UNKNOWN",
+  "level": "UNKNOWN",
+  "coverageRatio": 0.0,
+  "untestedComponents": ["PaymentController", "PaymentService"],
+  "requiredTestTypes": ["API", "INTEGRATION", "E2E"],
+  "existingTestFiles": [],
   "requiresNewTests": true
 }
 ```
 
-### How the strategy-service uses this
+Phase 2 output after E2ECoverageAnalyzer scans the test repo:
+```json
+{
+  "source": "REPO_SCAN",
+  "level": "PARTIAL",
+  "coverageRatio": 0.5,
+  "testedComponents": ["PaymentService"],
+  "untestedComponents": ["PaymentController"],
+  "requiredTestTypes": ["API", "INTEGRATION", "E2E"],
+  "existingTestFiles": ["PaymentServiceIT.java"],
+  "requiresNewTests": true
+}
+```
 
-`StrategyAgent` treats `missingCoverageAreas` as a hard override:
+### How strategy-service uses this
+
+`StrategyAgent` calls `E2ECoverageAnalyzer.analyze(envelope)` first to get the real level:
 
 ```
-coverage.level == NONE           → force CREATE_TESTS
-!missingCoverageAreas.isEmpty()  → CREATE_TESTS for those areas
+coverage.level == NONE AND untestedComponents not empty   → force CREATE_TESTS
+coverage.level == PARTIAL                                 → UPDATE_TESTS
+coverage.level == GOOD                                    → follow other rules
+coverage.level == UNKNOWN (no repo configured)            → follow other rules (conservative)
 ```
 
-This is what makes the system a *smart* QA layer rather than a blind generator —
-if your PR already includes tests alongside the code, the agent may decide to
-`UPDATE_TESTS` or even `SKIP` instead of generating from scratch.
+### Why not just check the test repo directly in impact-service?
 
-### Known limitations
+**Separation of concerns + topology.** impact-service is a fast, stateless processing stage
+that runs immediately on every PR event. Cloning and scanning a test repository would:
+1. Make it stateful (cached clone)
+2. Add significant startup and runtime latency
+3. Couple impact detection to the deployment configuration of the test repo
 
-| Limitation | Implication |
-|-----------|-------------|
-| Only sees files **in the PR diff** | A test that already exists in the repo but wasn't modified is invisible — it will show as "missing" |
-| Name-based matching only (`*Test`, `*Spec`, `*IT`) | Unconventionally-named tests (e.g. `PaymentControllerShould.java`) will not match |
-| No assertion-depth checking | A test file with zero assertions counts as "covered" |
-
-The first limitation is intentional by design — it encourages developers to include
-or update test files in every PR. A future enhancement could cross-reference the
-target test repo cloned by `strategy-service`'s `RepoContextService`.
+`strategy-service` already owns that concern — it manages the clone lifecycle via
+`RepoContextService` at startup and keeps the clone fresh with `POST /api/strategy/refresh-context`.
 
 ---
 
@@ -417,12 +463,18 @@ Consumer group: `impact-service-group`
   "riskScore": "0.72",
   "riskLevel": "HIGH",
   "coverage": {
-    "level": "NONE",
-    "ratio": "0.00",
-    "missingTests": ["AuthController", "UserService"]
+    "source": "UNKNOWN",
+    "level": "UNKNOWN",
+    "untestedComponents": ["AuthController", "UserService"],
+    "requiredTestTypes": ["API", "E2E"],
+    "requiresNewTests": true
   }
 }
 ```
+
+> **Note:** `level=UNKNOWN` is correct here. The real level (GOOD/PARTIAL/NONE) is set
+> by `E2ECoverageAnalyzer` in strategy-service after scanning the test repo.
+> If no test repo is configured, strategy-service conservatively treats UNKNOWN as requiring tests.
 
 ---
 
