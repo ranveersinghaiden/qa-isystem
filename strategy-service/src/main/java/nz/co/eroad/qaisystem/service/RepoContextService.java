@@ -28,15 +28,28 @@ import java.util.stream.Stream;
  * already have integration/E2E test coverage in the test repo.
  *
  * Lifecycle:
- *   1. On startup: clone the repo if it doesn't exist; pull latest if it does.
+ *   1. On startup: try to clone/pull the remote repo (if configured).
+ *      If that fails, try the fallback local path (if configured).
  *   2. Scan each configured module directory → populate context cache + coverage index.
  *   3. Expose getContext(testType) for runners to call at generation time.
  *   4. Expose getCoverageIndex() for E2ECoverageAnalyzer.
  *   5. POST /api/strategy/refresh-context re-runs steps 1–2 without restart.
  *
- * If the repo URL is not configured, or clone/pull fails, getContext() returns
+ * If neither the remote repo nor a fallback is available, getContext() returns
  * contextAvailable=false and getCoverageIndex() returns an empty map — both callers
- * fall back transparently.
+ * fall back transparently to built-in templates.
+ *
+ * <h2>Credential handling</h2>
+ * <ul>
+ *   <li>{@code auth.type=token}: token is embedded in the HTTPS URL, so git does not
+ *       need a credential helper. {@code credential.helper} is overridden to {@code ""}
+ *       to prevent macOS Keychain popups.</li>
+ *   <li>{@code auth.type=none} or {@code auth.type=ssh}: the system credential store
+ *       (e.g. {@code osxkeychain}) is left intact so git can authenticate using
+ *       stored credentials — useful when IntelliJ has already configured GitHub access.</li>
+ *   <li>{@code GIT_TERMINAL_PROMPT=0} is always set to prevent interactive terminal prompts
+ *       that would hang the service startup.</li>
+ * </ul>
  */
 @Slf4j
 @Service
@@ -79,23 +92,76 @@ public class RepoContextService {
     @PostConstruct
     public void initialise() {
         if (!props.isConfigured()) {
-            log.info("[RepoContextService] No target repo URL configured — " +
-                    "codegen will use built-in templates. " +
+            log.info("[RepoContextService] No remote repo URL configured. " +
                     "Set aiqa.target-repo.url to enable context-aware generation.");
+            // Still try the fallback — useful when the repo is already checked out locally
+            if (props.hasFallback()) {
+                log.info("[RepoContextService] Attempting fallback local path: '{}'",
+                        props.getFallbackLocalPath());
+                initFromFallback();
+            } else {
+                log.info("[RepoContextService] No fallback configured. Using built-in templates.");
+            }
             return;
         }
+
         TargetRepoProperties.Auth auth = props.getAuth();
         log.info("[RepoContextService] Starting with url='{}' branch='{}' authType='{}' tokenLength={}",
                 props.getUrl(), props.getBranch(), auth.getType(),
                 (auth.getToken() != null ? auth.getToken().length() : 0));
         try {
             cloneOrPull();
-            refreshCache();
-            log.info("[RepoContextService] Context loaded — API={} UI={} MOBILE={}",
+            refreshCache(Path.of(props.getLocalPath()));
+            log.info("[RepoContextService] Context loaded from remote — API={} UI={} MOBILE={}",
                     contextSummary("API"), contextSummary("UI"), contextSummary("MOBILE"));
         } catch (Exception e) {
-            log.error("[RepoContextService] Initialisation failed ({}). " +
-                    "Falling back to built-in templates.", e.getMessage(), e);
+            log.error("[RepoContextService] Remote clone/pull failed: {}. Trying fallback...",
+                    e.getMessage());
+            if (props.hasFallback()) {
+                initFromFallback();
+            } else {
+                log.error("[RepoContextService] No fallback configured. Using built-in templates. " +
+                        "Tip: set aiqa.target-repo.fallback-local-path to your local checkout.");
+            }
+        }
+    }
+
+    /**
+     * Attempts to load context from the configured fallback local path.
+     * Logs clearly at each step so the user knows what happened.
+     */
+    private void initFromFallback() {
+        String fallbackDir = props.getFallbackLocalPath();
+        Path fallbackPath  = Path.of(fallbackDir);
+
+        if (!Files.isDirectory(fallbackPath)) {
+            log.warn("[RepoContextService] Fallback path '{}' does not exist or is not a directory. " +
+                    "Using built-in templates.", fallbackPath);
+            return;
+        }
+
+        // Optionally pull latest on the fallback if it is a git repo
+        if (props.isFallbackPull() && Files.exists(fallbackPath.resolve(".git"))) {
+            log.info("[RepoContextService] Attempting git pull on fallback path '{}'", fallbackPath);
+            try {
+                runGit(fallbackPath, "git", "pull", "origin", props.getBranch());
+                log.info("[RepoContextService] Fallback pull succeeded.");
+            } catch (Exception pullEx) {
+                // Pull failure is non-fatal — we use the cached version
+                log.warn("[RepoContextService] Fallback pull failed ({}). " +
+                        "Using cached local content as-is.", pullEx.getMessage());
+            }
+        }
+
+        try {
+            refreshCache(fallbackPath);
+            log.info("[RepoContextService] Context loaded from fallback '{}' — " +
+                            "API={} UI={} MOBILE={}",
+                    fallbackPath, contextSummary("API"),
+                    contextSummary("UI"), contextSummary("MOBILE"));
+        } catch (Exception e) {
+            log.error("[RepoContextService] Failed to scan fallback path '{}': {}. " +
+                    "Using built-in templates.", fallbackPath, e.getMessage());
         }
     }
 
@@ -104,19 +170,38 @@ public class RepoContextService {
      * Called from {@code POST /api/strategy/refresh-context}.
      */
     public Map<String, Object> refresh() {
-        if (!props.isConfigured()) {
-            return Map.of("status", "SKIPPED", "reason", "No target repo configured");
+        if (!props.isConfigured() && !props.hasFallback()) {
+            return Map.of("status", "SKIPPED", "reason", "No remote repo or fallback configured");
         }
         try {
-            cloneOrPull();
-            refreshCache();
+            if (props.isConfigured()) {
+                cloneOrPull();
+                refreshCache(Path.of(props.getLocalPath()));
+            } else {
+                initFromFallback();
+            }
             return Map.of(
                     "status", "OK",
+                    "source", props.isConfigured() ? "remote"  : "fallback",
                     "api",    contextSummary("API"),
                     "ui",     contextSummary("UI"),
                     "mobile", contextSummary("MOBILE"));
         } catch (Exception e) {
-            log.error("[RepoContextService] Refresh failed: {}", e.getMessage(), e);
+            log.error("[RepoContextService] Refresh failed, trying fallback: {}", e.getMessage());
+            if (props.hasFallback()) {
+                try {
+                    initFromFallback();
+                    return Map.of("status", "OK_FALLBACK",
+                            "source", "fallback",
+                            "api",    contextSummary("API"),
+                            "ui",     contextSummary("UI"),
+                            "mobile", contextSummary("MOBILE"));
+                } catch (Exception fe) {
+                    return Map.of("status", "ERROR",
+                            "message", "Remote failed: " + e.getMessage()
+                                    + ". Fallback failed: " + fe.getMessage());
+                }
+            }
             return Map.of("status", "ERROR", "message", e.getMessage());
         }
     }
@@ -182,23 +267,47 @@ public class RepoContextService {
                 .directory(workDir.toFile())
                 .redirectErrorStream(true);
 
-        // Disable ALL interactive credential prompts so git fails fast instead of hanging.
-        // GIT_TERMINAL_PROMPT=0 → no terminal prompt
-        // GIT_ASKPASS=echo      → any askpass program returns empty (prevents macOS Keychain dialog)
-        // credential.helper=''  → disable the system credential store (e.g. osxkeychain)
+        // ─── Credential handling ───────────────────────────────────────────────
+        //
+        // GIT_TERMINAL_PROMPT=0 is ALWAYS set — prevents interactive prompts that
+        // would hang the service startup (git would wait forever for keyboard input).
         pb.environment().put("GIT_TERMINAL_PROMPT", "0");
-        pb.environment().put("GIT_ASKPASS", "echo");
 
-        // Prepend -c credential.helper='' after 'git' to override osxkeychain etc.
-        // Only inject for git commands (not raw shell commands).
+        // Determine whether we are using token-in-URL authentication.
+        // When we are, the token is already embedded in the clone URL so the
+        // credential helper is not needed — we can safely disable it to prevent
+        // the macOS Keychain dialog from appearing.
+        //
+        // When we are NOT using a token (auth.type = "none" or "ssh", or token is blank),
+        // we leave the credential helper INTACT so git can authenticate via:
+        //   - osxkeychain (macOS) — where IntelliJ has stored the GitHub token
+        //   - libsecret (Linux)
+        //   - git credential store
+        //   - SSH agent (for auth.type=ssh)
+        boolean usingEmbeddedToken = "token".equalsIgnoreCase(props.getAuth().getType())
+                && props.getAuth().getToken() != null
+                && !props.getAuth().getToken().isBlank();
+
         if (cmd.length > 0 && cmd[0].equals("git")) {
             java.util.List<String> enriched = new java.util.ArrayList<>();
             enriched.add("git");
-            enriched.add("-c");
-            enriched.add("credential.helper=");
+            if (usingEmbeddedToken) {
+                // Token is in the URL — disable credential helper to silence Keychain popups
+                enriched.add("-c");
+                enriched.add("credential.helper=");
+            }
+            // If NOT using embedded token, the credential helper runs normally — git will
+            // use osxkeychain (or whatever is configured) to authenticate.
             for (int i = 1; i < cmd.length; i++) enriched.add(cmd[i]);
             pb.command(enriched);
         }
+
+        if (usingEmbeddedToken) {
+            // Prevent any askpass GUI — token in URL means no prompt needed
+            pb.environment().put("GIT_ASKPASS", "echo");
+        }
+        // When NOT using embedded token, GIT_ASKPASS is intentionally not set so that
+        // the credential helper can prompt via its own mechanism (keychain, etc.).
 
         Process proc = pb.start();
         String out = new String(proc.getInputStream().readAllBytes());
@@ -211,23 +320,31 @@ public class RepoContextService {
 
     // ─── Context scanning ──────────────────────────────────────────────────────
 
-    private void refreshCache() {
+    /**
+     * Scans the test modules under {@code basePath} and rebuilds the in-memory
+     * context cache and coverage index.
+     *
+     * @param basePath the root of the test repository to scan — either the primary
+     *                 clone at {@code localPath} or the fallback local directory
+     */
+    private void refreshCache(Path basePath) {
         // Load agent instructions once — they live at repo root, not per-module
         Map<String, Map<String, String>> agentInstructionsByType =
-                loadAgentInstructions(Path.of(props.getLocalPath()));
+                loadAgentInstructions(basePath);
 
         // Build coverage index per module, then merge
         Map<String, List<String>> mergedIndex = new HashMap<>();
 
         for (String type : List.of("API", "UI", "MOBILE")) {
             Map<String, List<String>> moduleIndex = buildCoverageIndex(
-                    Path.of(props.getLocalPath(), props.modulePathFor(type)));
+                    basePath.resolve(props.modulePathFor(type)));
 
             // Merge into merged index
             moduleIndex.forEach((comp, files) ->
                     mergedIndex.computeIfAbsent(comp, k -> new ArrayList<>()).addAll(files));
 
             cache.put(type, scanModule(type, props.modulePathFor(type),
+                    basePath,
                     agentInstructionsByType.getOrDefault(type, Map.of()),
                     moduleIndex));
         }
@@ -308,9 +425,10 @@ public class RepoContextService {
     }
 
     private RepoContext scanModule(String testType, String moduleRelPath,
+                                   Path basePath,
                                    Map<String, String> agentInstructions,
                                    Map<String, List<String>> moduleCoverageIndex) {
-        Path modulePath = Path.of(props.getLocalPath(), moduleRelPath);
+        Path modulePath = basePath.resolve(moduleRelPath);
 
         // If we have agent instructions, the context is usable even without test source files
         boolean hasAgentFiles = !agentInstructions.isEmpty();

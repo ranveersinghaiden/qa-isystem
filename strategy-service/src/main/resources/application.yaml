@@ -35,15 +35,52 @@ aiqa:
     risk-threshold-high: 0.7
     risk-threshold-medium: 0.4
   target-repo:
-    url: "https://github.com/rsaiden/tax-test-support"
+    url: "https://github.com/ranveersinghaiden/qa-isystem"
     branch: main
     local-path: /tmp/qa-context-repo
+
+    # ── Fallback local path ─────────────────────────────────────────────────────
+    # If the remote clone/pull fails (or no URL is set), this local directory is
+    # used as the context source instead.
+    #
+    # COMMON USE CASES:
+    #
+    # 1. IntelliJ already has the test repo checked out locally:
+    #    fallback-local-path: /Users/yourname/projects/your-test-repo
+    #    (no credentials needed — git never touches the network)
+    #
+    # 2. You want ONLY the local copy (skip remote entirely):
+    #    url: ""                          # leave blank — remote clone is skipped
+    #    fallback-local-path: /path/to/local/repo
+    #
+    # 3. Keep the local copy fresh (git pull on the fallback before scanning):
+    #    fallback-pull: true
+    #    (uses the system credential store — osxkeychain on macOS — same credentials
+    #     that IntelliJ uses for GitHub, so no extra config needed)
+    fallback-local-path: ""        # leave blank to disable; set to your local repo path
+    fallback-pull: false           # set true to git pull the fallback before scanning
+
     modules:
       api: tests/api
       ui: tests/ui
       mobile: tests/mobile
     auth:
-      type: token
+      # auth type: none | token | ssh
+      #
+      # none  → git uses the system credential store (osxkeychain on macOS).
+      #         This works automatically if IntelliJ is connected to GitHub —
+      #         it stores the token in the Keychain which git then reads.
+      #         No extra config needed.
+      #
+      # token → embed a PAT in the clone URL (most reliable for CI/servers).
+      #         Set TOKEN and USERNAME as environment variables:
+      #           export TARGET_REPO_TOKEN=ghp_your_token
+      #           export TARGET_REPO_USERNAME=your_github_username
+      #         Then set type: token below.
+      #
+      # ssh   → use the SSH agent. Ensure ~/.ssh/id_rsa (or ed25519) is loaded
+      #         and the URL starts with git@github.com:
+      type: none
       token: ${TARGET_REPO_TOKEN:}
       username: ${TARGET_REPO_USERNAME:}
 

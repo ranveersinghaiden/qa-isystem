@@ -24,6 +24,33 @@ public class TargetRepoProperties {
     private String localPath = "/tmp/qa-context-repo";
 
     /**
+     * Optional local directory to use as a context source when the remote clone
+     * fails (network unavailable, credentials missing, etc.).
+     *
+     * <p>Use cases:
+     * <ul>
+     *   <li>IntelliJ already has the repo checked out locally — point here to avoid
+     *       needing a separate clone at all.</li>
+     *   <li>Air-gapped environment — point to a manually synced copy.</li>
+     *   <li>Dev laptop without internet access to the test repo — use last known good copy.</li>
+     * </ul>
+     *
+     * <p>If this path contains a {@code .git} directory AND {@code fallback-pull=true},
+     * the service will attempt a {@code git pull} on it before scanning.  Failures are
+     * logged and ignored — the cached version is used as-is.
+     *
+     * <p>Leave blank (default) to disable the fallback entirely.
+     */
+    private String fallbackLocalPath = "";
+
+    /**
+     * When {@code true}, attempt {@code git pull} on the fallback path if it is a git
+     * repository. Useful when the fallback is your IntelliJ workspace clone.
+     * Default: {@code false} — use the fallback as a static/read-only directory.
+     */
+    private boolean fallbackPull = false;
+
+    /**
      * Relative paths inside the monorepo for each test module.
      * Adjust these to match your repository layout.
      */
@@ -66,6 +93,11 @@ public class TargetRepoProperties {
         return url != null && !url.isBlank();
     }
 
+    /** Returns true when a fallback local path is configured. */
+    public boolean hasFallback() {
+        return fallbackLocalPath != null && !fallbackLocalPath.isBlank();
+    }
+
     /** Resolves the module path for a given test type (API / UI / MOBILE). */
     public String modulePathFor(String testType) {
         return switch (testType.toUpperCase()) {
@@ -75,4 +107,3 @@ public class TargetRepoProperties {
         };
     }
 }
-

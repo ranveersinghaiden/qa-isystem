@@ -585,20 +585,62 @@ strategy-service already owns the repo lifecycle, so coverage analysis naturally
 - **Exists** → `git pull origin {branch}`
 - **Absent** → `git clone {cloneUrl} --branch {branch} --depth 1 {localPath}`
 
-To prevent macOS Keychain popups and interactive prompts, every `git` invocation is wrapped with:
-```
-git -c credential.helper=  {command}
-```
-And these env vars are set on the `ProcessBuilder`:
-```
-GIT_TERMINAL_PROMPT=0
-GIT_ASKPASS=echo
-```
+#### Credential handling — what actually runs when
+
+The service always sets `GIT_TERMINAL_PROMPT=0` to prevent git from hanging on a keyboard
+prompt during startup. Beyond that, behaviour depends on `auth.type`:
+
+| `auth.type` | Token blank? | What happens |
+|-------------|-------------|--------------|
+| `token` | No | Token embedded in clone URL. `credential.helper=` overridden to prevent macOS Keychain popup (not needed — token is already in URL). `GIT_ASKPASS=echo` set. |
+| `token` | Yes | Falls through to `none` behaviour |
+| `none` | — | System credential helper runs normally. **osxkeychain on macOS** is used, which is where IntelliJ stores its GitHub token. No extra config needed. |
+| `ssh` | — | System SSH agent is used (`~/.ssh/id_rsa` or `id_ed25519`). Credential helper is left intact. |
+
+**This means:** If IntelliJ is already connected to GitHub, just set `auth.type: none`
+(or leave it at the default) — the service will automatically use the same Keychain
+credentials that IntelliJ uses. No token or SSH key setup required.
 
 **Token auth** injects credentials into the HTTPS URL:
 ```
 https://github.com/org/repo
 → https://{username}:{token}@github.com/org/repo
+```
+
+#### Fallback local path
+
+If the remote clone or pull fails for any reason (network, credentials, rate limit),
+the service automatically tries a **fallback local directory**. This is configured via:
+
+```yaml
+aiqa:
+  target-repo:
+    fallback-local-path: /Users/yourname/projects/your-test-repo
+    fallback-pull: false   # set true to git pull the fallback before scanning
+```
+
+Fallback use cases:
+
+| Scenario | Setup |
+|----------|-------|
+| IntelliJ has the repo cloned locally — skip remote entirely | Set `url: ""`, `fallback-local-path:` your local clone |
+| Remote fails at startup — use last known good copy | Set `fallback-local-path` to the cached clone; service uses it silently |
+| Air-gapped or offline development | Point fallback at a manually synced directory |
+| Keep fallback fresh automatically | Set `fallback-pull: true` — on fallback, git pull is attempted first (failures are logged and ignored) |
+
+Fallback startup sequence:
+```
+1. Try remote clone/pull (if url is set)
+   └─ SUCCESS → scan remote clone for context + coverage index
+   └─ FAILURE → log warning, proceed to fallback
+
+2. Try fallback-local-path (if set)
+   └─ fallback-pull=true AND it's a git repo → try git pull (ignore failures)
+   └─ Scan directory for context + coverage index
+   └─ FAILURE → log error, use built-in templates
+
+3. No remote and no fallback:
+   └─ log info, use built-in templates (contextAvailable=false)
 ```
 
 ### Context Scanning
@@ -786,12 +828,21 @@ aiqa:
     url: "https://github.com/your-org/your-test-repo"
     branch: main
     local-path: /tmp/qa-context-repo
+
+    # Fallback: use a local copy when remote clone/pull fails
+    # Set to your IntelliJ checkout path to work without needing a separate clone
+    fallback-local-path: ""      # e.g. /Users/yourname/projects/your-test-repo
+    fallback-pull: false         # set true to git pull the fallback before scanning
+
     auth:
-      type: token               # none | token | ssh
+      type: none                  # none | token | ssh
+                                  # none  = use osxkeychain (IntelliJ credentials work automatically)
+                                  # token = embed PAT in URL (best for CI)
+                                  # ssh   = use SSH agent (~/.ssh/id_rsa)
       token: ${TARGET_REPO_TOKEN:}
       username: ${TARGET_REPO_USERNAME:}
     modules:
-      api: tests/api            # relative path inside the repo
+      api: tests/api
       ui: tests/ui
       mobile: tests/mobile
 
