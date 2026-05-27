@@ -54,7 +54,9 @@ public class ImpactEngine {
         double riskScore             = riskScorer.score(diffs, changeTypes, components);
         ImpactEnvelope.RiskLevel lvl = riskScorer.toLevel(riskScore);
 
-        // 5. Test coverage assessment (the intelligence layer)
+        // 5. Coverage assessment: identify which components need integration/E2E tests.
+        //    Level is UNKNOWN here — real coverage (GOOD/PARTIAL/NONE) is determined
+        //    downstream in strategy-service by E2ECoverageAnalyzer against the test repo.
         CoverageReport coverage = testCoverageService.assess(components, diffs);
 
         // 6. Metrics
@@ -93,14 +95,14 @@ public class ImpactEngine {
                 .totalLinesDeleted(totalDeleted)
                 .affectedTestFiles((int) diffs.stream().filter(GitDiff::isTestFile).count())
                 .existingTestFiles(existingTestFiles)
-                .suggestedTestAreas(coverage.getMissingCoverageAreas())
+                .suggestedTestAreas(coverage.getUntestedComponents())
                 .changesSummary(buildSummary(pr, diffs, changeTypes, lvl, coverage))
                 .build();
 
-        log.info("[ImpactEngine] Envelope '{}' → risk={} ({}) coverage={} missingTests={}",
+        log.info("[ImpactEngine] Envelope '{}' → risk={} ({}) coverage={} componentsPendingE2E={}",
                 envelope.getEnvelopeId(),
                 String.format("%.2f", riskScore), lvl,
-                coverage.getLevel(), coverage.getMissingCoverageAreas().size());
+                coverage.getLevel(), coverage.getUntestedComponents().size());
 
         return envelope;
     }
@@ -133,11 +135,12 @@ public class ImpactEngine {
                                 ImpactEnvelope.RiskLevel level,
                                 CoverageReport coverage) {
         return String.format(
-                "PR '%s' changed %d files (+%d/-%d). Types: %s. Risk: %s. Coverage: %s (%.0f%%).",
+                "PR '%s' changed %d files (+%d/-%d). Types: %s. Risk: %s. Coverage: %s (components pending E2E scan: %s).",
                 pr.getTitle(), diffs.size(),
                 diffs.stream().mapToInt(GitDiff::getLinesAdded).sum(),
                 diffs.stream().mapToInt(GitDiff::getLinesDeleted).sum(),
-                types, level, coverage.getLevel(), coverage.getCoverageRatio() * 100);
+                types, level, coverage.getLevel(),
+                coverage.getUntestedComponents());
     }
 }
 

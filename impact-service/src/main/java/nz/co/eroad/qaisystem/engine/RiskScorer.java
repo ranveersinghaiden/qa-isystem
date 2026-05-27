@@ -3,6 +3,7 @@ package nz.co.eroad.qaisystem.engine;
 import nz.co.eroad.qaisystem.model.GitDiff;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.ChangeType;
+import nz.co.eroad.qaisystem.model.ImpactEnvelope.ImpactedComponent.ComponentType;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.RiskLevel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,7 +20,9 @@ import java.util.OptionalDouble;
  *   1. File volume & churn
  *   2. Change type severity
  *   3. Component criticality
- *   4. Existing test coverage signal
+ *   4. Integration-test coverage risk (based on component types, NOT test files in PR)
+ *      The real E2E/integration test coverage assessment is performed later by
+ *      E2ECoverageAnalyzer in strategy-service when it has access to the test repo.
  */
 @Slf4j
 @Component
@@ -58,7 +61,7 @@ public class RiskScorer {
         double churnScore       = calculateChurnScore(diffs);
         double changeTypeScore  = calculateChangeTypeScore(changeTypes);
         double componentScore   = calculateComponentScore(components);
-        double coverageScore    = calculateCoverageScore(diffs);
+        double coverageScore    = calculateCoverageScore(components);
 
         double raw = (W_CHURN         * churnScore)
                 + (W_CHANGE_TYPE   * changeTypeScore)
@@ -131,15 +134,29 @@ public class RiskScorer {
         return Math.min(1.0, avg + callerBonus);
     }
 
-    private double calculateCoverageScore(List<GitDiff> diffs) {
-        long testFiles = diffs.stream().filter(GitDiff::isTestFile).count();
-        long srcFiles  = diffs.stream().filter(d -> !d.isTestFile()).count();
+    /**
+     * Coverage risk based on component types, not PR test file presence.
+     *
+     * <p>Components requiring integration tests (CONTROLLER, SERVICE, REPOSITORY)
+     * represent coverage risk because their integration/E2E coverage is unknown
+     * until strategy-service performs the actual test-repo scan.
+     * More such components → higher conservative risk.
+     */
+    private double calculateCoverageScore(List<ImpactEnvelope.ImpactedComponent> components) {
+        long nonTestComponents = components.stream()
+                .filter(c -> c.getType() != ComponentType.TEST
+                          && c.getType() != ComponentType.UTILITY)
+                .count();
+        long integrationTestable = components.stream()
+                .filter(c -> c.getType() == ComponentType.CONTROLLER
+                          || c.getType() == ComponentType.SERVICE
+                          || c.getType() == ComponentType.REPOSITORY)
+                .count();
 
-        if (srcFiles == 0) return 0.0;
+        if (nonTestComponents == 0) return 0.0;
 
-        // If test files are missing relative to source → higher risk
-        double ratio = testFiles / (double) srcFiles;
-        // ratio >= 1 → low risk (0.1); ratio = 0 → high risk (0.9)
-        return Math.max(0.1, 0.9 - ratio * 0.8);
+        // Higher proportion of integration-testable components = more coverage uncertainty = higher risk.
+        // Cap at 0.9 — we never declare 100% coverage risk without the repo scan.
+        return Math.min(0.9, (double) integrationTestable / nonTestComponents * 0.9);
     }
 }

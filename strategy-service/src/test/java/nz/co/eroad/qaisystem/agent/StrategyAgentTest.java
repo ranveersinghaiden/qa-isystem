@@ -5,6 +5,7 @@ import nz.co.eroad.qaisystem.model.ImpactEnvelope.ChangeType;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.ImpactedComponent;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.RiskLevel;
 import nz.co.eroad.qaisystem.model.TestStrategy.StrategyDecision;
+import nz.co.eroad.qaisystem.service.E2ECoverageAnalyzer;
 import nz.co.eroad.qaisystem.service.TestPrService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,11 +25,23 @@ import static org.mockito.Mockito.*;
 @DisplayName("StrategyAgent decision logic tests")
 class StrategyAgentTest {
 
-    @Mock BddGenerator  bddGenerator;
-    @Mock TestPrService testPrService;
+    @Mock BddGenerator       bddGenerator;
+    @Mock TestPrService      testPrService;
+    @Mock E2ECoverageAnalyzer e2eCoverageAnalyzer;
     @InjectMocks StrategyAgent agent;
 
-    @BeforeEach void setUp() {}
+    /** Default: UNKNOWN coverage — no test repo configured */
+    @BeforeEach void setUp() {
+        CoverageReport unknown = CoverageReport.builder()
+                .level(CoverageReport.CoverageLevel.UNKNOWN)
+                .source(CoverageReport.CoverageSource.UNKNOWN)
+                .untestedComponents(List.of("AuthService"))
+                .testedComponents(List.of())
+                .requiredTestTypes(List.of("API"))
+                .requiresNewTests(true)
+                .build();
+        lenient().when(e2eCoverageAnalyzer.analyze(any())).thenReturn(unknown);
+    }
 
     // ─── Core decision tests ─────────────────────────────────────────────────
 
@@ -44,6 +57,17 @@ class StrategyAgentTest {
     @Test
     @DisplayName("only CONFIGURATION_CHANGE + LOW risk -> SKIP")
     void infraLow_skips() {
+        // Simulate no integration-testable components changed
+        CoverageReport noCovReq = CoverageReport.builder()
+                .level(CoverageReport.CoverageLevel.GOOD)
+                .source(CoverageReport.CoverageSource.REPO_SCAN)
+                .untestedComponents(List.of())
+                .testedComponents(List.of())
+                .requiredTestTypes(List.of())
+                .requiresNewTests(false)
+                .build();
+        when(e2eCoverageAnalyzer.analyze(any())).thenReturn(noCovReq);
+
         TestStrategy strategy = agent.decide(envelope(RiskLevel.LOW, 0.2,
                 List.of(ChangeType.CONFIGURATION_CHANGE), null, 2, 0));
         assertThat(strategy.getDecision()).isEqualTo(StrategyDecision.SKIP);
@@ -59,13 +83,56 @@ class StrategyAgentTest {
     }
 
     @Test
-    @DisplayName("coverage NONE forces CREATE_TESTS regardless of change type")
+    @DisplayName("E2E coverage NONE (from test repo scan) forces CREATE_TESTS regardless of change type")
     void coverageNone_forcesCreate() {
         CoverageReport noCoverage = CoverageReport.builder()
                 .level(CoverageReport.CoverageLevel.NONE)
-                .missingCoverageAreas(List.of("AuthService")).build();
+                .source(CoverageReport.CoverageSource.REPO_SCAN)
+                .untestedComponents(List.of("AuthService"))
+                .testedComponents(List.of())
+                .requiredTestTypes(List.of("API"))
+                .requiresNewTests(true)
+                .build();
+        when(e2eCoverageAnalyzer.analyze(any())).thenReturn(noCoverage);
+
         TestStrategy strategy = agent.decide(envelope(RiskLevel.LOW, 0.15,
-                List.of(ChangeType.REFACTORING), noCoverage, 2, 0));
+                List.of(ChangeType.REFACTORING), null, 2, 0));
+        assertThat(strategy.getDecision()).isEqualTo(StrategyDecision.CREATE_TESTS);
+    }
+
+    @Test
+    @DisplayName("PARTIAL E2E coverage -> UPDATE_TESTS to cover the gap")
+    void coveragePartial_updatesTests() {
+        CoverageReport partial = CoverageReport.builder()
+                .level(CoverageReport.CoverageLevel.PARTIAL)
+                .source(CoverageReport.CoverageSource.REPO_SCAN)
+                .testedComponents(List.of("AuthService"))
+                .untestedComponents(List.of("PaymentService"))
+                .requiredTestTypes(List.of("API", "INTEGRATION"))
+                .requiresNewTests(true)
+                .build();
+        when(e2eCoverageAnalyzer.analyze(any())).thenReturn(partial);
+
+        TestStrategy strategy = agent.decide(envelope(RiskLevel.MEDIUM, 0.5,
+                List.of(ChangeType.BUG_FIX), null, 3, 0));
+        assertThat(strategy.getDecision()).isEqualTo(StrategyDecision.UPDATE_TESTS);
+    }
+
+    @Test
+    @DisplayName("GOOD E2E coverage from repo scan still creates tests for NEW_FEATURE")
+    void goodCoverage_newFeature_stillCreates() {
+        CoverageReport good = CoverageReport.builder()
+                .level(CoverageReport.CoverageLevel.GOOD)
+                .source(CoverageReport.CoverageSource.REPO_SCAN)
+                .testedComponents(List.of("AuthService"))
+                .untestedComponents(List.of())
+                .requiredTestTypes(List.of("API"))
+                .requiresNewTests(false)
+                .build();
+        when(e2eCoverageAnalyzer.analyze(any())).thenReturn(good);
+
+        TestStrategy strategy = agent.decide(envelope(RiskLevel.MEDIUM, 0.55,
+                List.of(ChangeType.NEW_FEATURE), null, 3, 0));
         assertThat(strategy.getDecision()).isEqualTo(StrategyDecision.CREATE_TESTS);
     }
 
@@ -93,6 +160,24 @@ class StrategyAgentTest {
         assertThat(strategy.getPrId()).isEqualTo("PR-T");
     }
 
+    @Test
+    @DisplayName("testAreasTocover uses untestedComponents from E2E analysis, not suggestedTestAreas from envelope")
+    void testAreas_fromE2eAnalysis() {
+        CoverageReport repoScan = CoverageReport.builder()
+                .level(CoverageReport.CoverageLevel.NONE)
+                .source(CoverageReport.CoverageSource.REPO_SCAN)
+                .untestedComponents(List.of("NewPaymentController"))
+                .testedComponents(List.of())
+                .requiredTestTypes(List.of("API"))
+                .requiresNewTests(true)
+                .build();
+        when(e2eCoverageAnalyzer.analyze(any())).thenReturn(repoScan);
+
+        TestStrategy strategy = agent.decide(envelope(RiskLevel.MEDIUM, 0.55,
+                List.of(ChangeType.NEW_FEATURE), null, 3, 0));
+        assertThat(strategy.getTestAreasTocover()).contains("NewPaymentController");
+    }
+
     // ─── Helper ──────────────────────────────────────────────────────────────
 
     private ImpactEnvelope envelope(RiskLevel risk, double score,
@@ -111,6 +196,7 @@ class StrategyAgentTest {
                 .suggestedTestAreas(List.of("AuthService"))
                 .directDependencies(List.of())
                 .transitiveDependencies(List.of())
+                .existingTestFiles(List.of())
                 .impactedModules(List.of("auth"))
                 .build();
     }

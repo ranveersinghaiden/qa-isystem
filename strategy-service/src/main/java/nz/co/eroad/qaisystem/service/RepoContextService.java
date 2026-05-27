@@ -12,7 +12,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -21,15 +22,21 @@ import java.util.stream.Stream;
  * context (packages, imports, base classes, naming conventions, sample tests)
  * so code generators can produce output that matches existing project conventions.
  *
+ * <p>Also builds an integration/E2E <b>coverage index</b> by scanning test files
+ * for integration test markers and extracting component-name references. This index
+ * is consumed by {@code E2ECoverageAnalyzer} to determine which impacted components
+ * already have integration/E2E test coverage in the test repo.
+ *
  * Lifecycle:
  *   1. On startup: clone the repo if it doesn't exist; pull latest if it does.
- *   2. Scan each configured module directory → populate context cache.
+ *   2. Scan each configured module directory → populate context cache + coverage index.
  *   3. Expose getContext(testType) for runners to call at generation time.
- *   4. POST /api/strategy/refresh-context re-runs steps 1–2 without restart.
+ *   4. Expose getCoverageIndex() for E2ECoverageAnalyzer.
+ *   5. POST /api/strategy/refresh-context re-runs steps 1–2 without restart.
  *
- * If the repo URL is not configured, or if the clone/pull fails, every
- * getContext() call returns a context with {@code contextAvailable = false}
- * and runners fall back to built-in templates transparently.
+ * If the repo URL is not configured, or clone/pull fails, getContext() returns
+ * contextAvailable=false and getCoverageIndex() returns an empty map — both callers
+ * fall back transparently.
  */
 @Slf4j
 @Service
@@ -41,8 +48,31 @@ public class RepoContextService {
     /** In-memory cache: "API" | "UI" | "MOBILE" → RepoContext */
     private final Map<String, RepoContext> cache = new ConcurrentHashMap<>();
 
+    /**
+     * Merged integration/E2E coverage index across all test modules.
+     * componentName → list of integration/E2E test file names covering it.
+     * Empty when no repo is configured.
+     */
+    private volatile Map<String, List<String>> coverageIndex = Map.of();
+
     private static final int MAX_SAMPLE_FILES = 3;
     private static final int MAX_SAMPLE_SIZE  = 6_000; // chars — skip huge files
+
+    /** PascalCase identifiers that are Java/framework builtins — excluded from coverage index. */
+    private static final Set<String> EXCLUDED_NAMES = Set.of(
+            "String", "Integer", "Long", "Double", "Boolean", "Object", "List", "Map", "Set",
+            "Optional", "Collection", "Iterable", "Iterator", "Array", "Arrays",
+            "Override", "SuppressWarnings", "Test", "BeforeEach", "AfterEach",
+            "BeforeAll", "AfterAll", "DisplayName", "ExtendWith", "SpringBootTest",
+            "MockBean", "Autowired", "Value", "Inject", "Component", "Service",
+            "Repository", "Controller", "RestController",
+            "Given", "When", "Then", "And", "But", "Feature", "Scenario", "Background",
+            "Assertions", "AssertJ", "Mockito", "MockitoExtension", "ArgumentCaptor",
+            "RestAssured", "MockMvc", "WebTestClient", "ResponseEntity",
+            "HttpStatus", "HttpMethod", "MediaType", "ContentType",
+            "UUID", "LocalDate", "LocalDateTime", "Instant", "Duration",
+            "IOException", "RuntimeException", "Exception", "Throwable",
+            "Before", "After");
 
     // ─── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -96,6 +126,18 @@ public class RepoContextService {
         return cache.getOrDefault(
                 testType.toUpperCase(),
                 RepoContext.builder().testType(testType).contextAvailable(false).build());
+    }
+
+    /**
+     * Returns the merged integration/E2E coverage index across ALL test modules.
+     * Key   = component name (e.g. "PaymentController", "OrderService")
+     * Value = list of integration/E2E test file names that reference this component.
+     *
+     * <p>Returns an empty map when no repo is configured or the clone failed.
+     * {@code E2ECoverageAnalyzer} uses this to determine actual E2E test coverage.
+     */
+    public Map<String, List<String>> getCoverageIndex() {
+        return coverageIndex;
     }
 
     // ─── Git operations ────────────────────────────────────────────────────────
@@ -174,10 +216,25 @@ public class RepoContextService {
         Map<String, Map<String, String>> agentInstructionsByType =
                 loadAgentInstructions(Path.of(props.getLocalPath()));
 
+        // Build coverage index per module, then merge
+        Map<String, List<String>> mergedIndex = new HashMap<>();
+
         for (String type : List.of("API", "UI", "MOBILE")) {
+            Map<String, List<String>> moduleIndex = buildCoverageIndex(
+                    Path.of(props.getLocalPath(), props.modulePathFor(type)));
+
+            // Merge into merged index
+            moduleIndex.forEach((comp, files) ->
+                    mergedIndex.computeIfAbsent(comp, k -> new ArrayList<>()).addAll(files));
+
             cache.put(type, scanModule(type, props.modulePathFor(type),
-                    agentInstructionsByType.getOrDefault(type, Map.of())));
+                    agentInstructionsByType.getOrDefault(type, Map.of()),
+                    moduleIndex));
         }
+
+        coverageIndex = Collections.unmodifiableMap(mergedIndex);
+        log.info("[RepoContextService] Coverage index built — {} components tracked across all modules",
+                coverageIndex.size());
     }
 
     /**
@@ -251,7 +308,8 @@ public class RepoContextService {
     }
 
     private RepoContext scanModule(String testType, String moduleRelPath,
-                                   Map<String, String> agentInstructions) {
+                                   Map<String, String> agentInstructions,
+                                   Map<String, List<String>> moduleCoverageIndex) {
         Path modulePath = Path.of(props.getLocalPath(), moduleRelPath);
 
         // If we have agent instructions, the context is usable even without test source files
@@ -265,11 +323,13 @@ public class RepoContextService {
                         .testType(testType)
                         .contextAvailable(true)
                         .agentInstructions(agentInstructions)
+                        .coverageIndex(Map.of())
                         .build();
             }
             log.warn("[RepoContextService] Module '{}' not found at '{}' — " +
                     "skipping context for {}", testType, modulePath, testType);
-            return RepoContext.builder().testType(testType).contextAvailable(false).build();
+            return RepoContext.builder().testType(testType).contextAvailable(false)
+                    .coverageIndex(Map.of()).build();
         }
 
         List<Path> testFiles = findTestFiles(modulePath);
@@ -281,8 +341,9 @@ public class RepoContextService {
         Map<String, String> samples = loadSamples(testFiles);
 
         log.info("[RepoContextService] {} module: {} test files, package='{}', baseClass='{}', " +
-                        "agentFiles={}",
-                testType, testFiles.size(), basePackage, baseClass, agentInstructions.size());
+                        "agentFiles={}, coverageIndex={}",
+                testType, testFiles.size(), basePackage, baseClass,
+                agentInstructions.size(), moduleCoverageIndex.size());
 
         return RepoContext.builder()
                 .testType(testType)
@@ -297,6 +358,7 @@ public class RepoContextService {
                 .baseTestClass(baseClass)
                 .testNamingConvention(naming)
                 .sampleTests(samples)
+                .coverageIndex(moduleCoverageIndex)
                 .build();
     }
 
@@ -409,6 +471,104 @@ public class RepoContextService {
         int agentFiles  = ctx.getAgentInstructions() != null ? ctx.getAgentInstructions().size() : 0;
         int testFiles   = ctx.getExistingTestFileNames() != null ? ctx.getExistingTestFileNames().size() : 0;
         return testFiles + " tests, pkg=" + ctx.getBasePackage() + ", agentFiles=" + agentFiles;
+    }
+
+    // ─── Coverage index building ───────────────────────────────────────────────
+
+    /**
+     * Scans {@code modulePath} for integration/E2E test files and builds an inverted index:
+     * component name → list of test files that reference it.
+     *
+     * <p><b>Integration test detection criteria (any one match):</b>
+     * <ul>
+     *   <li>Gherkin feature file ({@code .feature})</li>
+     *   <li>File name contains {@code IT}, {@code IntTest}, {@code IntegrationTest},
+     *       {@code E2E}, {@code Acceptance}</li>
+     *   <li>File content contains {@code @SpringBootTest}, {@code @IntegrationTest},
+     *       {@code RestAssured}, {@code MockMvc}, or {@code WebTestClient}</li>
+     * </ul>
+     *
+     * <p>Component names are extracted by scanning for PascalCase identifiers in each
+     * file. Common Java/framework names are excluded (see {@link #EXCLUDED_NAMES}).
+     */
+    private Map<String, List<String>> buildCoverageIndex(Path modulePath) {
+        if (!Files.isDirectory(modulePath)) return Map.of();
+
+        Map<String, List<String>> index = new HashMap<>();
+
+        try (Stream<Path> walk = Files.walk(modulePath)) {
+            walk.filter(Files::isRegularFile)
+                .filter(this::isIntegrationOrE2eFile)
+                .forEach(file -> {
+                    Set<String> refs = extractClassReferences(file);
+                    String fileName  = file.getFileName().toString();
+                    refs.forEach(ref ->
+                            index.computeIfAbsent(ref, k -> new ArrayList<>()).add(fileName));
+                });
+        } catch (IOException e) {
+            log.error("[RepoContextService] Error building coverage index for {}: {}",
+                    modulePath, e.getMessage());
+        }
+
+        log.debug("[RepoContextService] Coverage index for '{}': {} component entries",
+                modulePath.getFileName(), index.size());
+        return index;
+    }
+
+    /**
+     * Returns {@code true} if the file is an integration or E2E test, not a unit test.
+     *
+     * <p>This distinction matters because unit tests (JUnit + Mockito, no Spring context)
+     * do NOT validate integration behaviour. Only tests that boot the full Spring context,
+     * use an actual HTTP client (RestAssured / WebTestClient / MockMvc with @SpringBootTest),
+     * or describe flows in Gherkin are considered integration/E2E.
+     */
+    private boolean isIntegrationOrE2eFile(Path file) {
+        String name = file.getFileName().toString();
+
+        // Gherkin feature files are always integration/E2E
+        if (name.endsWith(".feature")) return true;
+
+        boolean isTestFile = name.endsWith(".java") || name.endsWith(".kt");
+        if (!isTestFile) return false;
+
+        // Filename-based heuristics (strongest signal)
+        if (name.matches(".*(IT|IntTest|IntegrationTest|E2ETest|AcceptanceTest)\\..*")) return true;
+
+        // Content-based detection (fallback for projects without naming conventions)
+        try {
+            String content = Files.readString(file);
+            return content.contains("@SpringBootTest")
+                || content.contains("@IntegrationTest")
+                || content.contains("RestAssured")
+                || content.contains("MockMvc")
+                || content.contains("WebTestClient")
+                || content.contains("TestRestTemplate");
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    private static final Pattern PASCAL_CASE = Pattern.compile("\\b([A-Z][a-zA-Z0-9]{2,})\\b");
+
+    /**
+     * Extracts PascalCase class-name references from a test file's content.
+     * Short names (≤ 2 chars) and those in {@link #EXCLUDED_NAMES} are dropped.
+     */
+    private Set<String> extractClassReferences(Path file) {
+        try {
+            String content = Files.readString(file);
+            Set<String> refs = new HashSet<>();
+            Matcher m = PASCAL_CASE.matcher(content);
+            while (m.find()) {
+                String name = m.group(1);
+                if (!EXCLUDED_NAMES.contains(name)) refs.add(name);
+            }
+            return refs;
+        } catch (IOException e) {
+            log.debug("[RepoContextService] Could not read file for coverage indexing: {}", file);
+            return Set.of();
+        }
     }
 }
 

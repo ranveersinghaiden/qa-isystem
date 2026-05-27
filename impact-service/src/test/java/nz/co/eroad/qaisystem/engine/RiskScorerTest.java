@@ -40,12 +40,16 @@ class RiskScorerTest {
             .isGreaterThan(scorer.score(d, List.of(ChangeType.REFACTORING), c));
     }
 
-    @Test @DisplayName("test files lower risk score")
-    void score_testFilesLower() {
+    @Test
+    @DisplayName("more CONTROLLER/SERVICE/REPOSITORY components → higher coverage risk than all-MODEL diff")
+    void score_integrationTestableHigherRisk() {
+        List<GitDiff> d = List.of(src(40, 0));
         List<ChangeType> t = List.of(ChangeType.NEW_FEATURE);
-        List<ImpactedComponent> c = List.of(svc());
-        assertThat(scorer.score(List.of(src(40,0),tst(30,0)), t, c))
-            .isLessThan(scorer.score(List.of(src(40,0)), t, c));
+        // All integration-testable (CONTROLLER + SERVICE) vs all model-only
+        ImpactedComponent svc2 = ImpactedComponent.builder().componentName("S2")
+                .type(ImpactedComponent.ComponentType.SERVICE).callers(List.of()).build();
+        assertThat(scorer.score(d, t, List.of(ctrl(), svc2)))
+                .isGreaterThan(scorer.score(d, t, List.of(mdl(), mdl())));
     }
 
     @Test @DisplayName("CONTROLLER > MODEL")

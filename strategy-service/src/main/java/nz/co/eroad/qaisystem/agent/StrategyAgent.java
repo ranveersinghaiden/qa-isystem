@@ -5,6 +5,7 @@ import nz.co.eroad.qaisystem.model.ImpactEnvelope.ChangeType;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.RiskLevel;
 import nz.co.eroad.qaisystem.model.TestStrategy.StrategyDecision;
 import nz.co.eroad.qaisystem.model.TestStrategy.TestRequirement;
+import nz.co.eroad.qaisystem.service.E2ECoverageAnalyzer;
 import nz.co.eroad.qaisystem.service.TestPrService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,26 +22,36 @@ import java.util.stream.Collectors;
  *   UPDATE_TESTS → inline BDD delta for existing tests
  *   CREATE_TESTS → full BDD scenario generation
  *
+ * Coverage is assessed by {@link E2ECoverageAnalyzer} against the cloned test repo
+ * (or UNKNOWN if no repo is configured). The coverage level from the impact-service
+ * envelope is intentionally ignored here — it always arrives as UNKNOWN because
+ * impact-service has no test repo access.
+ *
  * Fallback rules:
  *   LOW confidence (< 0.4)    → flag fullRegressionRequired = true
  *   HIGH / CRITICAL risk      → flag expandedScope = true + widen areas
- *   NONE coverage             → force CREATE_TESTS regardless of decision
+ *   NONE coverage             → force CREATE_TESTS regardless of change type
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class StrategyAgent {
 
-    private final BddGenerator  bddGenerator;
-    private final TestPrService testPrService;
+    private final BddGenerator       bddGenerator;
+    private final TestPrService      testPrService;
+    private final E2ECoverageAnalyzer e2eCoverageAnalyzer;
 
     private static final double LOW_CONFIDENCE_THRESHOLD = 0.4;
 
     public TestStrategy decide(ImpactEnvelope envelope) {
         log.info("[StrategyAgent] Evaluating strategy for PR '{}'", envelope.getPrId());
 
-        StrategyDecision decision = computeDecision(envelope);
-        TestStrategy strategy     = buildStrategy(envelope, decision);
+        // Perform real E2E/integration coverage analysis against the test repo.
+        // This replaces the UNKNOWN-level coverage from impact-service with actual data.
+        CoverageReport coverage = e2eCoverageAnalyzer.analyze(envelope);
+
+        StrategyDecision decision = computeDecision(envelope, coverage);
+        TestStrategy strategy     = buildStrategy(envelope, coverage, decision);
         strategy                  = applyFallbackRules(strategy, envelope);
 
         log.info("[StrategyAgent] PR '{}' → {} | conf={} | fullRegression={} | expandedScope={}",
@@ -60,12 +71,16 @@ public class StrategyAgent {
 
     // ─── Decision logic ────────────────────────────────────────────────────────
 
-    private StrategyDecision computeDecision(ImpactEnvelope env) {
-        // Coverage NONE → always create (intelligence layer: we KNOW tests are missing)
-        CoverageReport coverage = env.getCoverageReport();
-        if (coverage != null && coverage.getLevel() == CoverageReport.CoverageLevel.NONE
-                && !coverage.getMissingCoverageAreas().isEmpty()) {
-            log.info("[StrategyAgent] Coverage=NONE → forcing CREATE_TESTS");
+    /**
+     * Core decision. Uses the E2E/integration coverage report from the test repo
+     * (not the UNKNOWN-level one that arrived from impact-service).
+     */
+    private StrategyDecision computeDecision(ImpactEnvelope env, CoverageReport coverage) {
+        // Coverage NONE → always create tests (repo scan confirmed no integration tests exist)
+        if (coverage.getLevel() == CoverageReport.CoverageLevel.NONE
+                && !coverage.getUntestedComponents().isEmpty()) {
+            log.info("[StrategyAgent] Coverage=NONE (source={}) → forcing CREATE_TESTS for {}",
+                    coverage.getSource(), coverage.getUntestedComponents());
             return StrategyDecision.CREATE_TESTS;
         }
 
@@ -85,6 +100,10 @@ public class StrategyAgent {
         // New feature → CREATE
         if (env.getDetectedChangeTypes().contains(ChangeType.NEW_FEATURE))
             return StrategyDecision.CREATE_TESTS;
+
+        // Partial coverage → UPDATE existing tests to cover the new delta
+        if (coverage.getLevel() == CoverageReport.CoverageLevel.PARTIAL)
+            return StrategyDecision.UPDATE_TESTS;
 
         // Existing tests in diff → UPDATE
         if (!env.getExistingTestFiles().isEmpty()) return StrategyDecision.UPDATE_TESTS;
@@ -152,7 +171,8 @@ public class StrategyAgent {
 
     // ─── Strategy builder ──────────────────────────────────────────────────────
 
-    private TestStrategy buildStrategy(ImpactEnvelope env, StrategyDecision decision) {
+    private TestStrategy buildStrategy(ImpactEnvelope env, CoverageReport coverage,
+                                       StrategyDecision decision) {
         List<TestRequirement> requirements = new ArrayList<>();
         List<String> testTypes             = new ArrayList<>();
 
@@ -170,17 +190,23 @@ public class StrategyAgent {
             }
         }
 
+        // Prefer uncovered components from E2E analysis as the test areas to focus on.
+        // Fall back to suggestedTestAreas from the envelope (populated by impact-service).
+        List<String> testAreas = !coverage.getUntestedComponents().isEmpty()
+                ? coverage.getUntestedComponents()
+                : env.getSuggestedTestAreas();
+
         return TestStrategy.builder()
                 .strategyId(UUID.randomUUID().toString())
                 .envelopeId(env.getEnvelopeId())
                 .prId(env.getPrId())
                 .decision(decision)
-                .reasoning(buildReasoning(env, decision))
+                .reasoning(buildReasoning(env, coverage, decision))
                 .confidenceScore(computeConfidence(env))
                 .testsToUpdate(env.getExistingTestFiles())
                 .newTestRequirements(requirements)
                 .testTypes(testTypes)
-                .testAreasTocover(env.getSuggestedTestAreas())
+                .testAreasTocover(testAreas)
                 .priority(resolvePriority(env))
                 .build();
     }
@@ -257,14 +283,16 @@ public class StrategyAgent {
         return hints;
     }
 
-    private String buildReasoning(ImpactEnvelope env, StrategyDecision decision) {
-        CoverageReport cov = env.getCoverageReport();
+    private String buildReasoning(ImpactEnvelope env, CoverageReport cov,
+                                  StrategyDecision decision) {
         return String.format(
-                "Decision=%s risk=%s (%.2f) changeTypes=%s filesChanged=%d coverage=%s missing=%d",
+                "Decision=%s risk=%s (%.2f) changeTypes=%s filesChanged=%d " +
+                "coverage=%s source=%s covered=%d uncovered=%s",
                 decision, env.getRiskLevel(), env.getOverallRiskScore(),
                 env.getDetectedChangeTypes(), env.getTotalFilesChanged(),
-                cov != null ? cov.getLevel() : "N/A",
-                cov != null ? cov.getMissingCoverageAreas().size() : 0);
+                cov.getLevel(), cov.getSource(),
+                cov.getTestedComponents() != null ? cov.getTestedComponents().size() : 0,
+                cov.getUntestedComponents());
     }
 
     private double computeConfidence(ImpactEnvelope env) {

@@ -3,6 +3,7 @@ package nz.co.eroad.qaisystem.execution;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -71,11 +72,32 @@ public class RepoContext {
      */
     private final Map<String, String> sampleTests;
 
+    /**
+     * Integration/E2E coverage index for this test module.
+     * Key   = component name (e.g. "PaymentController", "OrderService")
+     * Value = list of integration/E2E test file names that reference this component.
+     *
+     * <p>Built by {@code RepoContextService.buildCoverageIndex()} by scanning test files
+     * for integration test markers ({@code @SpringBootTest}, RestAssured, Gherkin features)
+     * and extracting class name references from their content.
+     * Empty when {@code contextAvailable == false} (no repo configured).
+     */
+    private final Map<String, List<String>> coverageIndex;
+
     // ── Convenience helpers ────────────────────────────────────────────────────
 
     /** True when at least one agent instruction file was loaded. */
     public boolean hasAgentInstructions() {
         return contextAvailable && agentInstructions != null && !agentInstructions.isEmpty();
+    }
+
+    /**
+     * Returns the list of integration/E2E test files that cover the given component.
+     * Returns an empty list when the component has no known coverage.
+     */
+    public List<String> testsForComponent(String componentName) {
+        if (coverageIndex == null) return Collections.emptyList();
+        return coverageIndex.getOrDefault(componentName, Collections.emptyList());
     }
 
     public String effectivePackage(String fallback) {

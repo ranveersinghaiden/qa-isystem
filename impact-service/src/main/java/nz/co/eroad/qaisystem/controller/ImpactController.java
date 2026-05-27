@@ -46,9 +46,11 @@ public class ImpactController {
                 "riskScore",     String.format("%.2f", riskScore),
                 "riskLevel",     riskScorer.toLevel(riskScore).name(),
                 "coverage",      Map.of(
-                        "level",        coverage.getLevel(),
-                        "ratio",        String.format("%.2f", coverage.getCoverageRatio()),
-                        "missingTests", coverage.getMissingCoverageAreas())));
+                        "level",               coverage.getLevel(),
+                        "source",              coverage.getSource(),
+                        "untestedComponents",  coverage.getUntestedComponents(),
+                        "requiredTestTypes",   coverage.getRequiredTestTypes(),
+                        "note",                "Full E2E/integration coverage assessed by strategy-service after test-repo scan")));
     }
 }
 
