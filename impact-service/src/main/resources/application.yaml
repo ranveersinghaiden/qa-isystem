@@ -32,6 +32,25 @@ aiqa:
     risk-threshold-high: 0.7
     risk-threshold-medium: 0.4
 
+  # ── AI last-resort evaluator ────────────────────────────────────────────────────
+  # AI is only invoked when the deterministic risk score falls in the gray zone
+  # [confidence-lower-bound, confidence-upper-bound]. Outside that range the
+  # deterministic result is considered confident enough on its own.
+  #
+  # To enable: set enabled=true and supply the AIQA_AI_API_KEY environment variable.
+  # Compatible with any OpenAI chat-completions API (Azure OpenAI, Ollama, etc.) by
+  # changing base-url to your provider's endpoint.
+  ai:
+    enabled: false                              # opt-in; set to true to activate
+    api-key: ${AIQA_AI_API_KEY:}               # injected from env — never hard-code
+    model: gpt-4o-mini                         # fast + cheap; change to gpt-4o for higher accuracy
+    base-url: https://api.openai.com/v1
+    confidence-lower-bound: 0.30               # scores below this → confidently LOW, skip AI
+    confidence-upper-bound: 0.75               # scores above this → confidently HIGH+, skip AI
+    max-diff-chars: 3000                       # truncate large diffs before sending to LLM
+    timeout-seconds: 15                        # fail-fast if LLM is slow
+    max-score-adjustment: 0.15                 # AI can adjust score by at most ±0.15
+
 server:
   port: 8081
 

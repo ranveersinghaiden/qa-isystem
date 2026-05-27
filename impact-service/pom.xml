@@ -9,7 +9,7 @@
     </parent>
     <artifactId>impact-service</artifactId>
     <name>impact-service</name>
-    <description>Deterministic impact analysis — no AI, pure heuristics</description>
+    <description>Deterministic impact analysis with optional AI refinement for ambiguous gray-zone PRs</description>
 
     <dependencies>
         <dependency><groupId>nz.co.eroad</groupId><artifactId>common</artifactId></dependency>

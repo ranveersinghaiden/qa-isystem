@@ -52,6 +52,14 @@ public class ImpactEnvelope {
     private List<String> suggestedTestAreas;
     private String changesSummary;
 
+    /**
+     * AI-generated refinement of the deterministic analysis.
+     * {@code null} when AI evaluation is disabled, not configured, or not triggered
+     * (score outside the gray zone).  Never {@code null} once AI ran — even if it
+     * produced no changes, it records the model + reasoning.
+     */
+    private AIInsight aiInsight;
+
     public enum RiskLevel { LOW, MEDIUM, HIGH, CRITICAL }
 
     public enum ChangeType {
@@ -78,5 +86,30 @@ public class ImpactEnvelope {
             UTILITY, MODEL, CONFIG, TEST
         }
     }
-}
 
+    /**
+     * Records the outcome of the AI last-resort evaluation pass.
+     *
+     * <p>Fields:
+     * <ul>
+     *   <li>{@code applied} — {@code true} if the AI result caused score or type changes</li>
+     *   <li>{@code model} — the LLM model used (e.g. "gpt-4o-mini")</li>
+     *   <li>{@code originalRiskScore} — the deterministic score before AI adjustment</li>
+     *   <li>{@code adjustedRiskScore} — the score after AI adjustment (clamped to ±0.15)</li>
+     *   <li>{@code addedChangeTypes} — change types the AI detected but regex missed</li>
+     *   <li>{@code reasoning} — 1–2 sentence explanation from the LLM</li>
+     * </ul>
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AIInsight {
+        private boolean applied;
+        private String  model;
+        private double  originalRiskScore;
+        private double  adjustedRiskScore;
+        private List<ChangeType> addedChangeTypes;
+        private String  reasoning;
+    }
+}

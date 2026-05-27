@@ -1,5 +1,6 @@
 package nz.co.eroad.qaisystem.engine;
 
+import nz.co.eroad.qaisystem.ai.AIImpactEvaluator;
 import nz.co.eroad.qaisystem.model.CoverageReport;
 import nz.co.eroad.qaisystem.model.GitDiff;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope;
@@ -16,10 +17,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Phase 1 — Deterministic impact analysis.  No AI, no LLM.
+ * Phase 1 — Deterministic impact analysis, with optional AI refinement as last resort.
  *
  * Pipeline: parse → dependency graph → change types → risk score
- *           → coverage assessment → envelope
+ *           → AI refinement (gray-zone only, if configured) → coverage assessment → envelope
  *
  * Publishes the resulting ImpactEnvelope to ImpactResultsQueue.
  * Strategy-service consumes ImpactResultsQueue as its entry point.
@@ -29,11 +30,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ImpactEngine {
 
-    private final GitDiffParser      diffParser;
-    private final DependencyGraph    dependencyGraph;
-    private final ChangeTypeDetector changeTypeDetector;
-    private final RiskScorer         riskScorer;
+    private final GitDiffParser       diffParser;
+    private final DependencyGraph     dependencyGraph;
+    private final ChangeTypeDetector  changeTypeDetector;
+    private final RiskScorer          riskScorer;
     private final TestCoverageService testCoverageService;
+    private final AIImpactEvaluator   aiImpactEvaluator;
 
     public ImpactEnvelope analyze(PullRequest pr) {
         log.info("[ImpactEngine] Analyzing PR '{}'", pr.getPrId());
@@ -53,6 +55,29 @@ public class ImpactEngine {
         // 4. Risk scoring
         double riskScore             = riskScorer.score(diffs, changeTypes, components);
         ImpactEnvelope.RiskLevel lvl = riskScorer.toLevel(riskScore);
+
+        // 4b. AI last-resort refinement — only invoked when riskScore is in the
+        //     ambiguous gray zone AND the evaluator is configured.  Falls back
+        //     silently to the deterministic result on any error.
+        ImpactEnvelope.AIInsight aiInsight = null;
+        var aiResult = aiImpactEvaluator.evaluate(pr, diffs, changeTypes, components, riskScore);
+        if (aiResult.isPresent()) {
+            aiInsight = aiResult.get();
+            if (aiInsight.isApplied()) {
+                double prevScore = riskScore;
+                riskScore    = aiInsight.getAdjustedRiskScore();
+                lvl          = riskScorer.toLevel(riskScore);
+                changeTypes  = mergeChangeTypes(changeTypes, aiInsight.getAddedChangeTypes());
+                log.info("[ImpactEngine] AI refinement applied — riskScore {} → {} ({}) | " +
+                         "added types: {}",
+                        String.format("%.2f", prevScore),
+                        String.format("%.2f", riskScore), lvl,
+                        aiInsight.getAddedChangeTypes());
+            } else {
+                log.info("[ImpactEngine] AI ran but found no changes to the deterministic result — " +
+                         "reason: {}", aiInsight.getReasoning());
+            }
+        }
 
         // 5. Coverage assessment: identify which components need integration/E2E tests.
         //    Level is UNKNOWN here — real coverage (GOOD/PARTIAL/NONE) is determined
@@ -97,17 +122,30 @@ public class ImpactEngine {
                 .existingTestFiles(existingTestFiles)
                 .suggestedTestAreas(coverage.getUntestedComponents())
                 .changesSummary(buildSummary(pr, diffs, changeTypes, lvl, coverage))
+                .aiInsight(aiInsight)   // null when AI disabled/not triggered
                 .build();
 
-        log.info("[ImpactEngine] Envelope '{}' → risk={} ({}) coverage={} componentsPendingE2E={}",
+        log.info("[ImpactEngine] Envelope '{}' → risk={} ({}) coverage={} componentsPendingE2E={} aiApplied={}",
                 envelope.getEnvelopeId(),
                 String.format("%.2f", riskScore), lvl,
-                coverage.getLevel(), coverage.getUntestedComponents().size());
+                coverage.getLevel(), coverage.getUntestedComponents().size(),
+                aiInsight != null && aiInsight.isApplied());
 
         return envelope;
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
+
+    /** Merges AI-detected change types into the existing list without duplicates. */
+    private List<ChangeType> mergeChangeTypes(List<ChangeType> existing,
+                                              List<ChangeType> additional) {
+        if (additional == null || additional.isEmpty()) return existing;
+        List<ChangeType> merged = new ArrayList<>(existing);
+        additional.stream()
+                .filter(ct -> !merged.contains(ct))
+                .forEach(merged::add);
+        return merged;
+    }
 
     private List<String> extractModules(List<GitDiff> diffs) {
         return diffs.stream()

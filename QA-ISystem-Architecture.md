@@ -369,6 +369,43 @@ Capped at 0.9 — never declares maximum risk without a real repo scan.
 | ≥ 0.4 | MEDIUM |
 | < 0.4 | LOW |
 
+### Step 4b: AIImpactEvaluator — AI Last Resort (optional)
+
+After the deterministic risk scorer runs, the pipeline checks whether the score falls in a
+configurable **gray zone** — the range where the rule-based system has the least signal.
+
+```
+Risk score:  0.0 ──── 0.30 ──────────── 0.75 ──── 1.0
+               Confident LOW  Gray zone   Confident HIGH
+               (skip AI)   AI refines   (skip AI)
+```
+
+**Why the gray zone matters:**
+The boundaries are where the deterministic system is **most likely to be wrong**.
+- A score of `0.31` might really be `0.15` (false alarm from a regex match)
+- A score of `0.73` might really be `0.85` (the diff touches a critical payment path but the regex missed it)
+
+Below `0.30` and above `0.75`, the deterministic signal is strong enough to trust without
+AI involvement.
+
+**What the AI does:**
+The `AIImpactEvaluator` sends a structured prompt to an OpenAI-compatible API
+(`gpt-4o-mini` by default). The prompt contains:
+- PR title, author, repository, and file count/line delta
+- Deterministic findings (change types, risk level, impacted components)
+- The actual diff content (truncated to 3,000 characters)
+
+The LLM returns JSON with:
+- `adjustedRiskScore` — clamped to ±0.15 from the deterministic score to prevent overrides
+- `additionalChangeTypes` — types the regex missed (e.g. `SECURITY_FIX` when JWT code changes)
+- `reasoning` — 1–2 factual sentences explaining the refinement
+
+**Fail-safe:** Every failure mode (network timeout, wrong JSON, HTTP error, LLM hallucination)
+is caught and returns the deterministic result unchanged. The AI **never breaks the pipeline**.
+
+**The result is recorded in `ImpactEnvelope.aiInsight`** so strategy-service and human
+reviewers can see exactly what the AI changed and why.
+
 ### Step 5: TestCoverageService — Which components need integration tests?
 
 This is Phase 1 of a **two-phase coverage assessment**.
@@ -917,6 +954,10 @@ curl -X POST http://localhost:8082/api/strategy/approve-bdd \
 | Stabilisation: attempt 3 simplifies to smoke test | `StabilizationLoop` | Generated code may be too brittle for the test environment. A smoke test that just checks reachability is better than abandoning silently with no PR |
 | 60/80/95% pass probability simulation | `TestExecutionEngine` | Represents realistic first-run flakiness. Real implementation would compile and execute the Java code via JUnit Platform Launcher |
 | `acks=all` on Kafka producer | All producers | Ensures the Kafka leader AND all replicas have received the message before acknowledging. Prevents message loss on broker failure |
+| AI gray-zone threshold [0.30, 0.75] | `AIImpactEvaluator` | Below 0.30 the deterministic system is confidently LOW. Above 0.75 it's confidently HIGH. In between, structural heuristics have the least signal and semantic AI adds the most value |
+| Max AI score adjustment ±0.15 | `AIImpactEvaluator` | Prevents the LLM from completely overriding well-reasoned deterministic scoring. The LLM refines; it does not override |
+| Low temperature (0.1) for AI prompt | `AIImpactEvaluator` | LLMs are stochastic. Temperature near zero makes output consistent and predictable — critical for a pipeline that must behave reliably |
+| `response_format: json_object` | `AIImpactEvaluator` | Forces the LLM to return parseable JSON, eliminating markdown wrapping and prose that would break the parser |
 
 ---
 
@@ -935,6 +976,7 @@ curl -X POST http://localhost:8082/api/strategy/approve-bdd \
 | `CoverageReport` | model | Two-phase coverage assessment |
 | `CoverageReport.CoverageLevel` | model (enum) | GOOD, PARTIAL, NONE, UNKNOWN |
 | `CoverageReport.CoverageSource` | model (enum) | REPO_SCAN, UNKNOWN |
+| `ImpactEnvelope.AIInsight` | model (nested) | AI refinement record: model, scores, added types, reasoning |
 | `TestStrategy` | model | Decision + requirements from StrategyAgent |
 | `BddScenario` | model | Gherkin scenarios for BDD review PR |
 | `TestScript` | model | Generated test code + metadata |
@@ -955,9 +997,11 @@ curl -X POST http://localhost:8082/api/strategy/approve-bdd \
 |-------|---------|------|
 | `ImpactServiceApplication` | impact | Spring Boot entry point |
 | `KafkaConfig` | config | Explicit consumer/producer/factory beans |
+| `AIImpactProperties` | config | Typed binding for `aiqa.ai` YAML block |
+| `AIImpactEvaluator` | ai | LLM last-resort refinement (gray-zone only, fail-safe) |
 | `FeatureUpdatesConsumer` | kafka | Consume PullRequest → trigger ImpactEngine |
 | `ImpactResultsProducer` | kafka | Publish ImpactEnvelope to ImpactResultsQueue |
-| `ImpactEngine` | engine | Orchestrate 5-step pipeline |
+| `ImpactEngine` | engine | Orchestrate 5-step pipeline + optional AI step |
 | `GitDiffParser` | engine | Raw unified diff → List<GitDiff> |
 | `DependencyGraph` | engine | Import graph + component typing |
 | `ChangeTypeDetector` | engine | Regex-based change classification |

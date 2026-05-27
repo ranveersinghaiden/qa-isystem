@@ -1,13 +1,16 @@
 # impact-service
 
 **Port:** `8081`  
-**Phase:** 1 — Deterministic Impact Analysis  
+**Phase:** 1 — Impact Analysis (deterministic + optional AI refinement)  
 **Package root:** `nz.co.eroad.qaisystem`  
-**Role:** Consumes PR events from Kafka, runs a fully rule-based impact pipeline
-(**zero AI / zero LLM**), then publishes an `ImpactEnvelope` for the strategy layer.
+**Role:** Consumes PR events from Kafka, runs a fully rule-based impact pipeline, then optionally
+calls an LLM to refine the risk score when the deterministic result is ambiguous. Publishes an
+`ImpactEnvelope` for the strategy layer.
 
-> **No AI here.** Every decision is deterministic and reproducible.
-> The same diff will always produce the same envelope.
+> **Deterministic by default.** The same diff always produces the same envelope.
+> AI is **opt-in** and **last-resort only** — it runs solely when the deterministic risk score
+> falls in the configured gray zone (`0.30–0.75` by default) where the rule-based system
+> has the least signal. Outside that range, the deterministic result is used as-is.
 
 ---
 
@@ -17,9 +20,10 @@
 2. [End-to-End Data Flow](#end-to-end-data-flow)
 3. [Class-by-Class Breakdown](#class-by-class-breakdown)
 4. [How TestCoverageService Works](#how-testcoverageservice-works)
-5. [Kafka Flow](#kafka-flow)
-6. [API Endpoints](#api-endpoints)
-7. [Configuration](#configuration)
+5. [AI Last-Resort Evaluator](#ai-last-resort-evaluator)
+6. [Kafka Flow](#kafka-flow)
+7. [API Endpoints](#api-endpoints)
+8. [Configuration](#configuration)
 
 ---
 
@@ -29,13 +33,16 @@
 nz/co/eroad/qaisystem/
 ├── impact/
 │   └── ImpactServiceApplication.java   ← Spring Boot entry point
+├── ai/
+│   └── AIImpactEvaluator.java          ← LLM last-resort refinement (opt-in, gray-zone only)
 ├── config/
-│   └── KafkaConfig.java                ← Explicit consumer/producer/factory beans
+│   ├── KafkaConfig.java                ← Explicit consumer/producer/factory beans
+│   └── AIImpactProperties.java         ← @ConfigurationProperties for aiqa.ai
 ├── kafka/
 │   ├── FeatureUpdatesConsumer.java     ← Consumes PullRequest from Kafka
 │   └── ImpactResultsProducer.java      ← Publishes ImpactEnvelope to Kafka
 ├── engine/
-│   ├── ImpactEngine.java               ← Orchestrates the full 5-step pipeline
+│   ├── ImpactEngine.java               ← Orchestrates the full pipeline (steps 1–5 + AI)
 │   ├── GitDiffParser.java              ← Raw unified diff → List<GitDiff>
 │   ├── DependencyGraph.java            ← Import-graph analysis, component typing
 │   ├── ChangeTypeDetector.java         ← Regex-based change classification
@@ -78,11 +85,18 @@ nz/co/eroad/qaisystem/
   │    List<GitDiff>                                          │
   │        └─► List<ChangeType>  (API_CHANGE, BUG_FIX, ...)   │
   │                                                           │
-  │  Step 4 ─ RiskScorer                                      │
-  │    diffs + changeTypes + components                       │
-  │        └─► double riskScore (0.0–1.0)                     │
-  │            RiskLevel  (LOW / MEDIUM / HIGH / CRITICAL)    │
-  │                                                           │
+   │  Step 4 ─ RiskScorer                                      │
+   │    diffs + changeTypes + components                       │
+   │        └─► double riskScore (0.0–1.0)                     │
+   │            RiskLevel  (LOW / MEDIUM / HIGH / CRITICAL)    │
+   │                                                           │
+   │  Step 4b ─ AIImpactEvaluator (last resort, optional)      │
+   │    Only runs if enabled=true AND score in gray zone       │
+   │    Calls LLM → may adjust riskScore (±0.15 max)           │
+   │             → may add missed ChangeTypes                  │
+   │    Falls back silently on any error                       │
+   │    Records AIInsight in the envelope                      │
+   │                                                           │
    │  Step 5 ─ TestCoverageService                             │
    │    components + diffs                                     │
    │        └─► CoverageReport  (level=UNKNOWN, source=UNKNOWN │
@@ -431,6 +445,146 @@ that runs immediately on every PR event. Cloning and scanning a test repository 
 
 ---
 
+## AI Last-Resort Evaluator
+
+### Why AI as last resort?
+
+The deterministic pipeline (regex, file paths, import graphs, fixed weights) is excellent at
+**structural signals** but blind to **semantic context**. Examples of where it falls short:
+
+| Scenario | Deterministic sees | Reality |
+|----------|-------------------|---------|
+| 8 lines added to `PaymentController.chargeCustomer()` | LOW churn, MEDIUM risk | Touches payment critical path → HIGH risk |
+| 8 lines added to `PaymentController.getReceiptHtml()` | Same score as above | Cosmetic change → LOW risk |
+| Rename `processOrder` → `fulfillOrder` with 60+ deletes | `BREAKING_CHANGE` (deletion threshold) | Actually a safe internal refactoring |
+| New JWT claim validation added inline | `SECURITY_FIX` (keyword) | Could also be `API_CHANGE` — AI can disambiguate |
+
+The semantic questions ("is this a risky change?") are exactly what LLMs excel at. But
+calling an LLM on every PR would be slow, expensive, and unnecessary for clear-cut cases.
+
+### The gray zone principle
+
+```
+Risk score:  0.0 ─────── 0.30 ─────────────────── 0.75 ─────── 1.0
+                  Confident LOW    Gray zone         Confident HIGH
+                  (skip AI)    (AI refines here)    (skip AI)
+```
+
+- Below `0.30`: deterministic confidently says LOW risk. AI would add cost with no benefit.
+- Above `0.75`: deterministic confidently says HIGH/CRITICAL. AI cannot make it worse and is not needed.
+- Between `0.30` and `0.75`: the system has real uncertainty. This is where the LLM earns its place.
+
+Both bounds are configurable in `application.yaml`.
+
+### Fail-safe design
+
+Every possible failure mode is handled gracefully:
+
+| Failure | Behaviour |
+|---------|-----------|
+| AI disabled (`enabled: false`) | Skip entirely, no log noise beyond DEBUG |
+| API key not set | Skip entirely |
+| Score outside gray zone | Skip, log at DEBUG |
+| Network timeout | Log WARN, use deterministic result |
+| HTTP non-200 from API | Log WARN, use deterministic result |
+| Malformed JSON in response | Log WARN, use deterministic result |
+| Unknown ChangeType in response | Skip that type, keep valid ones |
+| Score adjustment > ±0.15 | Clamped to ±0.15 |
+
+The pipeline **never fails** because of AI. The worst outcome is falling back to the
+deterministic result as if AI was disabled.
+
+### Classes
+
+#### `AIImpactProperties`
+**`config/AIImpactProperties.java`** — `@ConfigurationProperties(prefix = "aiqa.ai")`
+
+| Property | Default | Meaning |
+|----------|---------|---------|
+| `enabled` | `false` | Master switch — must be `true` to activate |
+| `api-key` | `""` | Injected from `${AIQA_AI_API_KEY}` env var |
+| `model` | `gpt-4o-mini` | Any OpenAI chat-completions model |
+| `base-url` | `https://api.openai.com/v1` | Override for Azure OpenAI, Ollama, etc. |
+| `confidence-lower-bound` | `0.30` | Min score that triggers AI |
+| `confidence-upper-bound` | `0.75` | Max score that triggers AI |
+| `max-diff-chars` | `3000` | Truncate large diffs before sending |
+| `timeout-seconds` | `15` | HTTP timeout — fail-fast |
+| `max-score-adjustment` | `0.15` | Maximum score change the AI can make |
+
+#### `AIImpactEvaluator`
+**`ai/AIImpactEvaluator.java`**
+
+```
+evaluate(pr, diffs, changeTypes, components, riskScore):
+  if not configured → return empty
+  if score outside gray zone → return empty
+  build prompt (PR summary + truncated diff + deterministic findings)
+  POST to /v1/chat/completions (OpenAI-compatible)
+  parse JSON response:
+    adjustedRiskScore → clamp to [original ± maxScoreAdjustment]
+    additionalChangeTypes → filter unknowns, deduplicate
+    reasoning → 1-2 sentences
+  return AIInsight
+  (any exception → log WARN, return empty)
+```
+
+**Prompt design:** Low temperature (`0.1`) for consistent output. `response_format: json_object`
+to guarantee parseable JSON. Instructs the LLM to prefer minimal changes when the deterministic
+result looks correct, and explicitly states the maximum score adjustment allowed.
+
+### What gets added to the ImpactEnvelope
+
+The `ImpactEnvelope.aiInsight` field is populated whenever the evaluator ran (even if no
+changes were made). When AI is disabled or skipped, `aiInsight` is `null`.
+
+```json
+{
+  "aiInsight": {
+    "applied": true,
+    "model": "gpt-4o-mini",
+    "originalRiskScore": 0.52,
+    "adjustedRiskScore": 0.67,
+    "addedChangeTypes": ["SECURITY_FIX"],
+    "reasoning": "The JWT claim validation logic directly affects auth enforcement — warrants HIGH risk scrutiny."
+  }
+}
+```
+
+### Enabling AI
+
+```bash
+# Set the API key in your environment
+export AIQA_AI_API_KEY=sk-proj-...
+
+# In application.yaml
+aiqa:
+  ai:
+    enabled: true
+    model: gpt-4o-mini          # or gpt-4o for higher accuracy
+```
+
+For Azure OpenAI:
+```yaml
+aiqa:
+  ai:
+    enabled: true
+    base-url: https://{your-resource}.openai.azure.com/openai/deployments/{deployment}
+    api-key: ${AIQA_AI_API_KEY:}
+    model: gpt-4o
+```
+
+For local Ollama (free, no API key):
+```yaml
+aiqa:
+  ai:
+    enabled: true
+    base-url: http://localhost:11434/v1
+    api-key: ollama              # Ollama ignores the key but the header is required
+    model: llama3.1:8b           # or mistral, qwen2.5-coder, etc.
+```
+
+---
+
 ## Kafka Flow
 
 | Direction | Topic | Payload |
@@ -455,7 +609,7 @@ Consumer group: `impact-service-group`
 { "diff": "diff --git a/src/AuthController.java b/src/AuthController.java\n..." }
 ```
 
-**Response:**
+**Response (AI disabled or score outside gray zone):**
 ```json
 {
   "filesFound": 2,
@@ -468,13 +622,35 @@ Consumer group: `impact-service-group`
     "untestedComponents": ["AuthController", "UserService"],
     "requiredTestTypes": ["API", "E2E"],
     "requiresNewTests": true
+  },
+  "aiInsight": {
+    "applied": false,
+    "reason": "AI evaluation disabled (set aiqa.ai.enabled=true)"
+  }
+}
+```
+
+**Response (AI enabled, score in gray zone, refinement applied):**
+```json
+{
+  "filesFound": 2,
+  "changeTypes": ["API_CHANGE", "NEW_FEATURE", "SECURITY_FIX"],
+  "riskScore": "0.78",
+  "riskLevel": "HIGH",
+  "coverage": { "..." : "..." },
+  "aiInsight": {
+    "applied": true,
+    "model": "gpt-4o-mini",
+    "originalRiskScore": "0.63",
+    "adjustedRiskScore": "0.78",
+    "additionalChangeTypes": ["SECURITY_FIX"],
+    "reasoning": "The JWT token handling changes introduce new auth logic that should be treated as HIGH risk."
   }
 }
 ```
 
 > **Note:** `level=UNKNOWN` is correct here. The real level (GOOD/PARTIAL/NONE) is set
 > by `E2ECoverageAnalyzer` in strategy-service after scanning the test repo.
-> If no test repo is configured, strategy-service conservatively treats UNKNOWN as requiring tests.
 
 ---
 
@@ -501,6 +677,18 @@ aiqa:
   strategy:
     risk-threshold-high: 0.7     # score >= this → HIGH
     risk-threshold-medium: 0.4   # score >= this → MEDIUM
+
+  # AI last-resort evaluator (opt-in)
+  ai:
+    enabled: false                              # set to true + provide api-key to activate
+    api-key: ${AIQA_AI_API_KEY:}               # export AIQA_AI_API_KEY=sk-proj-...
+    model: gpt-4o-mini
+    base-url: https://api.openai.com/v1        # override for Azure/Ollama/etc.
+    confidence-lower-bound: 0.30               # AI only runs when score >= this
+    confidence-upper-bound: 0.75               # AI only runs when score <= this
+    max-diff-chars: 3000
+    timeout-seconds: 15
+    max-score-adjustment: 0.15                 # AI can change score by at most ±0.15
 
 logging:
   level:
