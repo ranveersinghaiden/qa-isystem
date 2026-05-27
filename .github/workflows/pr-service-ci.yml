@@ -1,0 +1,70 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CI — pr-service
+#
+# Triggers when code changes in:
+#   • pr-service/**     (the service itself)
+#   • common/**         (shared library — any change here may break this service)
+#   • .github/workflows/_service-build.yml  (workflow change)
+#
+# On push to main/develop: builds, tests, and pushes Docker image to GHCR.
+# On pull_request:          builds and tests only (no push).
+# ─────────────────────────────────────────────────────────────────────────────
+name: CI — pr-service
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+    paths:
+      - "pr-service/**"
+      - "common/**"
+      - ".github/workflows/_service-build.yml"
+      - ".github/workflows/pr-service-ci.yml"
+
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+    paths:
+      - "pr-service/**"
+      - "common/**"
+
+  # Allow manual trigger from the Actions UI for debugging
+  workflow_dispatch:
+    inputs:
+      force-push:
+        description: "Push Docker image even on a non-main branch?"
+        required: false
+        default: "false"
+        type: boolean
+
+jobs:
+  build:
+    name: pr-service — Build, Test & Push
+    uses: ./.github/workflows/_service-build.yml
+    with:
+      service: pr-service
+      port: 8080
+      java-version: "25"
+    secrets:
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+
+  # ── Notify on failure (optional — remove if you don't use Slack) ─────────────
+  notify-failure:
+    name: Notify on failure
+    needs: build
+    if: failure() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post failure notice to job summary
+        run: |
+          echo "## ❌ pr-service CI FAILED on \`main\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Author:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check the [build logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details." >> $GITHUB_STEP_SUMMARY
+

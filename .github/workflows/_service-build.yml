@@ -1,0 +1,171 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Reusable workflow: build, test, and push one service to GHCR.
+# Called by the per-service CI workflows.
+#
+# Inputs:
+#   service    — module name, e.g. "pr-service"
+#   port       — container port the service listens on, e.g. 8080
+#   java-version — Java version to use (default: 25)
+#
+# Secrets consumed (all optional — image push is skipped when not available):
+#   GHCR_TOKEN   — Personal Access Token or GITHUB_TOKEN with packages:write
+#
+# Image naming convention:
+#   ghcr.io/{owner}/{repo-lowercase}/{service}:{sha-short}
+#   ghcr.io/{owner}/{repo-lowercase}/{service}:latest   (main/master only)
+#   ghcr.io/{owner}/{repo-lowercase}/{service}:develop  (develop only)
+# ─────────────────────────────────────────────────────────────────────────────
+name: Reusable — Build, Test & Push
+
+on:
+  workflow_call:
+    inputs:
+      service:
+        description: "Maven module name (e.g. pr-service)"
+        required: true
+        type: string
+      port:
+        description: "Container port the service exposes"
+        required: true
+        type: number
+      java-version:
+        description: "Java version to use for building"
+        required: false
+        type: string
+        default: "25"
+    secrets:
+      GHCR_TOKEN:
+        description: "Token with packages:write permission for GHCR"
+        required: false
+    outputs:
+      image-tag:
+        description: "Full image tag that was pushed (sha-based)"
+        value: ${{ jobs.build.outputs.image-tag }}
+      image-digest:
+        description: "Digest of the pushed image"
+        value: ${{ jobs.build.outputs.image-digest }}
+
+jobs:
+  build:
+    name: Build & Test — ${{ inputs.service }}
+    runs-on: ubuntu-latest
+
+    outputs:
+      image-tag:    ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.push.outputs.digest }}
+
+    permissions:
+      contents: read
+      packages: write  # needed to push to GHCR
+
+    steps:
+      # ── 1. Source ────────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history for accurate change detection
+
+      # ── 2. Java ──────────────────────────────────────────────────────────────
+      - name: Set up Java ${{ inputs.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: temurin
+          cache: maven
+
+      # ── 3. Build common module ───────────────────────────────────────────────
+      # common must be installed into the local .m2 cache before the service
+      # can resolve it as a dependency.
+      - name: Install common module
+        run: |
+          ./mvnw clean install \
+            -pl common \
+            --no-transfer-progress \
+            -q
+
+      # ── 4. Build + test the service ──────────────────────────────────────────
+      - name: Build and test ${{ inputs.service }}
+        run: |
+          ./mvnw clean verify \
+            -pl ${{ inputs.service }} \
+            --no-transfer-progress
+        env:
+          # Prevents tests that need Kafka from hanging on CI (no broker available)
+          SPRING_AUTOCONFIGURE_EXCLUDE: >-
+            org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+
+      # ── 5. Upload test reports ───────────────────────────────────────────────
+      - name: Upload Surefire test reports
+        if: always()  # upload even when tests fail so we can see the failure
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-${{ inputs.service }}-${{ github.run_number }}
+          path: ${{ inputs.service }}/target/surefire-reports/
+          retention-days: 14
+
+      # ── 6. Docker image metadata ─────────────────────────────────────────────
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/${{ inputs.service }}
+          tags: |
+            # Tag with short SHA on every push
+            type=sha,prefix=sha-,format=short
+            # Tag "latest" only on pushes to main/master
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
+            # Tag the branch name on develop
+            type=ref,event=branch
+            # Tag with PR number on pull requests (image is not pushed for PRs, only built)
+            type=ref,event=pr
+
+      # ── 7. Log in to GHCR ────────────────────────────────────────────────────
+      # Skip on pull requests — we build to verify compilation, but don't push.
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
+
+      # ── 8. Set up Docker Buildx ──────────────────────────────────────────────
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ── 9. Build (and push on non-PR) ─────────────────────────────────────────
+      # The Dockerfile for each service lives at {service}/Dockerfile.
+      # The build context is the repo root so all modules are accessible.
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ inputs.service }}/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ inputs.service }}
+          cache-to:   type=gha,scope=${{ inputs.service }},mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+            SERVICE=${{ inputs.service }}
+            PORT=${{ inputs.port }}
+
+      # ── 10. Summary ──────────────────────────────────────────────────────────
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## 🏗️ Build Summary — ${{ inputs.service }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | \`${{ inputs.service }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Pushed to GHCR | ${{ github.event_name != 'pull_request' }} |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "| Image tags | \`${{ steps.meta.outputs.tags }}\` |" >> $GITHUB_STEP_SUMMARY
+          fi
+

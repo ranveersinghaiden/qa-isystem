@@ -1,0 +1,109 @@
+# docker-compose.prod.yml
+#
+# Production overlay for QA-ISystem.
+# Use with: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# This file defines the three application services using the GHCR images
+# built by CI. It extends the base docker-compose.yml which provides Kafka
+# and Zookeeper.
+#
+# Required environment variables (set in a .env file at DEPLOY_PATH on the server):
+#
+#   # Image tags — set by the CD workflow (or "latest" for manual deploys)
+#   PR_SERVICE_IMAGE=ghcr.io/your-org/qa-isystem/pr-service:latest
+#   IMPACT_SERVICE_IMAGE=ghcr.io/your-org/qa-isystem/impact-service:latest
+#   STRATEGY_SERVICE_IMAGE=ghcr.io/your-org/qa-isystem/strategy-service:latest
+#
+#   # strategy-service: target test repo (optional)
+#   TARGET_REPO_TOKEN=ghp_your_token
+#   TARGET_REPO_USERNAME=your_github_username
+#   TARGET_REPO_URL=https://github.com/your-org/your-test-repo
+#
+#   # impact-service: AI evaluator (optional — disabled by default)
+#   AIQA_AI_API_KEY=sk-proj-...
+#
+#   # Kafka advertised listener — must be the server's IP or DNS name
+#   KAFKA_HOST=your-server-ip
+
+services:
+
+  # ── pr-service ──────────────────────────────────────────────────────────────
+  pr-service:
+    image: ${PR_SERVICE_IMAGE:-ghcr.io/eroad/qa-isystem/pr-service:latest}
+    container_name: qa-pr-service
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8080
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/pr/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  # ── impact-service ──────────────────────────────────────────────────────────
+  impact-service:
+    image: ${IMPACT_SERVICE_IMAGE:-ghcr.io/eroad/qa-isystem/impact-service:latest}
+    container_name: qa-impact-service
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8081
+      # AI last-resort evaluator — set AIQA_AI_API_KEY to enable
+      AIQA_AI_ENABLED: ${AIQA_AI_ENABLED:-false}
+      AIQA_AI_API_KEY: ${AIQA_AI_API_KEY:-}
+      AIQA_AI_MODEL: ${AIQA_AI_MODEL:-gpt-4o-mini}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8081/api/impact/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  # ── strategy-service ────────────────────────────────────────────────────────
+  strategy-service:
+    image: ${STRATEGY_SERVICE_IMAGE:-ghcr.io/eroad/qa-isystem/strategy-service:latest}
+    container_name: qa-strategy-service
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8082
+      # Target test repo — strategy-service clones this at startup to build the coverage index
+      AIQA_TARGET_REPO_URL: ${TARGET_REPO_URL:-}
+      AIQA_TARGET_REPO_AUTH_TOKEN: ${TARGET_REPO_TOKEN:-}
+      AIQA_TARGET_REPO_AUTH_USERNAME: ${TARGET_REPO_USERNAME:-}
+    volumes:
+      # Persist the cloned test repo between container restarts to avoid re-cloning every time
+      - qa-repo-cache:/tmp/qa-context-repo
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8082/api/strategy/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s  # longer start period — repo clone takes time
+
+volumes:
+  # Shared cache volume for the cloned test repository
+  qa-repo-cache:
+    driver: local
+
+# Override Kafka advertised listener so services inside Docker can reach
+# the broker by hostname, and external clients can reach it on port 9092.
+# The base docker-compose.yml uses localhost which doesn't work inside Docker networks.
+

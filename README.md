@@ -16,7 +16,8 @@ produces executable test code, and stabilises failing tests — all without huma
 6. [Running Tests Locally](#running-tests-locally)
 7. [API Reference](#api-reference)
 8. [Configuration](#configuration)
-9. [Technology Stack](#technology-stack)
+9. [CI/CD Pipelines](#cicd-pipelines)
+10. [Technology Stack](#technology-stack)
 
 ---
 
@@ -594,5 +595,122 @@ curl -X POST http://localhost:8082/api/strategy/refresh-context
 ```bash
 # Ctrl+C in each Spring terminal, then:
 docker compose down
+```
+
+---
+
+## CI/CD Pipelines
+
+The `.github/workflows/` directory contains **8 workflow files** (2 reusable + 6 per-service):
+
+```
+.github/workflows/
+├── _service-build.yml      ← Reusable: build, test, push Docker image to GHCR
+├── _service-deploy.yml     ← Reusable: SSH deploy to a target server
+│
+├── pr-service-ci.yml       ← Triggers on pr-service/** or common/** changes
+├── impact-service-ci.yml   ← Triggers on impact-service/** or common/** changes
+├── strategy-service-ci.yml ← Triggers on strategy-service/** or common/** changes
+│
+├── pr-service-cd.yml       ← Deploys after CI succeeds (auto) or manually
+├── impact-service-cd.yml   ← Same for impact-service
+└── strategy-service-cd.yml ← Same for strategy-service
+```
+
+### CI flow per service (on push or PR)
+
+```
+push/PR to main|develop
+      │
+      │  path filter: {service}/** or common/**
+      ▼
+┌─────────────────────────────────────────────────────────┐
+│  _service-build.yml (reusable)                          │
+│                                                         │
+│  1. Checkout + set up Java 25 (Temurin)                 │
+│  2. Cache Maven .m2 (by pom.xml hash)                   │
+│  3. mvn install -pl common                              │
+│  4. mvn verify -pl {service}  (build + tests)           │
+│  5. Upload Surefire test reports as artifacts           │
+│  6. docker/metadata-action → tags: sha-xxxxx, latest,  │
+│     branch name, pr-N                                   │
+│  7. docker/build-push-action → build Docker image      │
+│     Push to GHCR only on push (not on PRs)             │
+└─────────────────────────────────────────────────────────┘
+```
+
+### CD flow per service (auto on main/develop, or manual)
+
+```
+CI workflow completes (conclusion == success)
+      │
+      │  branch == main   → environment = production
+      │  branch == develop → environment = staging
+      ▼
+┌─────────────────────────────────────────────────────────┐
+│  _service-deploy.yml (reusable)                         │
+│                                                         │
+│  Uses GitHub Environments (production / staging)        │
+│  — set required reviewers in Settings → Environments   │
+│    to add human approval gate for production            │
+│                                                         │
+│  1. SSH into DEPLOY_HOST as DEPLOY_USER                 │
+│  2. docker login ghcr.io on the server                 │
+│  3. docker pull {image}:{sha-tag}                      │
+│  4. docker compose -f docker-compose.yml               │
+│               -f docker-compose.prod.yml               │
+│       up -d --no-deps --force-recreate {service}       │
+│  5. Health check loop (30s max)                        │
+│  6. Write job summary with deploy result               │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Image naming convention
+
+```
+ghcr.io/{owner}/{repo}/pr-service:sha-a1b2c3d
+ghcr.io/{owner}/{repo}/pr-service:latest        ← only on main
+ghcr.io/{owner}/{repo}/pr-service:develop       ← on develop branch
+ghcr.io/{owner}/{repo}/pr-service:pr-42         ← on pull requests (not pushed)
+```
+
+### Required repository secrets
+
+| Secret | Environment | Purpose |
+|--------|-------------|---------|
+| `GHCR_TOKEN` | (global) | Push/pull images to GitHub Container Registry |
+| `DEPLOY_HOST` | production | Production server IP or hostname |
+| `DEPLOY_USER` | production | SSH username on the production server |
+| `DEPLOY_SSH_KEY` | production | SSH private key for production server |
+| `STAGING_DEPLOY_HOST` | staging | Staging server IP or hostname |
+| `STAGING_DEPLOY_USER` | staging | SSH username on the staging server |
+| `STAGING_DEPLOY_SSH_KEY` | staging | SSH private key for staging server |
+
+### Required repository variables
+
+| Variable | Environment | Example |
+|----------|-------------|---------|
+| `DEPLOY_PATH` | production | `/opt/qa-isystem` |
+| `DEPLOY_PATH` | staging | `/opt/qa-isystem-staging` |
+
+> **Tip:** Set secrets in **Settings → Secrets and variables → Actions**.
+> Scope production secrets to the `production` environment to enforce branch policies.
+
+### Deployment server setup
+
+```bash
+# On the deployment server:
+mkdir -p /opt/qa-isystem
+cd /opt/qa-isystem
+
+# Copy docker-compose.yml and docker-compose.prod.yml from this repo
+# Create a .env file from the template
+cp .env.example .env
+nano .env   # fill in your values
+
+# First time: pull Kafka + Zookeeper and start them
+docker compose -f docker-compose.yml up -d zookeeper kafka
+
+# Subsequent deploys are handled automatically by the CD workflow
 ```
 

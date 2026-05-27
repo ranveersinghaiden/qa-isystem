@@ -1,0 +1,116 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CD — pr-service
+#
+# Auto-deploys pr-service to staging when the CI build succeeds on "develop".
+# Auto-deploys pr-service to production when the CI build succeeds on "main".
+#
+# Can also be triggered manually (workflow_dispatch) to deploy any image tag
+# to any environment — useful for rollbacks or hotfixes.
+#
+# Required secrets (set per environment in repo Settings → Environments):
+#   DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, GHCR_TOKEN
+#
+# Required variables (set per environment in repo Settings → Environments):
+#   DEPLOY_PATH   — e.g. "/opt/qa-isystem"
+# ─────────────────────────────────────────────────────────────────────────────
+name: CD — pr-service
+
+on:
+  # Auto-deploy: triggered when the CI workflow completes successfully
+  workflow_run:
+    workflows: ["CI — pr-service"]
+    types: [completed]
+    branches:
+      - main
+      - master
+      - develop
+
+  # Manual: deploy a specific image tag to a specific environment
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+      image-tag:
+        description: "Image tag to deploy (default: latest)"
+        required: false
+        default: "latest"
+        type: string
+
+jobs:
+  # ── Guard: only deploy if CI succeeded ─────────────────────────────────────
+  check-ci:
+    name: Check CI outcome
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    outputs:
+      should-deploy: ${{ steps.check.outputs.deploy }}
+      environment: ${{ steps.check.outputs.env }}
+      image-tag: ${{ steps.check.outputs.tag }}
+    steps:
+      - name: Determine deploy parameters
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "deploy=true"             >> $GITHUB_OUTPUT
+            echo "env=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+            echo "tag=${{ github.event.inputs.image-tag }}"   >> $GITHUB_OUTPUT
+          else
+            # workflow_run event: determine environment from branch
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+            if [ "${BRANCH}" = "main" ] || [ "${BRANCH}" = "master" ]; then
+              echo "deploy=true"       >> $GITHUB_OUTPUT
+              echo "env=production"    >> $GITHUB_OUTPUT
+            elif [ "${BRANCH}" = "develop" ]; then
+              echo "deploy=true"       >> $GITHUB_OUTPUT
+              echo "env=staging"       >> $GITHUB_OUTPUT
+            else
+              echo "deploy=false"      >> $GITHUB_OUTPUT
+              echo "env=none"          >> $GITHUB_OUTPUT
+            fi
+            # Use the sha-based tag for exact reproducibility
+            SHA=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)
+            echo "tag=sha-${SHA}"      >> $GITHUB_OUTPUT
+          fi
+
+  # ── Production deployment ───────────────────────────────────────────────────
+  deploy-production:
+    name: Deploy to production
+    needs: check-ci
+    if: needs.check-ci.outputs.should-deploy == 'true' && needs.check-ci.outputs.environment == 'production'
+    uses: ./.github/workflows/_service-deploy.yml
+    with:
+      service: pr-service
+      environment: production
+      image-tag: ${{ needs.check-ci.outputs.image-tag }}
+      port: 8080
+    secrets:
+      DEPLOY_HOST:    ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER:    ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      GHCR_TOKEN:     ${{ secrets.GHCR_TOKEN }}
+
+  # ── Staging deployment ──────────────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy to staging
+    needs: check-ci
+    if: needs.check-ci.outputs.should-deploy == 'true' && needs.check-ci.outputs.environment == 'staging'
+    uses: ./.github/workflows/_service-deploy.yml
+    with:
+      service: pr-service
+      environment: staging
+      image-tag: ${{ needs.check-ci.outputs.image-tag }}
+      port: 8080
+    secrets:
+      DEPLOY_HOST:    ${{ secrets.STAGING_DEPLOY_HOST }}
+      DEPLOY_USER:    ${{ secrets.STAGING_DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.STAGING_DEPLOY_SSH_KEY }}
+      GHCR_TOKEN:     ${{ secrets.GHCR_TOKEN }}
+

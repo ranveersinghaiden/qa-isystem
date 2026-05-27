@@ -1,0 +1,69 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CI — impact-service
+#
+# Triggers when code changes in:
+#   • impact-service/**   (the service itself)
+#   • common/**           (shared library)
+#   • .github/workflows/_service-build.yml
+#   • .github/workflows/impact-service-ci.yml
+#
+# Note: impact-service also contains the AIImpactEvaluator. If you add a new
+# LLM provider or change the AI integration, those tests are run here too.
+# ─────────────────────────────────────────────────────────────────────────────
+name: CI — impact-service
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+    paths:
+      - "impact-service/**"
+      - "common/**"
+      - ".github/workflows/_service-build.yml"
+      - ".github/workflows/impact-service-ci.yml"
+
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+    paths:
+      - "impact-service/**"
+      - "common/**"
+
+  workflow_dispatch:
+    inputs:
+      force-push:
+        description: "Push Docker image even on a non-main branch?"
+        required: false
+        default: "false"
+        type: boolean
+
+jobs:
+  build:
+    name: impact-service — Build, Test & Push
+    uses: ./.github/workflows/_service-build.yml
+    with:
+      service: impact-service
+      port: 8081
+      java-version: "25"
+    secrets:
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+
+  notify-failure:
+    name: Notify on failure
+    needs: build
+    if: failure() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post failure notice to job summary
+        run: |
+          echo "## ❌ impact-service CI FAILED on \`main\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Author:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check the [build logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details." >> $GITHUB_STEP_SUMMARY
+

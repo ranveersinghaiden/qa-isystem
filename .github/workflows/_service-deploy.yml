@@ -1,0 +1,154 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Reusable workflow: deploy one service to a target environment.
+#
+# Deployment strategy: SSH into the target server and run docker pull + restart.
+# This pattern works for a single-server setup or when using Docker Compose.
+#
+# Required repository secrets (set per environment in repo Settings → Environments):
+#   DEPLOY_HOST      — IP or hostname of the deployment server
+#   DEPLOY_USER      — SSH username (e.g. "ubuntu" or "deploy")
+#   DEPLOY_SSH_KEY   — Private SSH key (RSA or Ed25519, no passphrase)
+#   GHCR_TOKEN       — Token with packages:read for the server to pull the image
+#
+# Required repository variables (Settings → Environments → Variables):
+#   DEPLOY_PATH      — Absolute path on the server where docker-compose.yml lives
+#                      e.g. "/opt/qa-isystem"
+#
+# The workflow assumes the server already has:
+#   - Docker installed
+#   - The docker-compose.yml (or docker-compose.prod.yml) in DEPLOY_PATH
+#   - The service environment variables in a .env file at DEPLOY_PATH
+# ─────────────────────────────────────────────────────────────────────────────
+name: Reusable — Deploy Service
+
+on:
+  workflow_call:
+    inputs:
+      service:
+        description: "Service name (e.g. pr-service)"
+        required: true
+        type: string
+      environment:
+        description: "Target environment (staging or production)"
+        required: true
+        type: string
+      image-tag:
+        description: "Full image tag to deploy (e.g. sha-abc1234)"
+        required: false
+        type: string
+        default: "latest"
+      port:
+        description: "Port the service exposes inside the container"
+        required: true
+        type: number
+    secrets:
+      DEPLOY_HOST:
+        required: true
+      DEPLOY_USER:
+        required: true
+      DEPLOY_SSH_KEY:
+        required: true
+      GHCR_TOKEN:
+        required: true
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.service }} → ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+
+    # GitHub Environments enforce branch policies and required reviewers.
+    # In Settings → Environments you can require a human to approve production deploys.
+    environment:
+      name: ${{ inputs.environment }}
+      url: http://${{ vars.DEPLOY_HOST }}:${{ inputs.port }}
+
+    steps:
+      # ── 1. Resolve image reference ────────────────────────────────────────────
+      - name: Set image reference
+        id: image
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO=$(echo "${{ github.event.repository.name }}"  | tr '[:upper:]' '[:lower:]')
+          IMAGE="ghcr.io/${OWNER}/${REPO}/${{ inputs.service }}:${{ inputs.image-tag }}"
+          echo "ref=${IMAGE}" >> $GITHUB_OUTPUT
+          echo "Image to deploy: ${IMAGE}"
+
+      # ── 2. Deploy via SSH ─────────────────────────────────────────────────────
+      # Uses appleboy/ssh-action to run a deploy script on the remote server.
+      # The script:
+      #   a) logs in to GHCR on the server
+      #   b) pulls the new image
+      #   c) restarts the service container using Docker Compose
+      - name: Deploy to ${{ inputs.environment }}
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key:      ${{ secrets.DEPLOY_SSH_KEY }}
+          timeout:  120s
+          script: |
+            set -euo pipefail
+
+            DEPLOY_PATH="${{ vars.DEPLOY_PATH }}"
+            SERVICE="${{ inputs.service }}"
+            IMAGE="${{ steps.image.outputs.ref }}"
+
+            echo "=== Deploying ${SERVICE} ==="
+            echo "Image: ${IMAGE}"
+            echo "Path:  ${DEPLOY_PATH}"
+
+            # Log in to GHCR on the server so it can pull the new image
+            echo "${{ secrets.GHCR_TOKEN }}" | \
+              docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+            # Pull the new image
+            docker pull "${IMAGE}"
+
+            # Update the image reference for this service in the compose project.
+            # This uses an override env-var that the docker-compose.prod.yml reads.
+            export "$(echo "${SERVICE}" | tr '-' '_' | tr '[:lower:]' '[:upper:]')_IMAGE=${IMAGE}"
+
+            # Restart only the one service (zero-downtime for the others)
+            cd "${DEPLOY_PATH}"
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+              pull "${SERVICE}"
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+              up -d --no-deps --force-recreate "${SERVICE}"
+
+            # Quick health check — wait up to 30s for the container to report healthy
+            echo "Waiting for ${SERVICE} to become healthy..."
+            for i in $(seq 1 6); do
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' "${SERVICE}" 2>/dev/null || echo "no-health-check")
+              if [ "${STATUS}" = "healthy" ] || [ "${STATUS}" = "no-health-check" ]; then
+                echo "Service ${SERVICE} is up (status: ${STATUS})"
+                break
+              fi
+              echo "  attempt ${i}: ${STATUS} — waiting 5s"
+              sleep 5
+            done
+
+            # Log the running container for audit
+            docker ps --filter "name=${SERVICE}" --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"
+
+            echo "=== Deploy complete ==="
+
+      # ── 3. Job summary ────────────────────────────────────────────────────────
+      - name: Write job summary
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            ICON="✅"
+          else
+            ICON="❌"
+          fi
+          echo "## ${ICON} Deploy — ${{ inputs.service }} → ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | \`${{ inputs.service }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Image | \`${{ steps.image.outputs.ref }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Status | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
+

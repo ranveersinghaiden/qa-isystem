@@ -1,0 +1,91 @@
+# CD — strategy-service
+# Auto-deploys to staging on develop, production on main.
+# strategy-service needs TARGET_REPO_TOKEN and TARGET_REPO_USERNAME on the server.
+name: "CD — strategy-service"
+
+on:
+  workflow_run:
+    workflows: ["CI — strategy-service"]
+    types: [completed]
+    branches: [main, master, develop]
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "staging"
+        type: choice
+        options: [staging, production]
+      image-tag:
+        description: "Image tag to deploy (default: latest)"
+        required: false
+        default: "latest"
+        type: string
+
+jobs:
+  check-ci:
+    name: Check CI outcome
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    outputs:
+      should-deploy: ${{ steps.check.outputs.deploy }}
+      environment:   ${{ steps.check.outputs.env }}
+      image-tag:     ${{ steps.check.outputs.tag }}
+    steps:
+      - name: Determine deploy parameters
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "deploy=true"             >> $GITHUB_OUTPUT
+            echo "env=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+            echo "tag=${{ github.event.inputs.image-tag }}"   >> $GITHUB_OUTPUT
+          else
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+            if [ "${BRANCH}" = "main" ] || [ "${BRANCH}" = "master" ]; then
+              echo "deploy=true"    >> $GITHUB_OUTPUT
+              echo "env=production" >> $GITHUB_OUTPUT
+            elif [ "${BRANCH}" = "develop" ]; then
+              echo "deploy=true"  >> $GITHUB_OUTPUT
+              echo "env=staging"  >> $GITHUB_OUTPUT
+            else
+              echo "deploy=false" >> $GITHUB_OUTPUT
+              echo "env=none"     >> $GITHUB_OUTPUT
+            fi
+            SHA=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)
+            echo "tag=sha-${SHA}" >> $GITHUB_OUTPUT
+          fi
+
+  deploy-production:
+    name: Deploy to production
+    needs: check-ci
+    if: needs.check-ci.outputs.should-deploy == 'true' && needs.check-ci.outputs.environment == 'production'
+    uses: ./.github/workflows/_service-deploy.yml
+    with:
+      service: strategy-service
+      environment: production
+      image-tag: ${{ needs.check-ci.outputs.image-tag }}
+      port: 8082
+    secrets:
+      DEPLOY_HOST:    ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER:    ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      GHCR_TOKEN:     ${{ secrets.GHCR_TOKEN }}
+
+  deploy-staging:
+    name: Deploy to staging
+    needs: check-ci
+    if: needs.check-ci.outputs.should-deploy == 'true' && needs.check-ci.outputs.environment == 'staging'
+    uses: ./.github/workflows/_service-deploy.yml
+    with:
+      service: strategy-service
+      environment: staging
+      image-tag: ${{ needs.check-ci.outputs.image-tag }}
+      port: 8082
+    secrets:
+      DEPLOY_HOST:    ${{ secrets.STAGING_DEPLOY_HOST }}
+      DEPLOY_USER:    ${{ secrets.STAGING_DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.STAGING_DEPLOY_SSH_KEY }}
+      GHCR_TOKEN:     ${{ secrets.GHCR_TOKEN }}
