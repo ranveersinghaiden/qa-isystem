@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: strategy-service
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: strategy-service-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      acks: all
+      retries: 3
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      missing-topics-fatal: false
+    properties:
+      reconnect.backoff.ms: 1000
+      reconnect.backoff.max.ms: 10000
+
+kafka:
+  topics:
+    feature-updates: FeatureUpdatesQueue
+    impact-results: ImpactResultsQueue
+    test-scripts: TestScriptsQueue
+    test-results: TestResultsQueue
+
+aiqa:
+  stabilization:
+    max-retries: 3
+    retry-delay-ms: 2000
+  strategy:
+    risk-threshold-high: 0.7
+    risk-threshold-medium: 0.4
+  target-repo:
+    url: "https://github.com/rsaiden/tax-test-support"
+    branch: main
+    local-path: /tmp/qa-context-repo
+    modules:
+      api: tests/api
+      ui: tests/ui
+      mobile: tests/mobile
+    auth:
+      type: token
+      token: ${TARGET_REPO_TOKEN:}
+      username: ${TARGET_REPO_USERNAME:}
+
+server:
+  port: 8082
+
+logging:
+  level:
+    nz.co.eroad.qaisystem: DEBUG
+    org.springframework.kafka: INFO
+    org.apache.kafka: WARN

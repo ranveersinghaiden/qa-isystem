@@ -1,0 +1,8 @@
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+aiqa:
+  strategy:
+    risk-threshold-high: 0.7
+    risk-threshold-medium: 0.4

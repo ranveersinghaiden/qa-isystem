@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: impact-service
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: impact-service-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      acks: all
+      retries: 3
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      missing-topics-fatal: false
+    properties:
+      reconnect.backoff.ms: 1000
+      reconnect.backoff.max.ms: 10000
+
+kafka:
+  topics:
+    feature-updates: FeatureUpdatesQueue
+    impact-results: ImpactResultsQueue
+    test-scripts: TestScriptsQueue
+    test-results: TestResultsQueue
+
+aiqa:
+  strategy:
+    risk-threshold-high: 0.7
+    risk-threshold-medium: 0.4
+
+server:
+  port: 8081
+
+logging:
+  level:
+    nz.co.eroad.qaisystem: DEBUG
+    org.springframework.kafka: INFO
+    org.apache.kafka: WARN
