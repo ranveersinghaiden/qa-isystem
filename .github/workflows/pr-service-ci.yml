@@ -4,6 +4,8 @@
 # Triggers when code changes in:
 #   • pr-service/**     (the service itself)
 #   • common/**         (shared library — any change here may break this service)
+#   • .mvn/**           (Maven Central routing settings — affects all builds)
+#   • pom.xml           (root BOM / parent version — affects all modules)
 #   • .github/workflows/_service-build.yml  (workflow change)
 #
 # On push to main/develop: builds, tests, and pushes Docker image to GHCR.
@@ -20,6 +22,8 @@ on:
     paths:
       - "pr-service/**"
       - "common/**"
+      - ".mvn/**"
+      - "pom.xml"
       - ".github/workflows/_service-build.yml"
       - ".github/workflows/pr-service-ci.yml"
 
@@ -31,6 +35,8 @@ on:
     paths:
       - "pr-service/**"
       - "common/**"
+      - ".mvn/**"
+      - "pom.xml"
 
   # Allow manual trigger from the Actions UI for debugging
   workflow_dispatch:

@@ -9,19 +9,34 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
+import jakarta.annotation.PostConstruct;
+
+import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Thin wrapper around the GitHub REST API v3.
  *
- * <p>Uses the same credentials ({@code TARGET_REPO_TOKEN}) configured in
- * {@link TargetRepoProperties} so no extra setup is needed.
+ * <h3>Token resolution — priority order</h3>
+ * <ol>
+ *   <li><b>Explicit env var</b> — {@code TARGET_REPO_TOKEN} set in the environment
+ *       (recommended for CI / production).</li>
+ *   <li><b>System credential store</b> — when no explicit token is present,
+ *       {@code git credential fill} is used to retrieve whatever token the local
+ *       git credential helper holds for {@code https://github.com}.
+ *       On macOS this is <em>osxkeychain</em>, which is the same store that
+ *       IntelliJ writes to when you authorise it with GitHub — so local dev works
+ *       with zero extra configuration as long as IntelliJ is already logged in.</li>
+ *   <li><b>No auth</b> — if neither source yields a token the service falls back to
+ *       unauthenticated requests (public repos only) and simulation-mode logging.</li>
+ * </ol>
  *
- * <p>Graceful fallback: every public method returns {@code null} / no-ops when
- * the service is not configured (no URL or no token), which keeps the local-dev
- * simulation mode working without GitHub credentials.
+ * <p>Graceful fallback: every public method returns {@code null} / no-ops when the
+ * service is not configured (no URL) or the repo is private and no token is available.
  */
 @Slf4j
 @Service
@@ -29,54 +44,89 @@ public class GitHubService {
 
     private static final String GITHUB_API_BASE = "https://api.github.com";
 
-    private final RestClient            restClient;
-    private final ObjectMapper          objectMapper;
-    private final TargetRepoProperties  repoProps;
+    private final RestClient   restClient;
+    private final ObjectMapper objectMapper;
 
-    /** Parsed from TARGET_REPO_URL – null when URL is blank or unparseable. */
+    /** Parsed from {@code TARGET_REPO_URL} — {@code null} when URL is blank or unparseable. */
     private final String owner;
     private final String repo;
 
+    /**
+     * Resolved token (may come from env var OR the system credential store).
+     * {@code null} if no token could be found — unauthenticated / simulation mode.
+     */
+    private final String resolvedToken;
+
     public GitHubService(TargetRepoProperties repoProps, ObjectMapper objectMapper) {
-        this.repoProps    = repoProps;
         this.objectMapper = objectMapper;
 
         String[] parsed = parseOwnerRepo(repoProps.getUrl());
         this.owner = parsed[0];
         this.repo  = parsed[1];
 
+        // ── Token resolution ────────────────────────────────────────────────
+        this.resolvedToken = resolveToken(repoProps);
+
+        // ── Build RestClient ────────────────────────────────────────────────
         RestClient.Builder builder = RestClient.builder()
                 .baseUrl(GITHUB_API_BASE)
-                .defaultHeader("Accept",             "application/vnd.github+json")
+                .defaultHeader("Accept",               "application/vnd.github+json")
                 .defaultHeader("X-GitHub-Api-Version", "2022-11-28");
 
-        String token = repoProps.getAuth().getToken();
-        if (token != null && !token.isBlank()) {
-            builder.defaultHeader("Authorization", "Bearer " + token);
+        if (resolvedToken != null) {
+            builder.defaultHeader("Authorization", "Bearer " + resolvedToken);
         }
-
         this.restClient = builder.build();
 
-        if (isConfigured()) {
-            log.info("[GitHubService] Configured for {}/{}", owner, repo);
+        // ── Startup log ─────────────────────────────────────────────────────
+        if (owner == null) {
+            log.info("[GitHubService] TARGET_REPO_URL not set — GitHub PR creation disabled");
+        } else if (resolvedToken != null) {
+            log.info("[GitHubService] Ready for {}/{} (token source: {})",
+                    owner, repo, tokenSource(repoProps));
         } else {
-            log.info("[GitHubService] Not configured — PR creation will be simulated (logs only)");
+            log.warn("[GitHubService] URL configured ({}/{}) but no token resolved yet — "
+                    + "will validate on startup completion", owner, repo);
+        }
+    }
+
+    /**
+     * Startup validation: if a repository URL is configured but no token could be
+     * resolved (neither {@code TARGET_REPO_TOKEN} nor the git credential helper),
+     * the service refuses to start with a clear error message.
+     *
+     * <p>If no URL is configured at all, the check is skipped — the service starts
+     * without GitHub integration (PR creation will throw at runtime if invoked).
+     */
+    @PostConstruct
+    public void validateConfiguration() {
+        if (owner != null && repo != null && resolvedToken == null) {
+            throw new IllegalStateException(
+                    "[GitHubService] TARGET_REPO_URL is set (" + repoWebUrl() + ") but no " +
+                    "GitHub token could be resolved. " +
+                    "Fix one of the following:\n" +
+                    "  1. Set TARGET_REPO_TOKEN=ghp_... in your environment\n" +
+                    "  2. Ensure IntelliJ is connected to GitHub " +
+                    "(Settings → Version Control → GitHub) so osxkeychain holds the token\n" +
+                    "  3. Run: git credential fill <<< 'protocol=https\\nhost=github.com\\n' " +
+                    "to verify the credential helper works");
         }
     }
 
     // ─── Public API ────────────────────────────────────────────────────────────
 
     /**
-     * Returns true when a URL + token are both present, i.e. real GitHub calls
-     * can be made. When false, all write operations are no-ops.
+     * Returns {@code true} when a valid URL and a resolved token are both available —
+     * i.e. real GitHub API calls can be made.
      */
     public boolean isConfigured() {
-        return owner != null && repo != null
-                && repoProps.getAuth().getToken() != null
-                && !repoProps.getAuth().getToken().isBlank();
+        return owner != null && repo != null && resolvedToken != null;
     }
 
-    /** Returns the HTTPS URL of the target repository, e.g. {@code https://github.com/org/repo}. */
+    /**
+     * Returns the HTTPS URL of the target repository,
+     * e.g. {@code https://github.com/org/repo}.
+     */
     public String repoWebUrl() {
         return "https://github.com/" + owner + "/" + repo;
     }
@@ -84,7 +134,7 @@ public class GitHubService {
     /**
      * Creates a new branch from the tip of {@code baseBranch}.
      *
-     * @return true on success
+     * @return {@code true} on success or when the branch already exists
      */
     public boolean createBranch(String newBranchName, String baseBranch) {
         if (!isConfigured()) return false;
@@ -110,22 +160,24 @@ public class GitHubService {
                 log.warn("[GitHubService] Branch '{}' already exists — continuing", newBranchName);
                 return true;
             }
-            log.error("[GitHubService] Failed to create branch '{}': {}", newBranchName, e.getMessage());
+            log.error("[GitHubService] Failed to create branch '{}': {}",
+                    newBranchName, e.getMessage());
             return false;
         } catch (Exception e) {
-            log.error("[GitHubService] Failed to create branch '{}': {}", newBranchName, e.getMessage());
+            log.error("[GitHubService] Failed to create branch '{}': {}",
+                    newBranchName, e.getMessage());
             return false;
         }
     }
 
     /**
-     * Creates (or updates) a file on the given branch.
+     * Creates (or updates) a file on the given branch via a single commit.
      *
-     * @param branch        target branch
+     * @param branch        target branch name
      * @param filePath      path inside the repo, e.g. {@code scenarios/PR-123.feature}
      * @param content       raw file content (UTF-8)
      * @param commitMessage commit message
-     * @return true on success
+     * @return {@code true} on success
      */
     public boolean createFile(String branch, String filePath,
                                String content, String commitMessage) {
@@ -156,7 +208,7 @@ public class GitHubService {
     }
 
     /**
-     * Opens a Pull Request.
+     * Opens a Pull Request on the target repository.
      *
      * @return {@link GitHubPrResult} with PR number and URL, or {@code null} on failure
      */
@@ -192,9 +244,92 @@ public class GitHubService {
         }
     }
 
-    // ─── Helpers ───────────────────────────────────────────────────────────────
+    // ─── Token resolution ─────────────────────────────────────────────────────
 
-    /** Returns the commit SHA that a ref points to, or null on failure. */
+    /**
+     * Resolves the GitHub API token using the following priority:
+     * <ol>
+     *   <li>Explicit {@code TARGET_REPO_TOKEN} env var / {@code auth.token} property.</li>
+     *   <li>System credential store via {@code git credential fill} — works transparently
+     *       with osxkeychain (macOS / IntelliJ), Windows Credential Manager, and any other
+     *       git credential helper the developer has configured.</li>
+     * </ol>
+     *
+     * @return the resolved token, or {@code null} if none is available
+     */
+    private static String resolveToken(TargetRepoProperties props) {
+        // 1. Explicit token takes priority (CI, production, or dev with TOKEN set)
+        String explicit = props.getAuth().getToken();
+        if (explicit != null && !explicit.isBlank()) {
+            return explicit;
+        }
+
+        // SSH auth doesn't translate to an API token — skip credential helper
+        if ("ssh".equalsIgnoreCase(props.getAuth().getType())) {
+            return null;
+        }
+
+        // 2. Ask the system git credential helper (same store IntelliJ uses)
+        return resolveFromCredentialHelper("github.com");
+    }
+
+    /**
+     * Runs {@code git credential fill} for the given host and extracts the
+     * {@code password} field from the response.
+     *
+     * <p>On macOS the credential helper is {@code osxkeychain}, which holds the
+     * OAuth token that IntelliJ stored when it connected to GitHub.  On Windows
+     * it is the Windows Credential Manager, and on Linux it is whatever helper
+     * the user has configured (e.g. {@code gnome-libsecret}, {@code pass}, etc.).
+     *
+     * <p>Returns {@code null} if git is not on the PATH, no credential helper is
+     * configured, or the helper returns no result for the requested host.
+     */
+    private static String resolveFromCredentialHelper(String host) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("git", "credential", "fill");
+            // Merge stderr into stdout so we can capture any error messages cleanly
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+
+            // Write the credential query to the helper's stdin
+            try (BufferedWriter writer = new BufferedWriter(
+                    new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8))) {
+                writer.write("protocol=https\n");
+                writer.write("host=" + host + "\n");
+                writer.write("\n"); // blank line signals end of input
+            }
+
+            String output = new String(
+                    process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+            if (!process.waitFor(5, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+                log.warn("[GitHubService] git credential fill timed out");
+                return null;
+            }
+
+            // Parse the key=value response; "password" holds the token
+            for (String line : output.split("\n")) {
+                if (line.startsWith("password=")) {
+                    String token = line.substring("password=".length()).trim();
+                    if (!token.isBlank()) {
+                        log.info("[GitHubService] Token resolved from git credential helper "
+                                + "(osxkeychain / IntelliJ auth)");
+                        return token;
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            log.debug("[GitHubService] git credential fill unavailable: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    /** Returns the commit SHA a ref points to, or {@code null} on failure. */
     private String getRef(String ref) {
         try {
             String body = restClient.get()
@@ -214,8 +349,19 @@ public class GitHubService {
     }
 
     /**
+     * Human-readable description of where the token came from — used only in
+     * startup logging.
+     */
+    private static String tokenSource(TargetRepoProperties props) {
+        String explicit = props.getAuth().getToken();
+        return (explicit != null && !explicit.isBlank())
+                ? "TARGET_REPO_TOKEN env var"
+                : "git credential helper (osxkeychain / IntelliJ)";
+    }
+
+    /**
      * Parses {@code https://github.com/owner/repo[.git]} into {@code [owner, repo]}.
-     * Returns {@code [null, null]} for blank or unparseable URLs.
+     * Returns {@code [null, null]} for a blank or unparseable URL.
      */
     private static String[] parseOwnerRepo(String url) {
         if (url == null || url.isBlank()) return new String[]{null, null};
@@ -225,15 +371,14 @@ public class GitHubService {
         return new String[]{parts[parts.length - 2], parts[parts.length - 1]};
     }
 
-    // ─── Result record ─────────────────────────────────────────────────────────
+    // ─── Result record ────────────────────────────────────────────────────────
 
     /**
      * Holds the result of a successful GitHub PR creation.
      *
      * @param prNumber GitHub PR number
-     * @param url      HTML URL of the PR  (e.g. https://github.com/org/repo/pull/42)
+     * @param url      HTML URL of the PR (e.g. https://github.com/org/repo/pull/42)
      * @param branch   Source branch name
      */
     public record GitHubPrResult(int prNumber, String url, String branch) {}
 }
-

@@ -1,6 +1,11 @@
 # CD — strategy-service
 # Auto-deploys to staging on develop, production on main.
-# strategy-service needs TARGET_REPO_TOKEN and TARGET_REPO_USERNAME on the server.
+# strategy-service requires these env vars on the server (.env file):
+#   TARGET_REPO_URL        — HTTPS URL of the target test repository
+#   TARGET_REPO_TOKEN      — GitHub PAT with repo scope (CI/production required)
+#   TARGET_REPO_USERNAME   — GitHub username paired with the PAT
+#   GITHUB_WEBHOOK_SECRET  — HMAC-SHA256 secret set in GitHub webhook settings
+#                            (enables BDD PR merge → auto codegen trigger)
 name: "CD — strategy-service"
 
 on:

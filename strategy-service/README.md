@@ -51,20 +51,24 @@ nz/co/eroad/qaisystem/
 ├── agent/
 │   ├── StrategyAgent.java                 ← Decision + fallback rules + UPDATE handler
 │   └── BddGenerator.java                  ← Template-based Gherkin scenario builder
+├── github/
+│   ├── GitHubService.java                 ← GitHub REST API v3 client (branches, files, PRs)
+│   └── BddScenarioStore.java              ← In-memory branch→BddScenario map (webhook bridge)
 ├── execution/
 │   ├── CodegenService.java                ← Routes BDD → API/UI/Mobile runner → stabilisation
 │   ├── ApiTestRunner.java                 ← Generates RestAssured + JUnit 5 test code
 │   ├── UITestRunner.java                  ← Generates Selenium test code
 │   ├── MobileTestRunner.java              ← Generates Appium test code
-│   ├── TestExecutionEngine.java           ← Simulates (or runs) the generated test
+│   ├── TestExecutionEngine.java           ← Compiles and runs generated tests (JavaCompiler + JUnit Platform)
 │   ├── StabilizationLoop.java             ← Run → fail → fix (max 3× bounded loop)
 │   └── RepoContext.java                   ← Value object: context extracted from target repo
 ├── service/
 │   ├── E2ECoverageAnalyzer.java           ← Scans cloned test repo; produces GOOD/PARTIAL/NONE coverage level
 │   ├── RepoContextService.java            ← Clones target repo, builds coverage index, scans test conventions
-│   └── TestPrService.java                 ← Simulates creating GitHub/GitLab PRs
+│   └── TestPrService.java                 ← Creates real GitHub PRs (BDD Review + Final Test Code)
 └── controller/
-    └── StrategyController.java            ← /status, /approve-bdd, /refresh-context
+    ├── StrategyController.java            ← /status, /approve-bdd, /refresh-context
+    └── GitHubWebhookController.java       ← /github-webhook — handles pull_request merged events
 ```
 
 ---
@@ -103,14 +107,22 @@ nz/co/eroad/qaisystem/
   └──────────────────────────────┬──────────────────────────────────────┘
                                  │  BDD PR logged for human review
                                  │
-  ────────── Human reviews BDD PR ─────────────────────────────────────────
-                                 │
-                                 │  POST /api/strategy/approve-bdd
-                                 ▼
-  ┌─────────────────────────────────────────────────────────────────────┐
-  │ StrategyController.approveBdd()                                     │
-  │  testScriptsProducer.publishBddScenario(bddScenario)                │
-  └──────────────────────────────┬──────────────────────────────────────┘
+   ────────── Human reviews BDD PR ─────────────────────────────────────────
+                                  │
+                  ┌───────────────┴──────────────────────┐
+                  │                                       │
+         Path A — GitHub webhook                 Path B — manual endpoint
+         (production)                            (local dev / testing)
+                  │                                       │
+    BDD PR merged on GitHub               POST /api/strategy/approve-bdd
+    → POST /api/strategy/github-webhook    with the BddScenario JSON
+                  │                                       │
+   GitHubWebhookController              StrategyController.approveBdd()
+   verifySignature()                            │
+   bddScenarioStore.findByBranch()             │
+                  └───────────────┬─────────────┘
+                                  │  testScriptsProducer.publishBddScenario()
+                                  ▼
                                  │  BddScenario JSON
                                  ▼
   Kafka: TestScriptsQueue
@@ -302,20 +314,39 @@ Pure code-generation — no execution, no I/O. Takes a `BddScenario.Scenario` +
 #### TestExecutionEngine
 **`execution/TestExecutionEngine.java`**
 
-Simulates test execution (current implementation). In production would:
-- Write the script to disk
-- Compile with `javax.tools.JavaCompiler`
-- Run via JUnit Platform Launcher or Maven Surefire subprocess
-- Parse Surefire XML / stdout for results
+Compiles and executes generated test code in an isolated temp directory using the Java
+Compiler API and JUnit Platform Launcher. No simulation — every attempt is a real
+compilation + runtime execution.
 
-**Current simulation (probabilistic pass rates):**
-| Attempt | Pass probability |
-|---------|----------------|
-| 1 | 60% |
-| 2 | 80% |
-| 3 | 95% |
+**Execution flow per attempt:**
 
-Returns a `TestResult` with `passed`, `errorMessage`, `failureReasons`, `executionTimeMs`.
+```
+1. Write generated .java source to a temp dir preserving the package structure
+   (e.g. /tmp/qa-gen-{scriptId}-a{N}-/src/nz/co/eroad/.../PaymentTest.java)
+
+2. Compile with javax.tools.JavaCompiler
+   — Classpath: the running JVM classpath (includes RestAssured, JUnit 5,
+     Cucumber, Selenium, Appium — all added as compile-scope runtime deps)
+   — On failure: return TestResult(passed=false, output="COMPILE_ERROR",
+     errorMessage=diagnostics) so StabilizationLoop can apply a targeted fix
+
+3. Load compiled class with URLClassLoader
+
+4. Execute via JUnit Platform Launcher with explicit JupiterTestEngine
+   — avoids ServiceLoader problems inside Spring Boot's nested-JAR classloader
+   — SummaryGeneratingListener captures: started/passed/failed/skipped counts
+     and the exception message for each failure
+
+5. Delete temp dir (always, in finally block)
+```
+
+**Returns:** `TestResult` with `passed`, `output` ("N started, N passed, N failed, N skipped"), `errorMessage`, `failureReasons`, `executionTimeMs`.
+
+**Compile failure result:** `output = "COMPILE_ERROR"`, `errorMessage` = full compiler diagnostics (file:line message format) — `StabilizationLoop` pattern-matches against this to pick the right fix.
+
+> **JDK required at runtime.** `ToolProvider.getSystemJavaCompiler()` returns `null` if the
+> service runs on a JRE-only image. Use the `eclipse-temurin:25-jdk` base image (already set
+> in the Dockerfiles) to ensure the compiler is available in production.
 
 ---
 
@@ -433,26 +464,93 @@ See [dedicated section below](#repocontextservice-deep-dive).
 #### TestPrService
 **`service/TestPrService.java`**
 
-Simulates raising PRs for human review. In production would call GitHub/GitLab/Bitbucket APIs.
-Currently logs the full PR payload as formatted JSON to the console.
+Creates real Pull Requests on the target GitHub repository using the `GitHubService` REST
+client. No simulation — every call makes live GitHub API calls.
 
-Two public methods:
+Throws `IllegalStateException` at call time if `GitHubService.isConfigured()` is false
+(i.e. `TARGET_REPO_URL` was not set). Throws `GitHubPrException` (inner class) if any
+API call fails so the caller gets an actionable error rather than silent failure.
 
 **`createBddPr(BddScenario)`** — raises a BDD review PR:
-- Branch: `qa/bdd/{prId}-{scenarioId(6chars)}`
-- Title: `[AI-QA] BDD Scenarios for PR: {prId}`
-- Body: formatted Gherkin (`Feature:`/`Scenario:`/`Given`/`When`/`Then`) + review checklist
-- Type: `BDD_REVIEW`
+1. Create branch `qa/bdd/{prId}-{scenarioId(6chars)}` from `main` HEAD SHA
+2. Commit `scenarios/{prId}.feature` with the Gherkin content (base64 encoded)
+3. Open PR titled `[AI-QA] BDD Scenarios for PR: {prId}` with review checklist body
+4. Register scenario in `BddScenarioStore` keyed by branch name (enables webhook lookup)
+5. Return the PR HTML URL (e.g. `https://github.com/org/repo/pull/42`)
 
 **`createFinalTestPr(TestScript, TestResult)`** — raises a final test code PR:
-- Branch: `qa/tests/{prId}-{scriptId(6chars)}`
-- Title: `✅ [PASSING]` / `✅ [STABILIZED]` / `⚠️ [NEEDS REVIEW]` based on result
-- Body: execution summary table, failure details (if failed), full generated Java source, review checklist
-- Type: `FINAL_TEST_CODE`
+1. Create branch `qa/tests/{prId}-{scriptId(6chars)}` from `main`
+2. Commit `src/test/java/{package}/{fileName}` with the generated Java source
+3. Open PR titled `✅ [PASSING]` / `✅ [STABILIZED]` / `⚠️ [NEEDS REVIEW]` based on result
+4. Body includes execution summary table, failure details (if failed), full generated Java source, review checklist
+
+> **Requires GitHub configuration.** Set `TARGET_REPO_URL` and ensure a token is available
+> via `TARGET_REPO_TOKEN` or the system git credential helper. See `GitHubService` below.
+
+---
+
+#### GitHubService
+**`github/GitHubService.java`**
+
+Thin REST client wrapping the GitHub API v3.  Constructed as a Spring `@Service` singleton
+and injected into `TestPrService`.
+
+**Token resolution — priority order:**
+
+| Priority | Source | Notes |
+|----------|--------|-------|
+| 1 | `TARGET_REPO_TOKEN` env var | Explicit PAT — recommended for CI/production |
+| 2 | `git credential fill` | Reads from the system credential helper. On macOS this is **osxkeychain**, which holds the token IntelliJ wrote when you connected it to GitHub — so local dev works with zero extra setup as long as IntelliJ is signed in. |
+| 3 | *(none)* | Service fails startup if `TARGET_REPO_URL` is set but no token was resolved |
+
+**Startup validation (`@PostConstruct validateConfiguration()`):**
+Throws `IllegalStateException` if a URL is configured but no token could be resolved.
+If no URL is configured at all, the check is skipped — the service starts without GitHub
+integration (PR creation will throw `IllegalStateException` at runtime if invoked).
+
+**Public API:**
+
+| Method | Description |
+|--------|-------------|
+| `isConfigured()` | `true` when URL + token both available |
+| `createBranch(name, base)` | POST `/git/refs` — returns `true` on success or 422 (already exists) |
+| `createFile(branch, path, content, msg)` | PUT `/contents/{path}` — base64 encodes content |
+| `createPullRequest(title, body, head, base)` | POST `/pulls` — returns `GitHubPrResult(prNumber, url, branch)` |
+
+All methods return `false` / `null` (not throw) when `isConfigured()` is false, so callers
+(`TestPrService`) can check and throw their own typed exceptions.
+
+---
+
+#### BddScenarioStore
+**`github/BddScenarioStore.java`**
+
+In-memory `ConcurrentHashMap<branchName, BddScenario>` that bridges the time between
+opening a BDD Review PR (in `TestPrService`) and receiving the GitHub merge webhook
+(in `GitHubWebhookController`).
+
+**Lifecycle of an entry:**
+
+```
+1. TestPrService.createBddPr()
+     → bddScenarioStore.put("qa/bdd/PR-xxx-abc123", scenario)
+
+2. (human reviews and merges the PR on GitHub)
+
+3. GitHubWebhookController.handleWebhook()
+     → bddScenarioStore.findByBranch("qa/bdd/PR-xxx-abc123")
+     → testScriptsProducer.publishBddScenario(scenario)
+     → bddScenarioStore.remove("qa/bdd/PR-xxx-abc123")
+```
+
+Also exposes `size()` for observability — the number of BDD PRs currently awaiting human
+review.
 
 ---
 
 ### Config Layer
+
+#### KafkaConfig
 
 #### KafkaConfig
 **`config/KafkaConfig.java`**
@@ -755,8 +853,8 @@ PR is raised even on `ABANDONED` so humans can see and fix the partial code.
 | Direction | Topic | Payload |
 |-----------|-------|---------|
 | **Consumes** | `ImpactResultsQueue` | `ImpactEnvelope` JSON (from impact-service) |
-| **Produces** | `TestScriptsQueue` | `BddScenario` JSON |
-| **Consumes** | `TestScriptsQueue` | `BddScenario` JSON (self-loop via human approval gate) |
+| **Produces** | `TestScriptsQueue` | `BddScenario` JSON — published by `TestScriptsProducer` via two paths: `POST /approve-bdd` (local dev) or GitHub webhook merge event (production) |
+| **Consumes** | `TestScriptsQueue` | `BddScenario` JSON — picked up by `TestScriptsConsumer` → `CodegenService` |
 | *(future)* | `TestResultsQueue` | `TestResult` JSON |
 
 Consumer group: `strategy-service-group`
@@ -771,17 +869,50 @@ Consumer group: `strategy-service-group`
 ```
 
 ### `POST /api/strategy/approve-bdd`
-Human gate — call this with the `BddScenario` JSON logged by the service when it creates the
-BDD review PR. This publishes the scenario to `TestScriptsQueue`, triggering codegen.
+Manual codegen trigger for **local development and testing**. Call this with the
+`BddScenario` JSON logged by the service when it opens the BDD Review PR.  
+This publishes the scenario to `TestScriptsQueue`, triggering the full codegen pipeline.
 
-**Body:** the full `BddScenario` JSON from the service logs (copy from log line starting with
-`[TestPrService] BDD Review PR created:`).
+In production the equivalent trigger is the GitHub webhook (see below) — this endpoint
+exists so you can test the pipeline without needing a real GitHub webhook delivery.
+
+**Body:** the full `BddScenario` JSON from the service logs (copy from the log line starting
+with `[TestPrService] BDD Review PR #N created:`).
 
 ```bash
 curl -X POST http://localhost:8082/api/strategy/approve-bdd \
   -H "Content-Type: application/json" \
   -d '{ "scenarioId": "...", "prId": "PR-XXXX", "scenarios": [...], ... }'
 ```
+
+### `POST /api/strategy/github-webhook`
+Receives GitHub `pull_request` webhook events. Used in **production** as the automatic
+codegen trigger when a BDD Review PR is merged on GitHub.
+
+**GitHub Setup:**
+```
+Repository Settings → Webhooks → Add webhook
+  Payload URL : https://<your-host>/api/strategy/github-webhook
+  Content type: application/json
+  Secret      : value of GITHUB_WEBHOOK_SECRET env var
+  Events      : Pull requests
+```
+
+**Flow:**
+1. GitHub fires `pull_request` with `action=closed, merged=true`
+2. Controller verifies `X-Hub-Signature-256` HMAC-SHA256 header
+3. Looks up the `BddScenario` in `BddScenarioStore` by the merged branch name
+4. Publishes to `TestScriptsQueue` → `CodegenService` handles from here
+
+**Response examples:**
+```json
+{ "status": "CODEGEN_TRIGGERED", "sourcePrId": "PR-XXXX", "scenarioId": "...", "mergedBranch": "qa/bdd/PR-XXXX-abc123" }
+{ "status": "NOT_A_QA_PR",       "branch": "feature/some-other-branch" }
+{ "status": "IGNORED",           "event": "issues" }
+```
+
+> If `GITHUB_WEBHOOK_SECRET` is not set, signature verification is skipped with a warning —
+> acceptable for local dev, **must be set in production**.
 
 ### `POST /api/strategy/refresh-context`
 Re-runs `git pull` on the target repo and refreshes the RepoContext cache without restart.

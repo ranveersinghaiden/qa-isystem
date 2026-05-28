@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Project-scoped Maven settings for QA-ISystem.
+
+  Purpose: this file overrides the user-level ~/.m2/settings.xml so that
+  builds for this personal project resolve dependencies from Maven Central
+  instead of through a corporate Nexus mirror that may not be reachable.
+
+  It is picked up automatically because .mvn/maven.config passes "-s .mvn/settings.xml"
+  on every Maven invocation in this directory (including ./mvnw).
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0
+                              https://maven.apache.org/xsd/settings-1.2.0.xsd">
+
+    <!-- Use the standard local repo location -->
+    <localRepository>${user.home}/.m2/repository</localRepository>
+
+    <!-- No mirrors — resolve all artifacts from the repository declared in each pom.xml
+         (Spring Boot parent points to Maven Central by default). -->
+    <mirrors/>
+
+</settings>
+

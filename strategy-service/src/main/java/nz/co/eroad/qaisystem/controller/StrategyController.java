@@ -69,14 +69,17 @@ public class StrategyController {
     }
 
     /**
-     * DEV SHORTCUT — bypasses GitHub by directly publishing a BddScenario to TestScriptsQueue.
+     * Manual trigger — publishes a {@link BddScenario} directly to {@code TestScriptsQueue}
+     * to start the codegen pipeline.
      *
-     * <p>In production, this step is handled automatically: the GitHub merge webhook fires
-     * {@code POST /api/strategy/github-webhook}, which looks up the stored scenario by
-     * branch name and triggers codegen without any manual intervention.
+     * <p>Useful for testing without a live GitHub webhook (e.g. copy the BDD scenario JSON
+     * logged by {@code BddGenerator} and POST it here to exercise the full codegen flow
+     * locally).
      *
-     * <p>Use this endpoint in local dev (no GitHub configured) after reviewing the BDD
-     * scenarios that were logged by {@code TestPrService}.
+     * <p>In production the equivalent step is fully automatic: GitHub fires a
+     * {@code pull_request} merged webhook to {@code /api/strategy/github-webhook},
+     * which looks up the stored scenario by branch name and triggers codegen
+     * without any intervention.
      */
     @PostMapping("/approve-bdd")
     public ResponseEntity<Map<String, Object>> approveBdd(@RequestBody BddScenario bdd) {

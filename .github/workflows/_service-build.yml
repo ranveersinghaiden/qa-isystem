@@ -10,6 +10,11 @@
 # Secrets consumed (all optional — image push is skipped when not available):
 #   GHCR_TOKEN   — Personal Access Token or GITHUB_TOKEN with packages:write
 #
+# Maven settings:
+#   The project ships a .mvn/settings.xml (empty mirrors) and .mvn/maven.config
+#   (-s .mvn/settings.xml) so ./mvnw always uses Maven Central regardless of any
+#   corporate Nexus mirror that may be in the CI agent's ~/.m2/settings.xml.
+#
 # Image naming convention:
 #   ghcr.io/{owner}/{repo-lowercase}/{service}:{sha-short}
 #   ghcr.io/{owner}/{repo-lowercase}/{service}:latest   (main/master only)

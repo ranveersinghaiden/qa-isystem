@@ -4,6 +4,8 @@
 # Triggers when code changes in:
 #   • impact-service/**   (the service itself)
 #   • common/**           (shared library)
+#   • .mvn/**             (Maven Central routing settings — affects all builds)
+#   • pom.xml             (root BOM / parent version — affects all modules)
 #   • .github/workflows/_service-build.yml
 #   • .github/workflows/impact-service-ci.yml
 #
@@ -21,6 +23,8 @@ on:
     paths:
       - "impact-service/**"
       - "common/**"
+      - ".mvn/**"
+      - "pom.xml"
       - ".github/workflows/_service-build.yml"
       - ".github/workflows/impact-service-ci.yml"
 
@@ -32,6 +36,8 @@ on:
     paths:
       - "impact-service/**"
       - "common/**"
+      - ".mvn/**"
+      - "pom.xml"
 
   workflow_dispatch:
     inputs:

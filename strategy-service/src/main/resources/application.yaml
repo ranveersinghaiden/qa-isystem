@@ -67,19 +67,26 @@ aiqa:
     auth:
       # auth type: none | token | ssh
       #
-      # none  → git uses the system credential store (osxkeychain on macOS).
-      #         This works automatically if IntelliJ is connected to GitHub —
-      #         it stores the token in the Keychain which git then reads.
-      #         No extra config needed.
+      # none  → GitHubService first checks TARGET_REPO_TOKEN; if blank it calls
+      #         "git credential fill" which reads whatever token the system
+      #         credential helper holds for https://github.com.
+      #         On macOS this is osxkeychain — the same store IntelliJ writes
+      #         to when you authorise it with GitHub, so local dev works with
+      #         zero extra configuration as long as IntelliJ is already
+      #         connected to GitHub.
+      #         For CI/production, set TARGET_REPO_TOKEN instead (more explicit).
       #
-      # token → embed a PAT in the clone URL (most reliable for CI/servers).
+      # token → always use TARGET_REPO_TOKEN (embed a PAT in the HTTPS URL).
+      #         Most reliable for servers / Docker containers where git
+      #         credential helpers are not set up.
       #         Set TOKEN and USERNAME as environment variables:
       #           export TARGET_REPO_TOKEN=ghp_your_token
       #           export TARGET_REPO_USERNAME=your_github_username
-      #         Then set type: token below.
       #
-      # ssh   → use the SSH agent. Ensure ~/.ssh/id_rsa (or ed25519) is loaded
-      #         and the URL starts with git@github.com:
+      # ssh   → use the SSH agent for JGit clone/pull. Note: the GitHub REST
+      #         API always requires a token, so PR creation is disabled when
+      #         type=ssh unless TARGET_REPO_TOKEN is also set.
+      #
       type: none
       token: ${TARGET_REPO_TOKEN:}
       username: ${TARGET_REPO_USERNAME:}

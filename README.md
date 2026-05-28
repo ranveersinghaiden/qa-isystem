@@ -160,12 +160,26 @@ Phase 3 — Strategy Decision (strategy-service)  ← minimal AI
 Phase 4 — BDD Generation (strategy-service)
  15. BddGenerator generates Gherkin scenarios (template-based)
      — happy path, error path, boundary outline (if API_CHANGE)
- 16. TestPrService creates a BDD Review PR for human approval
- 17. Human reviews and approves → POST /api/strategy/approve-bdd
+ 16. GitHubService creates BDD branch + commits .feature file
+     TestPrService opens BDD Review PR on GitHub (qa/bdd/{prId}-{short})
+     BddScenarioStore registers scenario keyed by branch name
+ 17. Human reviews the BDD PR on GitHub
 
 Phase 5 — Code Generation (strategy-service)
- 18. approve-bdd publishes BddScenario → TestScriptsQueue
- 19. CodegenService routes by testType:
+     Two equivalent triggers for codegen:
+
+     Path A — GitHub webhook (production):
+ 18a. Human merges the BDD Review PR on GitHub
+      GitHub fires pull_request webhook to POST /api/strategy/github-webhook
+      GitHubWebhookController verifies HMAC-SHA256 signature
+      Looks up BddScenario in BddScenarioStore by merged branch name
+      Publishes BddScenario → TestScriptsQueue
+
+     Path B — Manual endpoint (local dev / testing):
+ 18b. POST /api/strategy/approve-bdd  with the BddScenario JSON
+      StrategyController publishes BddScenario → TestScriptsQueue
+
+ 19. TestScriptsConsumer → CodegenService routes by testType:
        API    → ApiTestRunner    (RestAssured + JUnit 5)
        UI     → UITestRunner     (Selenium + ChromeDriver)
        Mobile → MobileTestRunner (Appium + AndroidDriver)
@@ -175,11 +189,14 @@ Phase 6 — Test Stabilisation (strategy-service)
        Attempt 1: add timeouts, retry-after config
        Attempt 2: add null guards, assertion retry wrapper
        Attempt 3: simplify to minimal smoke test
- 21. On pass (any attempt): TestPrService creates Final Test PR
- 22. On 3× fail:            marked ABANDONED, PR raised for human review
+     TestExecutionEngine compiles generated Java with javax.tools.JavaCompiler
+     and runs it via JUnit Platform Launcher + JupiterTestEngine
+ 21. On pass (any attempt): GitHubService creates final-test branch + file,
+     TestPrService opens Final Test PR on GitHub (qa/tests/{prId}-{short})
+ 22. On 3× fail: ABANDONED — PR still raised for human review
 
 Phase 7 — Feedback Loop (feedback-service)  ← PLANNED
- 23. Human merges BDD PR or Final Test PR on GitHub
+ 23. Human edits and merges BDD PR or Final Test PR on GitHub
  24. GitHub webhook fires to feedback-service
  25. FeedbackAnalyser diffs AI-generated blob vs human-merged blob
        — Gherkin structural diff for BDD scenarios
@@ -242,9 +259,10 @@ For a minimal local run **no environment variables are required** — all servic
 
 | Variable | Service | Purpose | Default |
 |----------|---------|---------|---------|
-| `TARGET_REPO_URL` | strategy-service | URL of the test repository to clone for coverage context | *(none — coverage will be `UNKNOWN`)* |
-| `TARGET_REPO_TOKEN` | strategy-service | Personal access token (PAT) for a private test repo | *(none — falls back to system credential store / osxkeychain)* |
+| `TARGET_REPO_URL` | strategy-service | URL of the test repository to clone for coverage context and to create BDD / test-code PRs in | *(none — coverage UNKNOWN, GitHub PR creation disabled)* |
+| `TARGET_REPO_TOKEN` | strategy-service | GitHub PAT with `repo` scope. **Optional for local dev** — if blank, GitHubService automatically calls `git credential fill` which reads the token IntelliJ stored in osxkeychain. Required for CI/production (no credential helper available). If `TARGET_REPO_URL` is set but no token can be resolved, **the service refuses to start**. | *(none — falls back to osxkeychain / IntelliJ auth)* |
 | `TARGET_REPO_USERNAME` | strategy-service | GitHub username paired with the PAT | *(none)* |
+| `GITHUB_WEBHOOK_SECRET` | strategy-service | HMAC-SHA256 secret matching the value set in GitHub Repository → Webhooks. Required for the BDD PR merge to automatically trigger codegen. Leave blank in local dev to skip signature verification. | *(none — verification skipped with a warning)* |
 | `AIQA_AI_ENABLED` | impact-service | Set `true` to enable AI-assisted risk scoring in the gray zone | `false` |
 | `AIQA_AI_API_KEY` | impact-service | OpenAI (or compatible) API key — required when AI is enabled | *(none)* |
 | `AIQA_AI_MODEL` | impact-service | Model used for AI scoring | `gpt-4o-mini` |
@@ -431,7 +449,9 @@ docker compose down
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/strategy/status` | Service health and status |
-| `POST` | `/api/strategy/approve-bdd` | Simulate BDD PR merge → triggers codegen |
+| `POST` | `/api/strategy/approve-bdd` | Manually trigger codegen from a BDD scenario (local dev / testing gate) |
+| `POST` | `/api/strategy/github-webhook` | GitHub `pull_request` webhook — auto-triggers codegen on BDD PR merge |
+| `POST` | `/api/strategy/refresh-context` | Re-pull target test repo and refresh coverage/context cache |
 
 **Approve BDD body:** the full `BddScenario` JSON logged by the strategy-service when it creates the BDD PR.
 
@@ -488,9 +508,9 @@ Each service has its own `application.yaml`. Common properties:
 Expected output:
 
 ```
-[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0   ← pr-service
-[INFO] Tests run: 24, Failures: 0, Errors: 0, Skipped: 0   ← impact-service
-[INFO] Tests run: 23, Failures: 0, Errors: 0, Skipped: 0   ← strategy-service
+[INFO] Tests run: 18, Failures: 0, Errors: 0, Skipped: 0   ← pr-service
+[INFO] Tests run: 27, Failures: 0, Errors: 0, Skipped: 0   ← impact-service
+[INFO] Tests run: 26, Failures: 0, Errors: 0, Skipped: 0   ← strategy-service
 [INFO] BUILD SUCCESS
 ```
 
@@ -519,16 +539,17 @@ Expected output:
 
 | Module | Test Class | Tests | What it covers |
 |--------|-----------|-------|----------------|
-| **pr-service** | `PRServiceTest` | 8 | enrichment, validation, Kafka publish |
+| **pr-service** | `PRServiceTest` | 9 | enrichment, validation, Kafka publish |
 | **pr-service** | `PRControllerTest` | 4 | `/webhook`, `/submit`, `/demo`, `/health` endpoints |
+| **pr-service** | `PRControllerAdviceTest` | 5 | global exception handler, error response shapes |
 | **impact-service** | `GitDiffParserTest` | 7 | diff parsing, file types, extensions |
 | **impact-service** | `RiskScorerTest` | 11 | level thresholds, factor weights, normalisation |
-| **impact-service** | `TestCoverageServiceTest` | 6 | coverage ratio, NONE/GOOD/PARTIAL levels |
+| **impact-service** | `TestCoverageServiceTest` | 9 | coverage ratio, NONE/GOOD/PARTIAL levels |
 | **strategy-service** | `RepoContextTest` | 9 | helper methods, agent instructions header |
 | **strategy-service** | `ApiTestRunnerTest` | 7 | code generation, repo context, agent header |
-| **strategy-service** | `StrategyAgentTest` | 7 | SKIP/CREATE logic, fallback rules, coverage override |
+| **strategy-service** | `StrategyAgentTest` | 10 | SKIP/CREATE logic, fallback rules, coverage override |
 
-**Total: 59 tests, 0 failures**
+**Total: 71 tests, 0 failures**
 
 ---
 <!-- end of README -->
@@ -545,14 +566,18 @@ The `.github/workflows/` directory contains **8 workflow files** (2 reusable + 6
 ├── _service-build.yml      ← Reusable: build, test, push Docker image to GHCR
 ├── _service-deploy.yml     ← Reusable: SSH deploy to a target server
 │
-├── pr-service-ci.yml       ← Triggers on pr-service/** or common/** changes
-├── impact-service-ci.yml   ← Triggers on impact-service/** or common/** changes
-├── strategy-service-ci.yml ← Triggers on strategy-service/** or common/** changes
+├── pr-service-ci.yml       ← Triggers on pr-service/**, common/**, .mvn/**, pom.xml
+├── impact-service-ci.yml   ← Triggers on impact-service/**, common/**, .mvn/**, pom.xml
+├── strategy-service-ci.yml ← Triggers on strategy-service/**, common/**, .mvn/**, pom.xml
 │
 ├── pr-service-cd.yml       ← Deploys after CI succeeds (auto) or manually
 ├── impact-service-cd.yml   ← Same for impact-service
 └── strategy-service-cd.yml ← Same for strategy-service
 ```
+
+> **`.mvn/` and `pom.xml` in all path triggers.** The project ships a `.mvn/settings.xml`
+> (empty mirrors) and `.mvn/maven.config` (`-s .mvn/settings.xml`) that route builds to
+> Maven Central. Any change to these files re-triggers CI for all three services.
 
 ### CI flow per service (on push or PR)
 
@@ -622,6 +647,19 @@ ghcr.io/{owner}/{repo}/pr-service:pr-42         ← on pull requests (not pushed
 | `STAGING_DEPLOY_HOST` | staging | Staging server IP or hostname |
 | `STAGING_DEPLOY_USER` | staging | SSH username on the staging server |
 | `STAGING_DEPLOY_SSH_KEY` | staging | SSH private key for staging server |
+
+### Required `.env` variables on the deployment server
+
+These are read by `docker-compose.prod.yml` on startup. Copy `.env.example` to `.env` and fill in your values.
+
+| Variable | Service | Required | Purpose |
+|----------|---------|----------|---------|
+| `TARGET_REPO_URL` | strategy-service | Yes (for PRs) | HTTPS URL of the target test repository |
+| `TARGET_REPO_TOKEN` | strategy-service | Yes (for PRs) | GitHub PAT with `repo` scope; `git credential fill` is not available in Docker |
+| `TARGET_REPO_USERNAME` | strategy-service | Yes (for PRs) | GitHub username paired with the PAT |
+| `GITHUB_WEBHOOK_SECRET` | strategy-service | Yes (recommended) | HMAC-SHA256 secret matching the GitHub webhook setting — prevents unauthenticated codegen triggers |
+| `AIQA_AI_ENABLED` | impact-service | No | Set `true` to enable AI-assisted risk scoring |
+| `AIQA_AI_API_KEY` | impact-service | If AI enabled | OpenAI-compatible API key |
 
 ### Required repository variables
 
