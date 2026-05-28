@@ -3,6 +3,7 @@ package nz.co.eroad.qaisystem.service;
 import nz.co.eroad.qaisystem.github.BddScenarioStore;
 import nz.co.eroad.qaisystem.github.GitHubService;
 import nz.co.eroad.qaisystem.github.GitHubService.GitHubPrResult;
+import nz.co.eroad.qaisystem.config.TargetRepoProperties;
 import nz.co.eroad.qaisystem.model.BddScenario;
 import nz.co.eroad.qaisystem.model.TestResult;
 import nz.co.eroad.qaisystem.model.TestScript;
@@ -41,8 +42,9 @@ import java.time.format.DateTimeFormatter;
 @RequiredArgsConstructor
 public class TestPrService {
 
-    private final GitHubService    gitHubService;
-    private final BddScenarioStore bddScenarioStore;
+    private final GitHubService        gitHubService;
+    private final BddScenarioStore     bddScenarioStore;
+    private final TargetRepoProperties repoProps;
 
     private static final DateTimeFormatter FMT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -64,9 +66,10 @@ public class TestPrService {
         String title  = "[AI-QA] BDD Scenarios for PR: " + scenario.getPrId();
         String body   = buildBddPrBody(scenario);
 
-        log.info("[TestPrService] Creating BDD PR on GitHub — branch='{}'", branch);
+        log.info("[TestPrService] Creating BDD PR on GitHub — branch='{}' base='{}'",
+                branch, repoProps.getBranch());
 
-        if (!gitHubService.createBranch(branch, "main")) {
+        if (!gitHubService.createBranch(branch, repoProps.getBranch())) {
             throw new GitHubPrException("Failed to create branch '" + branch + "' — check logs above");
         }
 
@@ -77,7 +80,7 @@ public class TestPrService {
             throw new GitHubPrException("Failed to commit feature file '" + featurePath + "'");
         }
 
-        GitHubPrResult result = gitHubService.createPullRequest(title, body, branch, "main");
+        GitHubPrResult result = gitHubService.createPullRequest(title, body, branch, repoProps.getBranch());
         if (result == null) {
             throw new GitHubPrException("GitHub API returned null for PR creation (head=" + branch + ")");
         }
@@ -106,9 +109,10 @@ public class TestPrService {
         String title  = buildTestPrTitle(script, result);
         String body   = buildTestPrBody(script, result);
 
-        log.info("[TestPrService] Creating final-test PR on GitHub — branch='{}'", branch);
+        log.info("[TestPrService] Creating final-test PR on GitHub — branch='{}' base='{}'",
+                branch, repoProps.getBranch());
 
-        if (!gitHubService.createBranch(branch, "main")) {
+        if (!gitHubService.createBranch(branch, repoProps.getBranch())) {
             throw new GitHubPrException("Failed to create branch '" + branch + "'");
         }
 
@@ -122,7 +126,7 @@ public class TestPrService {
             throw new GitHubPrException("Failed to commit test file '" + filePath + "'");
         }
 
-        GitHubPrResult pr = gitHubService.createPullRequest(title, body, branch, "main");
+        GitHubPrResult pr = gitHubService.createPullRequest(title, body, branch, repoProps.getBranch());
         if (pr == null) {
             throw new GitHubPrException("GitHub API returned null for PR creation (head=" + branch + ")");
         }

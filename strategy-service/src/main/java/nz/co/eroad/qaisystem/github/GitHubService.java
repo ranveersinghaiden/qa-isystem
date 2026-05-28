@@ -111,6 +111,42 @@ public class GitHubService {
                     "  3. Run: git credential fill <<< 'protocol=https\\nhost=github.com\\n' " +
                     "to verify the credential helper works");
         }
+
+        // ── Live connectivity check ─────────────────────────────────────────
+        if (owner == null || resolvedToken == null) return;
+
+        try {
+            // 1. Who does this token authenticate as?
+            String meBody = restClient.get()
+                    .uri("/user")
+                    .retrieve()
+                    .body(String.class);
+            Map<String, Object> me = objectMapper.readValue(meBody, new TypeReference<>() {});
+            log.info("[GitHubService] Token authenticated as: {} (login={})",
+                    me.get("name"), me.get("login"));
+
+            // 2. Can we reach the target repo?
+            String repoBody = restClient.get()
+                    .uri("/repos/{owner}/{repo}", owner, repo)
+                    .retrieve()
+                    .body(String.class);
+            Map<String, Object> repoInfo = objectMapper.readValue(repoBody, new TypeReference<>() {});
+            log.info("[GitHubService] Repo confirmed: {} (private={}, default_branch={})",
+                    repoInfo.get("full_name"), repoInfo.get("private"), repoInfo.get("default_branch"));
+
+            String defaultBranch = (String) repoInfo.get("default_branch");
+            if (defaultBranch != null && !defaultBranch.equals("main")) {
+                log.warn("[GitHubService] ⚠️  Repo default branch is '{}', not 'main'. " +
+                         "Update application.yaml: aiqa.target-repo.branch: {}",
+                         defaultBranch, defaultBranch);
+            }
+
+        } catch (Exception e) {
+            log.error("[GitHubService] ⚠️  Startup connectivity check FAILED for {}/{}: {} — " +
+                      "owner/repo in TARGET_REPO_URL may be wrong, or the token lacks repo access. " +
+                      "GitHub returns 404 for private repos when the token has no permission.",
+                      owner, repo, e.getMessage());
+        }
     }
 
     // ─── Public API ────────────────────────────────────────────────────────────
@@ -139,9 +175,10 @@ public class GitHubService {
     public boolean createBranch(String newBranchName, String baseBranch) {
         if (!isConfigured()) return false;
         try {
-            String sha = getRef("heads/" + baseBranch);
+            String sha = getBranchSha(baseBranch);
             if (sha == null) {
-                log.error("[GitHubService] Could not resolve SHA for branch '{}'", baseBranch);
+                log.error("[GitHubService] Could not resolve SHA for branch '{}' " +
+                        "— check that the branch exists and the token has repo access", baseBranch);
                 return false;
             }
             restClient.post()
@@ -186,8 +223,10 @@ public class GitHubService {
             String encoded = Base64.getEncoder()
                     .encodeToString(content.getBytes(StandardCharsets.UTF_8));
 
+            // Inline filePath into the URI string — same reason as getRef():
+            // a template variable would encode '/' to '%2F', breaking the GitHub API.
             restClient.put()
-                    .uri("/repos/{owner}/{repo}/contents/{path}", owner, repo, filePath)
+                    .uri("/repos/{owner}/{repo}/contents/" + filePath, owner, repo)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(Map.of(
                             "message", commitMessage,
@@ -329,21 +368,30 @@ public class GitHubService {
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    /** Returns the commit SHA a ref points to, or {@code null} on failure. */
-    private String getRef(String ref) {
+    /**
+     * Returns the HEAD commit SHA for a branch, or {@code null} on failure.
+     *
+     * <p>Uses {@code GET /repos/{owner}/{repo}/branches/{branch}} rather than
+     * the git/ref endpoint — the branch name ({@code main}, {@code develop}, etc.)
+     * contains no slashes so URI template encoding is safe, and this endpoint
+     * is more reliable than the low-level git/ref API.
+     */
+    private String getBranchSha(String branchName) {
         try {
+            log.info("[GitHubService] GET https://api.github.com/repos/{}/{}/branches/{}",
+                    owner, repo, branchName);
             String body = restClient.get()
-                    .uri("/repos/{owner}/{repo}/git/ref/{ref}", owner, repo, ref)
+                    .uri("/repos/{owner}/{repo}/branches/{branch}", owner, repo, branchName)
                     .retrieve()
                     .body(String.class);
 
             Map<String, Object> map = objectMapper.readValue(body, new TypeReference<>() {});
             @SuppressWarnings("unchecked")
-            Map<String, Object> object = (Map<String, Object>) map.get("object");
-            return (String) object.get("sha");
+            Map<String, Object> commit = (Map<String, Object>) map.get("commit");
+            return (String) commit.get("sha");
 
         } catch (Exception e) {
-            log.error("[GitHubService] getRef '{}' failed: {}", ref, e.getMessage());
+            log.error("[GitHubService] getBranchSha '{}' failed: {}", branchName, e.getMessage());
             return null;
         }
     }
