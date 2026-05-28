@@ -35,7 +35,7 @@ aiqa:
     risk-threshold-high: 0.7
     risk-threshold-medium: 0.4
   target-repo:
-    url: ""   # set via TARGET_REPO_URL env var or override here (e.g. https://github.com/your-org/your-test-repo)
+    url: ${TARGET_REPO_URL:}             # e.g. https://github.com/your-org/your-test-repo
     branch: main
     local-path: /tmp/qa-context-repo
 

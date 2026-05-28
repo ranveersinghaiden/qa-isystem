@@ -9,10 +9,13 @@
 #
 # Required environment variables (set in a .env file at DEPLOY_PATH on the server):
 #
-#   # Image tags — set by the CD workflow (or "latest" for manual deploys)
-#   PR_SERVICE_IMAGE=ghcr.io/your-org/qa-isystem/pr-service:latest
-#   IMPACT_SERVICE_IMAGE=ghcr.io/your-org/qa-isystem/impact-service:latest
-#   STRATEGY_SERVICE_IMAGE=ghcr.io/your-org/qa-isystem/strategy-service:latest
+#   # Container registry — the GitHub org / user that owns the packages
+#   GHCR_ORG=your-github-org                 # e.g. "acme-corp"
+#
+#   # Optional: pin to specific image tags (default: latest)
+#   PR_SERVICE_TAG=latest
+#   IMPACT_SERVICE_TAG=latest
+#   STRATEGY_SERVICE_TAG=latest
 #
 #   # strategy-service: target test repo (optional)
 #   TARGET_REPO_TOKEN=ghp_your_token
@@ -29,7 +32,7 @@ services:
 
   # ── pr-service ──────────────────────────────────────────────────────────────
   pr-service:
-    image: ${PR_SERVICE_IMAGE:-ghcr.io/your-org/qa-isystem/pr-service:latest}
+    image: ghcr.io/${GHCR_ORG}/qa-isystem/pr-service:${PR_SERVICE_TAG:-latest}
     container_name: qa-pr-service
     restart: unless-stopped
     depends_on:
@@ -49,7 +52,7 @@ services:
 
   # ── impact-service ──────────────────────────────────────────────────────────
   impact-service:
-    image: ${IMPACT_SERVICE_IMAGE:-ghcr.io/your-org/qa-isystem/impact-service:latest}
+    image: ghcr.io/${GHCR_ORG}/qa-isystem/impact-service:${IMPACT_SERVICE_TAG:-latest}
     container_name: qa-impact-service
     restart: unless-stopped
     depends_on:
@@ -73,7 +76,7 @@ services:
 
   # ── strategy-service ────────────────────────────────────────────────────────
   strategy-service:
-    image: ${STRATEGY_SERVICE_IMAGE:-ghcr.io/your-org/qa-isystem/strategy-service:latest}
+    image: ghcr.io/${GHCR_ORG}/qa-isystem/strategy-service:${STRATEGY_SERVICE_TAG:-latest}
     container_name: qa-strategy-service
     restart: unless-stopped
     depends_on:
