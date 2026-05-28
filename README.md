@@ -24,6 +24,8 @@ produces executable test code, and stabilises failing tests — all without huma
 8. [Configuration](#configuration)
 9. [CI/CD Pipelines](#cicd-pipelines)
 10. [Technology Stack](#technology-stack)
+11. [Future Roadmap](#future-roadmap)
+    - [Feedback Service — Self-Improving Agents](#feedback-service--self-improving-agents)
 
 ---
 
@@ -78,7 +80,23 @@ produces executable test code, and stabilises failing tests — all without huma
 │  │            (run → fail → fix, max 3×)                  │                  │
 │  │                       │                                │                  │
 │  │               Final Test PR ◄── Human reviews          │                  │
+│  │                       │  (merge triggers feedback loop)│                  │
 │  └────────────────────────────────────────────────────────┘                  │
+│                                                                              │
+│  ┌──────────────────────────────────────────────────────┐                    │
+│  │  feedback-service  :8083   Phase 7 (PLANNED)         │                    │
+│  │                                                      │                    │
+│  │  On BDD PR merge:  AI blob vs merged blob            │                    │
+│  │  On Test PR merge: AI blob vs merged blob            │                    │
+│  │       │                                              │                    │
+│  │  FeedbackAnalyser (Gherkin + AST diff)               │                    │
+│  │       │                                              │                    │
+│  │  FeedbackClassifier (label each delta)               │                    │
+│  │       │                                              │                    │
+│  │  ContextWriter → commits .qa-agent/instructions.md  │                    │
+│  │                  back to the test repository         │                    │
+│  │                  (improves next generation cycle)    │                    │
+│  └──────────────────────────────────────────────────────┘                    │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -101,8 +119,9 @@ produces executable test code, and stabilises failing tests — all without huma
 |-------|----------|----------|---------|
 | `FeatureUpdatesQueue` | pr-service | impact-service | `PullRequest` JSON |
 | `ImpactResultsQueue` | impact-service | strategy-service | `ImpactEnvelope` JSON |
-| `TestScriptsQueue` | strategy-service (approve-bdd) | strategy-service (codegen) | `BddScenario` JSON |
+| `TestScriptsQueue` | strategy-service (approve-bdd / webhook) | strategy-service (codegen) | `BddScenario` JSON |
 | `TestResultsQueue` | strategy-service (stabilisation) | *(future consumers)* | `TestResult` JSON |
+| `FeedbackQueue` | feedback-service *(planned)* | feedback-service *(planned)* | `FeedbackBatch` JSON |
 
 ---
 
@@ -158,6 +177,21 @@ Phase 6 — Test Stabilisation (strategy-service)
        Attempt 3: simplify to minimal smoke test
  21. On pass (any attempt): TestPrService creates Final Test PR
  22. On 3× fail:            marked ABANDONED, PR raised for human review
+
+Phase 7 — Feedback Loop (feedback-service)  ← PLANNED
+ 23. Human merges BDD PR or Final Test PR on GitHub
+ 24. GitHub webhook fires to feedback-service
+ 25. FeedbackAnalyser diffs AI-generated blob vs human-merged blob
+       — Gherkin structural diff for BDD scenarios
+       — AST diff (JavaParser) for test code
+ 26. FeedbackClassifier labels each delta:
+       WRONG_ASSERTION | MISSING_CONTEXT | WRONG_TEST_TYPE |
+       WRONG_ENDPOINT  | STYLE_PREFERENCE | COVERAGE_GAP
+ 27. ContextWriter commits .qa-agent/instructions.md to test repo
+       — growing rule set derived from real human corrections
+       — read by RepoContextService on next generation cycle
+ 28. Next generation run starts with richer context → converges toward
+       zero-edit AI output over time
 ```
 
 ---
@@ -611,9 +645,220 @@ cd /opt/qa-isystem
 cp .env.example .env
 nano .env   # fill in your values
 
-# First time: pull Kafka + Zookeeper and start them
+# Subsequent deploys are handled automatically by the CD workflow
 docker compose -f docker-compose.yml up -d zookeeper kafka
 
 # Subsequent deploys are handled automatically by the CD workflow
 ```
+
+---
+
+## Future Roadmap
+
+### Feedback Service — Self-Improving Agents
+
+> **Status:** Planned — not yet implemented.
+
+#### Motivation
+
+Every time a human reviews a BDD PR or a final test-code PR, they may edit, rewrite, or
+reject parts of what the AI generated.  Those edits are the most valuable signal in the
+entire pipeline because they reveal exactly where the AI's understanding of the codebase
+diverges from the team's intent.  Currently that signal is thrown away.
+
+The **Feedback Service** closes the loop: it captures what the human changed, reasons
+about *why* those changes were needed, and writes updated context documents back to the
+test repository so that the next generation run is measurably better.
+
+---
+
+#### How It Will Work
+
+```
+BDD PR (AI-generated)                Final Test PR (AI-generated)
+        │                                        │
+  Human edits & merges                   Human edits & merges
+        │                                        │
+        └──────────────────┬─────────────────────┘
+                           │
+                 GitHub pull_request webhook
+                 (action=closed, merged=true)
+                           │
+                           ▼
+               ┌────────────────────────┐
+               │    feedback-service    │
+               │                        │
+               │  1. Fetch both versions│
+               │     (AI blob vs merged │
+               │      blob via GH API)  │
+               │                        │
+               │  2. Diff analyser      │
+               │     — which scenarios  │
+               │       were removed?    │
+               │     — which steps were │
+               │       rewritten?       │
+               │     — which assertions │
+               │       were tightened?  │
+               │                        │
+               │  3. Pattern classifier │
+               │     tag each delta with│
+               │     a feedback label:  │
+               │     WRONG_ASSERTION,   │
+               │     MISSING_CONTEXT,   │
+               │     WRONG_TEST_TYPE,   │
+               │     WRONG_ENDPOINT,    │
+               │     STYLE_PREFERENCE   │
+               │                        │
+               │  4. Context writer     │
+               │     commit updated     │
+               │     agent instruction  │
+               │     files to test repo │
+               └────────────────────────┘
+```
+
+---
+
+#### Detailed Design
+
+##### Step 1 — Capture Both Versions
+
+When a QA-generated PR (BDD or final test code) is merged, the `GitHubWebhookController`
+already fires.  It will be extended to also record:
+
+| Field | Source |
+|-------|--------|
+| `ai_blob` | The file content at the **head of the QA branch** (what the AI committed) |
+| `human_blob` | The file content at **merge commit** (what the human actually merged) |
+| `pr_type` | `BDD_REVIEW` or `FINAL_TEST_CODE` |
+| `source_pr_id` | The original feature PR that triggered generation |
+| `component_names` | Which components the scenarios/tests cover |
+
+Both blobs are fetched via `GET /repos/{owner}/{repo}/contents/{path}?ref={sha}`.
+
+##### Step 2 — Diff Analysis
+
+A `FeedbackAnalyser` computes the structural diff between the two blobs:
+
+- **For BDD scenarios (`.feature` files):** parse both with a Gherkin parser; compare at
+  the scenario, step, and tag level — not just line-by-line.
+- **For Java test code:** parse the AST (using JavaParser); compare at the method,
+  assertion, and annotation level to detect meaningful semantic changes rather than
+  whitespace noise.
+
+Each delta is represented as a `FeedbackDelta`:
+
+```
+FeedbackDelta {
+  deltaType:   SCENARIO_REMOVED | STEP_REWRITTEN | ASSERTION_CHANGED |
+               TAG_ADDED | ENDPOINT_CORRECTED | DEPENDENCY_ADDED | ...
+  aiVersion:   String   // what AI produced
+  humanVersion: String  // what the human replaced it with
+  component:   String   // affected component / feature area
+  confidence:  double   // 0..1 — how consistently this pattern appears
+}
+```
+
+##### Step 3 — Pattern Classification
+
+The `FeedbackClassifier` groups deltas into labelled patterns:
+
+| Label | Meaning | Example |
+|-------|---------|---------|
+| `WRONG_ASSERTION` | AI asserted the wrong HTTP status or field | AI: `status 200`, Human: `status 201` for a create endpoint |
+| `MISSING_CONTEXT` | AI did not know about an existing base class or helper | Human added `extends BaseApiTest` |
+| `WRONG_TEST_TYPE` | AI generated API test for a UI component | Human changed framework to Selenium |
+| `WRONG_ENDPOINT` | AI used a placeholder path that doesn't exist | Human corrected `/api/v1/foo` |
+| `STYLE_PREFERENCE` | Naming, formatting, or structural choice | Human renamed `shouldReturnFoo` to `getFoo_returnsExpected` |
+| `COVERAGE_GAP` | Human added scenarios AI didn't generate | Extra edge-case scenario added |
+
+##### Step 4 — Context Writer
+
+The `ContextWriter` translates classified patterns into **agent instruction files** committed
+directly to the test repository:
+
+```
+{test-repo}/
+  .qa-agent/
+    instructions.md          ← natural-language rules the agent must follow
+    patterns/
+      wrong-assertions.md    ← list of corrected assertion examples
+      naming-conventions.md  ← inferred from STYLE_PREFERENCE deltas
+      base-classes.md        ← discovered base test classes
+      endpoint-map.md        ← verified real endpoint paths
+    history/
+      feedback-YYYY-MM-DD.json  ← raw delta log for audit / debugging
+```
+
+`instructions.md` is a growing, curated file that `RepoContextService` already reads
+(it looks for `AGENT_INSTRUCTIONS` markers in the scanned repo).  The Feedback Service
+appends new rules derived from each batch of human corrections, so each generation cycle
+starts with richer context than the last.
+
+---
+
+#### New Kafka Topic
+
+| Topic | Producer | Consumer | Payload |
+|-------|----------|----------|---------|
+| `FeedbackQueue` | feedback-service | feedback-service (internal batch processor) | `FeedbackBatch` JSON |
+
+The topic decouples the fast webhook handler (capture the blobs) from the slower analysis
+and context-write operations, and provides a natural audit log of every feedback event.
+
+---
+
+#### New Service: `feedback-service`
+
+| Attribute | Value |
+|-----------|-------|
+| Port | `8083` |
+| Trigger | GitHub `pull_request` webhook — merged QA PRs only |
+| Reads from | Test repository (both blobs via GitHub API) |
+| Writes to | Test repository (`.qa-agent/` context files via GitHub API) |
+| Depends on | `TARGET_REPO_TOKEN`, `GITHUB_WEBHOOK_SECRET` |
+
+It shares the `common` module for models and Kafka config, and will reuse `GitHubService`
+(move it to `common`) for all repository I/O.
+
+---
+
+#### Impact on Generation Quality
+
+Each feedback cycle tightens the gap between AI output and human expectation:
+
+```
+Cycle 1  AI generates generic RestAssured skeleton
+         Human corrects: adds correct base class, fixes endpoint
+
+         → ContextWriter appends to base-classes.md and endpoint-map.md
+
+Cycle 2  AI reads updated context, generates with the correct base class
+         Human makes only minor naming adjustments
+
+         → ContextWriter appends naming convention rule
+
+Cycle 3  AI output is accepted with no changes → zero deltas
+         No context update needed — convergence achieved for this component
+```
+
+Over time, the `.qa-agent/instructions.md` file in the test repository becomes a
+living specification of the team's test-writing standards, derived entirely from real
+human corrections rather than being hand-authored upfront.
+
+---
+
+#### Implementation Checklist
+
+- [ ] Extend `GitHubWebhookController` to emit a `FeedbackEvent` when a QA PR merges
+- [ ] Create `feedback-service` module (Spring Boot, port 8083)
+- [ ] Implement `FeedbackAnalyser` — Gherkin + JavaParser structural diff
+- [ ] Implement `FeedbackClassifier` — tag each delta with a label
+- [ ] Implement `ContextWriter` — commit `.qa-agent/` files to test repo
+- [ ] Move `GitHubService` to `common` module (shared by strategy + feedback)
+- [ ] Add `FeedbackQueue` Kafka topic to `KafkaConfig`
+- [ ] Update `RepoContextService` to read `.qa-agent/instructions.md`
+- [ ] Add `feedback-service` to `docker-compose.yml` and `docker-compose.prod.yml`
+- [ ] Write unit tests for `FeedbackAnalyser` pattern detection
+- [ ] Write integration test: generate → human edit → feedback → regenerate, assert improved output
+
 
