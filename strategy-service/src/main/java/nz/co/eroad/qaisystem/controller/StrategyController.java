@@ -1,5 +1,6 @@
 package nz.co.eroad.qaisystem.controller;
 
+import nz.co.eroad.qaisystem.github.BddScenarioStore;
 import nz.co.eroad.qaisystem.kafka.TestScriptsProducer;
 import nz.co.eroad.qaisystem.model.BddScenario;
 import nz.co.eroad.qaisystem.service.RepoContextService;
@@ -25,6 +26,7 @@ public class StrategyController {
 
     private final TestScriptsProducer testScriptsProducer;
     private final RepoContextService  repoContextService;
+    private final BddScenarioStore    bddScenarioStore;
 
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> status() {
@@ -35,6 +37,7 @@ public class StrategyController {
                 "service",   "strategy-service",
                 "status",    "OPERATIONAL",
                 "timestamp", LocalDateTime.now().toString(),
+                "pendingBddReviews", bddScenarioStore.size(),
                 "repoContext", Map.of(
                         "api",    contextSummary(api),
                         "ui",     contextSummary(ui),
@@ -66,10 +69,14 @@ public class StrategyController {
     }
 
     /**
-     * Simulates a human approving and merging the BDD review PR.
-     * In production this is triggered by the GitHub/GitLab merge webhook.
-     * After approval, the BDD scenario is published to TestScriptsQueue
-     * so codegen can start.
+     * DEV SHORTCUT — bypasses GitHub by directly publishing a BddScenario to TestScriptsQueue.
+     *
+     * <p>In production, this step is handled automatically: the GitHub merge webhook fires
+     * {@code POST /api/strategy/github-webhook}, which looks up the stored scenario by
+     * branch name and triggers codegen without any manual intervention.
+     *
+     * <p>Use this endpoint in local dev (no GitHub configured) after reviewing the BDD
+     * scenarios that were logged by {@code TestPrService}.
      */
     @PostMapping("/approve-bdd")
     public ResponseEntity<Map<String, Object>> approveBdd(@RequestBody BddScenario bdd) {

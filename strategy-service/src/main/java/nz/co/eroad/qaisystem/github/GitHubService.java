@@ -1,0 +1,239 @@
+package nz.co.eroad.qaisystem.github;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import nz.co.eroad.qaisystem.config.TargetRepoProperties;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClient;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Map;
+
+/**
+ * Thin wrapper around the GitHub REST API v3.
+ *
+ * <p>Uses the same credentials ({@code TARGET_REPO_TOKEN}) configured in
+ * {@link TargetRepoProperties} so no extra setup is needed.
+ *
+ * <p>Graceful fallback: every public method returns {@code null} / no-ops when
+ * the service is not configured (no URL or no token), which keeps the local-dev
+ * simulation mode working without GitHub credentials.
+ */
+@Slf4j
+@Service
+public class GitHubService {
+
+    private static final String GITHUB_API_BASE = "https://api.github.com";
+
+    private final RestClient            restClient;
+    private final ObjectMapper          objectMapper;
+    private final TargetRepoProperties  repoProps;
+
+    /** Parsed from TARGET_REPO_URL – null when URL is blank or unparseable. */
+    private final String owner;
+    private final String repo;
+
+    public GitHubService(TargetRepoProperties repoProps, ObjectMapper objectMapper) {
+        this.repoProps    = repoProps;
+        this.objectMapper = objectMapper;
+
+        String[] parsed = parseOwnerRepo(repoProps.getUrl());
+        this.owner = parsed[0];
+        this.repo  = parsed[1];
+
+        RestClient.Builder builder = RestClient.builder()
+                .baseUrl(GITHUB_API_BASE)
+                .defaultHeader("Accept",             "application/vnd.github+json")
+                .defaultHeader("X-GitHub-Api-Version", "2022-11-28");
+
+        String token = repoProps.getAuth().getToken();
+        if (token != null && !token.isBlank()) {
+            builder.defaultHeader("Authorization", "Bearer " + token);
+        }
+
+        this.restClient = builder.build();
+
+        if (isConfigured()) {
+            log.info("[GitHubService] Configured for {}/{}", owner, repo);
+        } else {
+            log.info("[GitHubService] Not configured — PR creation will be simulated (logs only)");
+        }
+    }
+
+    // ─── Public API ────────────────────────────────────────────────────────────
+
+    /**
+     * Returns true when a URL + token are both present, i.e. real GitHub calls
+     * can be made. When false, all write operations are no-ops.
+     */
+    public boolean isConfigured() {
+        return owner != null && repo != null
+                && repoProps.getAuth().getToken() != null
+                && !repoProps.getAuth().getToken().isBlank();
+    }
+
+    /** Returns the HTTPS URL of the target repository, e.g. {@code https://github.com/org/repo}. */
+    public String repoWebUrl() {
+        return "https://github.com/" + owner + "/" + repo;
+    }
+
+    /**
+     * Creates a new branch from the tip of {@code baseBranch}.
+     *
+     * @return true on success
+     */
+    public boolean createBranch(String newBranchName, String baseBranch) {
+        if (!isConfigured()) return false;
+        try {
+            String sha = getRef("heads/" + baseBranch);
+            if (sha == null) {
+                log.error("[GitHubService] Could not resolve SHA for branch '{}'", baseBranch);
+                return false;
+            }
+            restClient.post()
+                    .uri("/repos/{owner}/{repo}/git/refs", owner, repo)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("ref", "refs/heads/" + newBranchName, "sha", sha))
+                    .retrieve()
+                    .toBodilessEntity();
+
+            log.info("[GitHubService] Branch '{}' created from '{}' (sha={})",
+                    newBranchName, baseBranch, sha.substring(0, 7));
+            return true;
+
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 422) {
+                log.warn("[GitHubService] Branch '{}' already exists — continuing", newBranchName);
+                return true;
+            }
+            log.error("[GitHubService] Failed to create branch '{}': {}", newBranchName, e.getMessage());
+            return false;
+        } catch (Exception e) {
+            log.error("[GitHubService] Failed to create branch '{}': {}", newBranchName, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Creates (or updates) a file on the given branch.
+     *
+     * @param branch        target branch
+     * @param filePath      path inside the repo, e.g. {@code scenarios/PR-123.feature}
+     * @param content       raw file content (UTF-8)
+     * @param commitMessage commit message
+     * @return true on success
+     */
+    public boolean createFile(String branch, String filePath,
+                               String content, String commitMessage) {
+        if (!isConfigured()) return false;
+        try {
+            String encoded = Base64.getEncoder()
+                    .encodeToString(content.getBytes(StandardCharsets.UTF_8));
+
+            restClient.put()
+                    .uri("/repos/{owner}/{repo}/contents/{path}", owner, repo, filePath)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of(
+                            "message", commitMessage,
+                            "content", encoded,
+                            "branch",  branch
+                    ))
+                    .retrieve()
+                    .toBodilessEntity();
+
+            log.info("[GitHubService] File '{}' committed to branch '{}'", filePath, branch);
+            return true;
+
+        } catch (Exception e) {
+            log.error("[GitHubService] Failed to create file '{}' on '{}': {}",
+                    filePath, branch, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Opens a Pull Request.
+     *
+     * @return {@link GitHubPrResult} with PR number and URL, or {@code null} on failure
+     */
+    public GitHubPrResult createPullRequest(String title, String body,
+                                             String head, String base) {
+        if (!isConfigured()) return null;
+        try {
+            String responseBody = restClient.post()
+                    .uri("/repos/{owner}/{repo}/pulls", owner, repo)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of(
+                            "title", title,
+                            "body",  body,
+                            "head",  head,
+                            "base",  base,
+                            "draft", false
+                    ))
+                    .retrieve()
+                    .body(String.class);
+
+            Map<String, Object> map = objectMapper.readValue(
+                    responseBody, new TypeReference<>() {});
+
+            int    prNumber = ((Number) map.get("number")).intValue();
+            String prUrl    = (String)  map.get("html_url");
+
+            log.info("[GitHubService] PR #{} created: {}", prNumber, prUrl);
+            return new GitHubPrResult(prNumber, prUrl, head);
+
+        } catch (Exception e) {
+            log.error("[GitHubService] Failed to create PR (head={}): {}", head, e.getMessage());
+            return null;
+        }
+    }
+
+    // ─── Helpers ───────────────────────────────────────────────────────────────
+
+    /** Returns the commit SHA that a ref points to, or null on failure. */
+    private String getRef(String ref) {
+        try {
+            String body = restClient.get()
+                    .uri("/repos/{owner}/{repo}/git/ref/{ref}", owner, repo, ref)
+                    .retrieve()
+                    .body(String.class);
+
+            Map<String, Object> map = objectMapper.readValue(body, new TypeReference<>() {});
+            @SuppressWarnings("unchecked")
+            Map<String, Object> object = (Map<String, Object>) map.get("object");
+            return (String) object.get("sha");
+
+        } catch (Exception e) {
+            log.error("[GitHubService] getRef '{}' failed: {}", ref, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Parses {@code https://github.com/owner/repo[.git]} into {@code [owner, repo]}.
+     * Returns {@code [null, null]} for blank or unparseable URLs.
+     */
+    private static String[] parseOwnerRepo(String url) {
+        if (url == null || url.isBlank()) return new String[]{null, null};
+        String clean = url.trim().replaceAll("\\.git$", "").replaceAll("/$", "");
+        String[] parts = clean.split("/");
+        if (parts.length < 2) return new String[]{null, null};
+        return new String[]{parts[parts.length - 2], parts[parts.length - 1]};
+    }
+
+    // ─── Result record ─────────────────────────────────────────────────────────
+
+    /**
+     * Holds the result of a successful GitHub PR creation.
+     *
+     * @param prNumber GitHub PR number
+     * @param url      HTML URL of the PR  (e.g. https://github.com/org/repo/pull/42)
+     * @param branch   Source branch name
+     */
+    public record GitHubPrResult(int prNumber, String url, String branch) {}
+}
+

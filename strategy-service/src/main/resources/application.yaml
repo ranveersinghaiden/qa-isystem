@@ -84,6 +84,12 @@ aiqa:
       token: ${TARGET_REPO_TOKEN:}
       username: ${TARGET_REPO_USERNAME:}
 
+github:
+  # HMAC-SHA256 secret configured in the GitHub webhook settings.
+  # Requests without a matching signature are rejected (401).
+  # Leave blank in local dev to skip signature verification entirely.
+  webhook-secret: ${GITHUB_WEBHOOK_SECRET:}
+
 server:
   port: 8082
 

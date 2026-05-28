@@ -41,3 +41,7 @@ build/
 # Local test payloads — may contain real diff content, repo names, or author info
 pr-webhook-sample.json
 
+# macOS filesystem metadata
+.DS_Store
+**/.DS_Store
+
