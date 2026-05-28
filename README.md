@@ -13,6 +13,12 @@ produces executable test code, and stabilises failing tests — all without huma
 3. [Kafka Topics](#kafka-topics)
 4. [End-to-End Pipeline Flow](#end-to-end-pipeline-flow)
 5. [Quick Start](#quick-start)
+   - [1 — Start Kafka](#1--start-kafka)
+   - [2 — Build all modules](#2--build-all-modules)
+   - [3 — Configure environment variables](#3--configure-environment-variables)
+   - [4 — Start the three services](#4--start-the-three-services-separate-terminals)
+   - [5 — Verify all services are up](#5--verify-all-services-are-up)
+   - [6 — Trigger the full pipeline](#6--trigger-the-full-pipeline)
 6. [Running Tests Locally](#running-tests-locally)
 7. [API Reference](#api-reference)
 8. [Configuration](#configuration)
@@ -196,7 +202,39 @@ qa-kafka        Up (healthy)
 ./mvnw clean package -DskipTests
 ```
 
-### 3 — Start the three services (separate terminals)
+### 3 — Configure environment variables
+
+For a minimal local run **no environment variables are required** — all services start with sensible defaults. Set the variables below to unlock optional features before launching the services.
+
+| Variable | Service | Purpose | Default |
+|----------|---------|---------|---------|
+| `TARGET_REPO_URL` | strategy-service | URL of the test repository to clone for coverage context | *(none — coverage will be `UNKNOWN`)* |
+| `TARGET_REPO_TOKEN` | strategy-service | Personal access token (PAT) for a private test repo | *(none — falls back to system credential store / osxkeychain)* |
+| `TARGET_REPO_USERNAME` | strategy-service | GitHub username paired with the PAT | *(none)* |
+| `AIQA_AI_ENABLED` | impact-service | Set `true` to enable AI-assisted risk scoring in the gray zone | `false` |
+| `AIQA_AI_API_KEY` | impact-service | OpenAI (or compatible) API key — required when AI is enabled | *(none)* |
+| `AIQA_AI_MODEL` | impact-service | Model used for AI scoring | `gpt-4o-mini` |
+| `KAFKA_HOST` | all (production only) | Kafka broker hostname advertised to external clients | `localhost` |
+
+Export the variables you need in each terminal **before** starting a service:
+
+```bash
+# ── Optional: target test repository (strategy-service) ──────────────────────
+export TARGET_REPO_URL=https://github.com/your-org/your-test-repo
+export TARGET_REPO_TOKEN=ghp_your_personal_access_token
+export TARGET_REPO_USERNAME=your_github_username
+
+# ── Optional: AI-assisted risk scoring (impact-service) ──────────────────────
+export AIQA_AI_ENABLED=true
+export AIQA_AI_API_KEY=sk-...
+export AIQA_AI_MODEL=gpt-4o-mini   # or gpt-4o for higher accuracy
+```
+
+> **Local only — no `.env` file needed.** These variables map to the `${VAR:}` placeholders in each service's `application.yaml`. You can also hard-code non-secret values directly in `application.yaml` for local development, but **never commit secrets to source control**.
+>
+> **Production / Docker deployments** — copy `.env.example` to `.env` at your `DEPLOY_PATH` and fill in all values. The CD workflow picks this file up automatically via `docker-compose.prod.yml`.
+
+### 4 — Start the three services (separate terminals)
 
 ```bash
 # Terminal 1 — pr-service on :8080
@@ -214,7 +252,7 @@ Watch for this line in each service log — it confirms the Kafka consumer is re
 INFO  o.s.k.l.ConcurrentMessageListenerContainer - started
 ```
 
-### 4 — Verify all services are up
+### 5 — Verify all services are up
 
 ```bash
 curl http://localhost:8080/api/pr/health        # {"status":"UP","service":"PullRequestController"}
@@ -222,7 +260,7 @@ curl http://localhost:8081/api/impact/health    # {"status":"UP"}
 curl http://localhost:8082/api/strategy/health  # {"status":"UP"}
 ```
 
-### 5 — Trigger the full pipeline
+### 6 — Trigger the full pipeline
 
 ```bash
 curl -X POST http://localhost:8080/api/pr/demo
@@ -238,7 +276,7 @@ You should see logs flow through **all three** services:
 - `impact-service` → `[FeatureUpdatesConsumer] Analyzing PR '...'` then `[ImpactEngine]` logs
 - `strategy-service` → `[ImpactResultsConsumer] Strategy decision for PR '...'` then `[StrategyAgent]` logs
 
-### 6 — Submit a real PR payload
+### 7 — Submit a real PR payload
 
 ```bash
 curl -X POST http://localhost:8080/api/pr/webhook \
@@ -252,7 +290,7 @@ curl -X POST http://localhost:8080/api/pr/webhook \
   }'
 ```
 
-### 7 — (Optional) Configure target test repo
+### 8 — (Optional) Configure target test repo
 
 Edit `strategy-service/src/main/resources/application.yaml`:
 
@@ -273,7 +311,7 @@ aiqa:
 The service clones the repo on startup and reads `.github/agents/*.md` files for
 coding conventions, which are embedded into every generated test file.
 
-### 8 — Approve BDD scenarios (human gate)
+### 9 — Approve BDD scenarios (human gate)
 
 After strategy-service generates BDD and raises a PR, approve it to trigger codegen:
 
@@ -283,14 +321,14 @@ curl -X POST http://localhost:8082/api/strategy/approve-bdd \
   -d '{"prId": "PR-XXXXXXXX", "scenarioId": "SC-XXXXXXXX", "approved": true}'
 ```
 
-### 9 — Refresh repo context at runtime
+### 10 — Refresh repo context at runtime
 
 ```bash
 curl -X POST http://localhost:8082/api/strategy/refresh-context
 # Returns: {"status":"OK","api":"N tests, pkg=...","ui":"...","mobile":"..."}
 ```
 
-### 10 — Shut down
+### 11 — Shut down
 
 ```bash
 # Ctrl+C in each Spring terminal, then:
@@ -461,141 +499,6 @@ Expected output:
 ---
 <!-- end of README -->
 
-```bash
-# From the project root (docker-compose.yml is here)
-docker compose up -d
-
-# Poll until kafka shows "(healthy)" — takes ~30-45 seconds
-docker compose ps
-```
-
-Expected output once ready:
-```
-NAME            STATUS
-qa-zookeeper    Up (healthy)
-qa-kafka        Up (healthy)
-```
-
-> ⚠️ **Do not start the Spring services until `qa-kafka` shows `(healthy)`.**
-> Starting services before Kafka is ready causes the consumer group join to fail silently.
-
-> **Optional — Kafka UI** to browse topics in a browser at `http://localhost:8090`:
-> ```bash
-> docker compose --profile debug up -d
-> ```
-
-### 2. Build once (skip if already built)
-
-```bash
-./mvnw clean package -DskipTests
-```
-
-### 3. Start the three services (separate terminals)
-
-```bash
-# Terminal 1 — pr-service on :8080
-./mvnw spring-boot:run -pl pr-service
-OR
-java -jar pr-service/target/pr-service-0.0.1-SNAPSHOT.jar
-
-# Terminal 2 — impact-service on :8081
-./mvnw spring-boot:run -pl impact-service
-OR
-java -jar impact-service/target/impact-service-0.0.1-SNAPSHOT.jar
-
-# Terminal 3 — strategy-service on :8082
-./mvnw spring-boot:run -pl strategy-service
-OR
-java -jar strategy-service/target/strategy-service-0.0.1-SNAPSHOT.jar
-```
-
-Watch for this in each service log — it confirms Kafka consumer is registered:
-```
-INFO  o.s.k.l.ConcurrentMessageListenerContainer - started
-```
-
-### 4. Verify all three services are up
-
-```bash
-curl http://localhost:8080/api/pr/health        # {"status":"UP","service":"PullRequestController"}
-curl http://localhost:8081/api/impact/health    # {"status":"UP"}
-curl http://localhost:8082/api/strategy/health  # {"status":"UP"}
-```
-
-### 5. Trigger a demo run
-
-```bash
-curl -X POST http://localhost:8080/api/pr/demo
-```
-
-Expected response:
-```json
-{"status":"DEMO_TRIGGERED","prId":"PR-XXXXXXXX","diffsCount":3,...}
-```
-
-You should now see logs in **all three** services:
-- `pr-service` → `[FeatureUpdatesProducer] PR 'PR-...' sent → partition=X, offset=Y`
-- `impact-service` → `[FeatureUpdatesConsumer] Analyzing PR '...'` then `[ImpactEngine]` logs
-- `strategy-service` → `[ImpactResultsConsumer] Strategy decision for PR '...'` then `[StrategyAgent]` logs
-
-### 6. Submit a real PR payload
-
-```bash
-curl -X POST http://localhost:8080/api/pr/webhook \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "feat: add payment gateway",
-    "author": "dev@example.com",
-    "repositoryName": "payment-service",
-    "sourceBranch": "feature/payments",
-    "git_diff": []
-  }'
-```
-
-### 7. (Optional) Configure target test repo
-
-Edit `strategy-service/src/main/resources/application.yaml`:
-
-```yaml
-aiqa:
-  target-repo:
-    url: "https://github.com/your-org/your-test-repo"
-    branch: main
-    auth:
-      type: token
-      token: ${TARGET_REPO_TOKEN:}
-    modules:
-      api: tests/api
-      ui:  tests/ui
-      mobile: tests/mobile
-```
-
-The service clones the repo on startup and reads `.github/agents/*.md` files for
-coding conventions, which are embedded into every generated test file.
-
-### 8. Approve BDD scenarios (human gate)
-
-After strategy-service generates BDD and raises a PR, approve it to trigger codegen:
-
-```bash
-curl -X POST http://localhost:8082/api/strategy/approve-bdd \
-  -H "Content-Type: application/json" \
-  -d '{"prId": "PR-XXXXXXXX", "scenarioId": "SC-XXXXXXXX", "approved": true}'
-```
-
-### 9. Refresh repo context at runtime
-
-```bash
-curl -X POST http://localhost:8082/api/strategy/refresh-context
-# Returns: {"status":"OK","api":"N tests, pkg=...","ui":"...","mobile":"..."}
-```
-
-### 10. Shut down
-
-```bash
-# Ctrl+C in each Spring terminal, then:
-docker compose down
-```
 
 ---
 
