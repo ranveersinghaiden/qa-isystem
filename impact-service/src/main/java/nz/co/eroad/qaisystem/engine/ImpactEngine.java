@@ -7,6 +7,7 @@ import nz.co.eroad.qaisystem.model.ImpactEnvelope;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.ChangeType;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.ImpactedComponent;
 import nz.co.eroad.qaisystem.model.PullRequest;
+import nz.co.eroad.qaisystem.parser.GitDiffParser;
 import nz.co.eroad.qaisystem.service.TestCoverageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

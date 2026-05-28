@@ -37,3 +37,7 @@ build/
 .env.local
 .env.production
 *.env
+
+# Local test payloads — may contain real diff content, repo names, or author info
+pr-webhook-sample.json
+

@@ -42,16 +42,16 @@ public class KafkaConfig {
     @Value("${spring.kafka.listener.concurrency:3}")
     private int concurrency;
 
-    @Value("${kafka.topics.feature-updates}")
+    @Value("${kafka.topics.feature-updates:FeatureUpdatesQueue}")
     private String featureUpdatesTopic;
 
-    @Value("${kafka.topics.impact-results}")
+    @Value("${kafka.topics.impact-results:ImpactResultsQueue}")
     private String impactResultsTopic;
 
-    @Value("${kafka.topics.test-scripts}")
+    @Value("${kafka.topics.test-scripts:TestScriptsQueue}")
     private String testScriptsTopic;
 
-    @Value("${kafka.topics.test-results}")
+    @Value("${kafka.topics.test-results:TestResultsQueue}")
     private String testResultsTopic;
 
     // ── Consumer ─────────────────────────────────────────────────────────────

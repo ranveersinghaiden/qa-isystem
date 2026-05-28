@@ -1,0 +1,7 @@
+{
+  "title": "Update Validation logic",
+  "author": "dev@example.com",
+  "repositoryName": "your-repo-name",
+  "sourceBranch": "feature/your-branch",
+  "raw_diff": "diff --git a/src/main/java/com/example/Foo.java b/src/main/java/com/example/Foo.java\n--- a/src/main/java/com/example/Foo.java\n+++ b/src/main/java/com/example/Foo.java\n@@ -1,3 +1,4 @@\n public class Foo {\n-    // old implementation\n+    // new implementation\n }\n"
+}

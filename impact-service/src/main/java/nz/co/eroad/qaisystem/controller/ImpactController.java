@@ -2,10 +2,13 @@ package nz.co.eroad.qaisystem.controller;
 
 import nz.co.eroad.qaisystem.ai.AIImpactEvaluator;
 import nz.co.eroad.qaisystem.config.AIImpactProperties;
-import nz.co.eroad.qaisystem.engine.*;
+import nz.co.eroad.qaisystem.engine.ChangeTypeDetector;
+import nz.co.eroad.qaisystem.engine.DependencyGraph;
+import nz.co.eroad.qaisystem.engine.RiskScorer;
 import nz.co.eroad.qaisystem.model.*;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.ChangeType;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.ImpactedComponent;
+import nz.co.eroad.qaisystem.parser.GitDiffParser;
 import nz.co.eroad.qaisystem.service.TestCoverageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

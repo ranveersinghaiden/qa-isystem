@@ -3,6 +3,7 @@ package nz.co.eroad.qaisystem.service;
 import nz.co.eroad.qaisystem.kafka.FeatureUpdatesProducer;
 import nz.co.eroad.qaisystem.model.GitDiff;
 import nz.co.eroad.qaisystem.model.PullRequest;
+import nz.co.eroad.qaisystem.parser.GitDiffParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,18 @@ import java.util.UUID;
 
 /**
  * Entry-point service for new Pull Request events.
- * Validates, enriches, and publishes PRs to the FeatureUpdatesQueue.
+ * Validates, enriches, parses the raw diff (when present), and publishes PRs to Kafka.
+ *
+ * <h2>Diff content resolution order</h2>
+ * <ol>
+ *   <li>Pre-parsed {@code git_diff} list already in the payload — used as-is.</li>
+ *   <li>{@code raw_diff} string in the payload — parsed into {@link GitDiff} objects
+ *       by {@link GitDiffParser} before the message is published to Kafka.</li>
+ * </ol>
+ *
+ * <p>The caller (CI pipeline, Git webhook integrator, developer) is responsible for
+ * capturing the diff (e.g. {@code git diff main...BRANCH}) and supplying it in the
+ * payload.  No external GitHub API calls are made from this service.
  */
 @Slf4j
 @Service
@@ -22,34 +34,26 @@ import java.util.UUID;
 public class PRService {
 
     private final FeatureUpdatesProducer featureUpdatesProducer;
+    private final GitDiffParser          gitDiffParser;
 
-    /**
-     * Accepts a new PR (from webhook or API call), validates it,
-     * assigns an ID if missing, and publishes it to Kafka.
-     */
     public PullRequest processPullRequest(PullRequest pr) {
-        log.info("[PRService] Received PR from '{}': '{}'",
-                pr.getAuthor(), pr.getTitle());
+        log.info("[PRService] Received PR from '{}': '{}'", pr.getAuthor(), pr.getTitle());
 
-        // ── Enrich ────────────────────────────────────────────────────────────
         PullRequest enriched = enrich(pr);
-
-        // ── Validate ──────────────────────────────────────────────────────────
+        enriched = parseDiffIfNeeded(enriched);
         validate(enriched);
-
-        // ── Publish to Kafka ──────────────────────────────────────────────────
         featureUpdatesProducer.publishPullRequest(enriched);
 
-        log.info("[PRService] PR '{}' published to FeatureUpdatesQueue",
-                enriched.getPrId());
+        log.info("[PRService] PR '{}' published to FeatureUpdatesQueue " +
+                        "(diffsCount={}, rawDiffLen={})",
+                enriched.getPrId(),
+                enriched.getDiffs() != null ? enriched.getDiffs().size() : 0,
+                enriched.getRawDiffContent() != null
+                        ? enriched.getRawDiffContent().length() : 0);
 
         return enriched;
     }
 
-    /**
-     * Creates a sample PR with mock diff data — useful for demos / testing
-     * without a real Git webhook.
-     */
     public PullRequest createSamplePullRequest() {
         return PullRequest.builder()
                 .prId("PR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
@@ -64,159 +68,77 @@ public class PRService {
                 .createdAt(LocalDateTime.now())
                 .status(PullRequest.PrStatus.OPEN)
                 .rawDiffContent(buildSampleDiff())
-                .diffs(buildSampleDiffs())
                 .build();
     }
 
     // ─── Private helpers ───────────────────────────────────────────────────────
 
+    /**
+     * If the enriched PR has no pre-parsed diffs but carries a {@code raw_diff}
+     * string, parse it now so downstream consumers receive fully-structured data.
+     */
+    private PullRequest parseDiffIfNeeded(PullRequest pr) {
+        boolean hasDiffs = pr.getDiffs() != null && !pr.getDiffs().isEmpty();
+        boolean hasRaw   = pr.getRawDiffContent() != null && !pr.getRawDiffContent().isBlank();
+
+        if (hasDiffs || !hasRaw) return pr;
+
+        List<GitDiff> parsed = gitDiffParser.parse(pr.getRawDiffContent());
+        log.info("[PRService] Parsed {} file diffs from raw_diff for PR '{}'",
+                parsed.size(), pr.getPrId());
+
+        return PullRequest.builder()
+                .prId(pr.getPrId()).title(pr.getTitle()).description(pr.getDescription())
+                .author(pr.getAuthor()).sourceBranch(pr.getSourceBranch())
+                .targetBranch(pr.getTargetBranch()).repositoryName(pr.getRepositoryName())
+                .repositoryUrl(pr.getRepositoryUrl()).repoOwner(pr.getRepoOwner())
+                .createdAt(pr.getCreatedAt()).status(pr.getStatus())
+                .diffs(parsed).rawDiffContent(pr.getRawDiffContent())
+                .jiraIds(pr.getJiraIds()).changedFiles(pr.getChangedFiles())
+                .build();
+    }
+
     private PullRequest enrich(PullRequest pr) {
         return PullRequest.builder()
                 .prId(pr.getPrId() != null ? pr.getPrId()
                         : "PR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
-                .title(pr.getTitle())
-                .description(pr.getDescription())
-                .author(pr.getAuthor())
+                .title(pr.getTitle()).description(pr.getDescription()).author(pr.getAuthor())
                 .sourceBranch(pr.getSourceBranch())
                 .targetBranch(pr.getTargetBranch() != null ? pr.getTargetBranch() : "main")
-                .repositoryName(pr.getRepositoryName())
-                .repositoryUrl(pr.getRepositoryUrl())
-                .createdAt(pr.getCreatedAt() != null
-                        ? pr.getCreatedAt() : LocalDateTime.now())
-                .status(pr.getStatus() != null
-                        ? pr.getStatus() : PullRequest.PrStatus.OPEN)
+                .repositoryName(pr.getRepositoryName()).repositoryUrl(pr.getRepositoryUrl())
+                .repoOwner(pr.getRepoOwner())
+                .createdAt(pr.getCreatedAt() != null ? pr.getCreatedAt() : LocalDateTime.now())
+                .status(pr.getStatus() != null ? pr.getStatus() : PullRequest.PrStatus.OPEN)
                 .diffs(pr.getDiffs() != null ? pr.getDiffs() : new ArrayList<>())
                 .rawDiffContent(pr.getRawDiffContent())
+                .jiraIds(pr.getJiraIds()).changedFiles(pr.getChangedFiles())
                 .build();
     }
 
     private void validate(PullRequest pr) {
         List<String> errors = new ArrayList<>();
-
-        if (pr.getTitle() == null || pr.getTitle().isBlank()) {
+        if (pr.getTitle() == null || pr.getTitle().isBlank())
             errors.add("PR title is required");
-        }
-        if (pr.getAuthor() == null || pr.getAuthor().isBlank()) {
+        if (pr.getAuthor() == null || pr.getAuthor().isBlank())
             errors.add("PR author is required");
-        }
-        if (pr.getRepositoryName() == null || pr.getRepositoryName().isBlank()) {
+        if (pr.getRepositoryName() == null || pr.getRepositoryName().isBlank())
             errors.add("Repository name is required");
-        }
+        if (!errors.isEmpty())
+            throw new IllegalArgumentException("Invalid PullRequest: " + String.join(", ", errors));
+
         if ((pr.getDiffs() == null || pr.getDiffs().isEmpty())
                 && (pr.getRawDiffContent() == null || pr.getRawDiffContent().isBlank())) {
-            log.warn("[PRService] PR '{}' has no diffs — " +
-                    "impact analysis will be minimal", pr.getPrId());
-        }
-
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Invalid PullRequest: " + String.join(", ", errors));
+            log.warn("[PRService] PR '{}' has no diff content — " +
+                    "impact analysis will be minimal. Include 'raw_diff' in the payload.",
+                    pr.getPrId());
         }
     }
 
-    // ─── Sample data builders ──────────────────────────────────────────────────
-
-    private List<GitDiff> buildSampleDiffs() {
-        List<GitDiff> diffs = new ArrayList<>();
-
-        // New controller file
-        diffs.add(GitDiff.builder()
-                .filePath("src/main/java/com/example/controller/AuthController.java")
-                .oldFilePath("src/main/java/com/example/controller/AuthController.java")
-                .diffType(GitDiff.DiffType.ADDED)
-                .fileExtension("java")
-                .isTestFile(false)
-                .linesAdded(85)
-                .linesDeleted(0)
-                .hunks(buildSampleControllerHunks())
-                .build());
-
-        // Modified service file
-        diffs.add(GitDiff.builder()
-                .filePath("src/main/java/com/example/service/UserService.java")
-                .oldFilePath("src/main/java/com/example/service/UserService.java")
-                .diffType(GitDiff.DiffType.MODIFIED)
-                .fileExtension("java")
-                .isTestFile(false)
-                .linesAdded(45)
-                .linesDeleted(12)
-                .hunks(buildSampleServiceHunks())
-                .build());
-
-        // New model file
-        diffs.add(GitDiff.builder()
-                .filePath("src/main/java/com/example/model/JwtToken.java")
-                .oldFilePath("src/main/java/com/example/model/JwtToken.java")
-                .diffType(GitDiff.DiffType.ADDED)
-                .fileExtension("java")
-                .isTestFile(false)
-                .linesAdded(30)
-                .linesDeleted(0)
-                .hunks(new ArrayList<>())
-                .build());
-
-        return diffs;
-    }
-
-    private List<GitDiff.DiffHunk> buildSampleControllerHunks() {
-        List<GitDiff.DiffLine> lines = new ArrayList<>();
-        lines.add(makeLine(GitDiff.DiffLine.LineType.ADDED, 1,
-                "import org.springframework.web.bind.annotation.RestController;"));
-        lines.add(makeLine(GitDiff.DiffLine.LineType.ADDED, 2,
-                "import org.springframework.web.bind.annotation.PostMapping;"));
-        lines.add(makeLine(GitDiff.DiffLine.LineType.ADDED, 3,
-                "@RestController"));
-        lines.add(makeLine(GitDiff.DiffLine.LineType.ADDED, 4,
-                "public class AuthController {"));
-        lines.add(makeLine(GitDiff.DiffLine.LineType.ADDED, 5,
-                "    @PostMapping(\"/auth/login\")"));
-        lines.add(makeLine(GitDiff.DiffLine.LineType.ADDED, 6,
-                "    public ResponseEntity<JwtToken> login(@RequestBody LoginRequest req) {"));
-        lines.add(makeLine(GitDiff.DiffLine.LineType.ADDED, 7,
-                "        return ResponseEntity.ok(authService.authenticate(req));"));
-        lines.add(makeLine(GitDiff.DiffLine.LineType.ADDED, 8,
-                "    }"));
-
-        return List.of(GitDiff.DiffHunk.builder()
-                .oldStart(0).oldCount(0)
-                .newStart(1).newCount(8)
-                .lines(lines)
-                .build());
-    }
-
-    private List<GitDiff.DiffHunk> buildSampleServiceHunks() {
-        List<GitDiff.DiffLine> lines = new ArrayList<>();
-        lines.add(makeLine(GitDiff.DiffLine.LineType.ADDED, 50,
-                "    public JwtToken authenticate(LoginRequest request) {"));
-        lines.add(makeLine(GitDiff.DiffLine.LineType.ADDED, 51,
-                "        // validate credentials"));
-        lines.add(makeLine(GitDiff.DiffLine.LineType.ADDED, 52,
-                "        User user = userRepository.findByEmail(request.getEmail())"));
-        lines.add(makeLine(GitDiff.DiffLine.LineType.ADDED, 53,
-                "                .orElseThrow(() -> new AuthException(\"User not found\"));"));
-        lines.add(makeLine(GitDiff.DiffLine.LineType.REMOVED, 50,
-                "    // TODO: implement authentication"));
-
-        return List.of(GitDiff.DiffHunk.builder()
-                .oldStart(48).oldCount(3)
-                .newStart(48).newCount(7)
-                .lines(lines)
-                .build());
-    }
-
-    private GitDiff.DiffLine makeLine(GitDiff.DiffLine.LineType type,
-                                      int lineNumber, String content) {
-        return GitDiff.DiffLine.builder()
-                .type(type)
-                .lineNumber(lineNumber)
-                .content(content)
-                .build();
-    }
+    // ─── Sample diff builder ───────────────────────────────────────────────────
 
     private String buildSampleDiff() {
         return """
-                diff --git a/src/main/java/com/example/controller/AuthController.java \
-                b/src/main/java/com/example/controller/AuthController.java
+                diff --git a/src/main/java/com/example/controller/AuthController.java b/src/main/java/com/example/controller/AuthController.java
                 new file mode 100644
                 --- /dev/null
                 +++ b/src/main/java/com/example/controller/AuthController.java
@@ -229,8 +151,7 @@ public class PRService {
                 +    public ResponseEntity<JwtToken> login(@RequestBody LoginRequest req) {
                 +        return ResponseEntity.ok(authService.authenticate(req));
                 +    }
-                diff --git a/src/main/java/com/example/service/UserService.java \
-                b/src/main/java/com/example/service/UserService.java
+                diff --git a/src/main/java/com/example/service/UserService.java b/src/main/java/com/example/service/UserService.java
                 --- a/src/main/java/com/example/service/UserService.java
                 +++ b/src/main/java/com/example/service/UserService.java
                 @@ -48,3 +48,7 @@

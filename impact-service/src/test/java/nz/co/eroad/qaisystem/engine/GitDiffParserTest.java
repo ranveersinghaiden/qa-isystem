@@ -1,6 +1,7 @@
 package nz.co.eroad.qaisystem.engine;
 
 import nz.co.eroad.qaisystem.model.GitDiff;
+import nz.co.eroad.qaisystem.parser.GitDiffParser;
 import org.junit.jupiter.api.*;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;

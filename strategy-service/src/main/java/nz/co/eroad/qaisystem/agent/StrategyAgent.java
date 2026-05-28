@@ -84,6 +84,17 @@ public class StrategyAgent {
             return StrategyDecision.CREATE_TESTS;
         }
 
+        // No diff was parsed — webhook had no content and GitHub fetch didn't run / failed.
+        // Default conservatively to CREATE_TESTS so the PR is never silently skipped.
+        // Note: "0 == 0" would otherwise match the test-files-only SKIP rule below.
+        if (env.getTotalFilesChanged() == 0) {
+            log.warn("[StrategyAgent] PR '{}' has zero parsed diff files — " +
+                    "webhook had no diff content. Defaulting to CREATE_TESTS. " +
+                    "Tip: configure GITHUB_TOKEN + github.default-org in pr-service to " +
+                    "auto-fetch diffs from GitHub.", env.getPrId());
+            return StrategyDecision.CREATE_TESTS;
+        }
+
         // Only infra/config changes with LOW risk → SKIP
         boolean onlyInfra = env.getDetectedChangeTypes().stream()
                 .allMatch(ct -> ct == ChangeType.CONFIGURATION_CHANGE

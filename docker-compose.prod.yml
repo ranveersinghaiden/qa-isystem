@@ -29,7 +29,7 @@ services:
 
   # ── pr-service ──────────────────────────────────────────────────────────────
   pr-service:
-    image: ${PR_SERVICE_IMAGE:-ghcr.io/eroad/qa-isystem/pr-service:latest}
+    image: ${PR_SERVICE_IMAGE:-ghcr.io/your-org/qa-isystem/pr-service:latest}
     container_name: qa-pr-service
     restart: unless-stopped
     depends_on:
@@ -49,7 +49,7 @@ services:
 
   # ── impact-service ──────────────────────────────────────────────────────────
   impact-service:
-    image: ${IMPACT_SERVICE_IMAGE:-ghcr.io/eroad/qa-isystem/impact-service:latest}
+    image: ${IMPACT_SERVICE_IMAGE:-ghcr.io/your-org/qa-isystem/impact-service:latest}
     container_name: qa-impact-service
     restart: unless-stopped
     depends_on:
@@ -73,7 +73,7 @@ services:
 
   # ── strategy-service ────────────────────────────────────────────────────────
   strategy-service:
-    image: ${STRATEGY_SERVICE_IMAGE:-ghcr.io/eroad/qa-isystem/strategy-service:latest}
+    image: ${STRATEGY_SERVICE_IMAGE:-ghcr.io/your-org/qa-isystem/strategy-service:latest}
     container_name: qa-strategy-service
     restart: unless-stopped
     depends_on:

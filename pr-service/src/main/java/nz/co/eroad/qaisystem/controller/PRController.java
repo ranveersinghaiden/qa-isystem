@@ -44,6 +44,8 @@ public class PRController {
 
     /**
      * Manually submit a PR for analysis.
+     * Supply {@code raw_diff} in the payload and the service will parse it into
+     * structured diffs before publishing to Kafka.
      */
     @PostMapping("/submit")
     public ResponseEntity<Map<String, Object>> submit(
@@ -55,10 +57,11 @@ public class PRController {
         PullRequest processed = pullRequestService.processPullRequest(pullRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                "status",  "QUEUED",
-                "prId",    processed.getPrId(),
-                "message", "PR queued for AI-driven QA analysis",
-                "details", Map.of(
+                "status",     "QUEUED",
+                "prId",       processed.getPrId(),
+                "message",    "PR queued for AI-driven QA analysis",
+                "diffsCount", processed.getDiffs() != null ? processed.getDiffs().size() : 0,
+                "details",    Map.of(
                         "sourceBranch", processed.getSourceBranch() != null
                                 ? processed.getSourceBranch() : "unknown",
                         "targetBranch", processed.getTargetBranch(),
@@ -70,6 +73,8 @@ public class PRController {
     /**
      * Triggers a full demo run using built-in sample data.
      * Useful for verifying the pipeline without a real Git repo.
+     * The sample payload contains a {@code raw_diff} string that is parsed into
+     * structured diffs by the service before publishing.
      */
     @PostMapping("/demo")
     public ResponseEntity<Map<String, Object>> demo() {
@@ -79,12 +84,11 @@ public class PRController {
         PullRequest processed = pullRequestService.processPullRequest(sample);
 
         return ResponseEntity.accepted().body(Map.of(
-                "status",      "DEMO_TRIGGERED",
-                "prId",        processed.getPrId(),
-                "prTitle",     processed.getTitle(),
-                "message",     "Demo PR published — watch logs for full pipeline execution",
-                "diffsCount",  processed.getDiffs() != null
-                        ? processed.getDiffs().size() : 0
+                "status",     "DEMO_TRIGGERED",
+                "prId",       processed.getPrId(),
+                "prTitle",    processed.getTitle(),
+                "message",    "Demo PR published — watch logs for full pipeline execution",
+                "diffsCount", processed.getDiffs() != null ? processed.getDiffs().size() : 0
         ));
     }
 

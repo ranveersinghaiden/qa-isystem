@@ -2,6 +2,7 @@ package nz.co.eroad.qaisystem.service;
 
 import nz.co.eroad.qaisystem.kafka.FeatureUpdatesProducer;
 import nz.co.eroad.qaisystem.model.PullRequest;
+import nz.co.eroad.qaisystem.parser.GitDiffParser;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.*;
 @DisplayName("PRService unit tests")
 class PRServiceTest {
     @Mock FeatureUpdatesProducer featureUpdatesProducer;
+    @Spy  GitDiffParser gitDiffParser = new GitDiffParser();
     @InjectMocks PRService prService;
     PullRequest valid;
 
@@ -64,10 +66,31 @@ class PRServiceTest {
             .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Repository");
     }
 
-    @Test @DisplayName("createSamplePullRequest returns valid PR")
+    @Test @DisplayName("parses raw_diff into structured diffs before publishing")
+    void parsesRawDiffContent() {
+        String rawDiff =
+            "diff --git a/src/main/java/com/example/Foo.java b/src/main/java/com/example/Foo.java\n"
+          + "--- a/src/main/java/com/example/Foo.java\n"
+          + "+++ b/src/main/java/com/example/Foo.java\n"
+          + "@@ -1,1 +1,2 @@\n"
+          + "+// added\n";
+        valid.setRawDiffContent(rawDiff);
+
+        PullRequest result = prService.processPullRequest(valid);
+
+        assertThat(result.getDiffs()).hasSize(1);
+        assertThat(result.getDiffs().get(0).getLinesAdded()).isEqualTo(1);
+        verify(featureUpdatesProducer).publishPullRequest(argThat(
+                pr -> pr.getDiffs() != null && pr.getDiffs().size() == 1));
+    }
+
+    @Test @DisplayName("createSamplePullRequest builds valid PR with parseable diff")
     void samplePrValid() {
         PullRequest s = prService.createSamplePullRequest();
         assertThat(s.getPrId()).isNotNull();
-        assertThat(s.getDiffs()).isNotEmpty();
+        assertThat(s.getRawDiffContent()).isNotBlank();
+        // processPullRequest should parse the raw diff on the sample too
+        PullRequest processed = prService.processPullRequest(s);
+        assertThat(processed.getDiffs()).isNotEmpty();
     }
 }

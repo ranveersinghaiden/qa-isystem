@@ -1,3 +1,6 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: pr-service
@@ -17,12 +20,7 @@ spring:
 kafka:
   topics:
     feature-updates: FeatureUpdatesQueue
-    impact-results: ImpactResultsQueue
-    test-scripts: TestScriptsQueue
-    test-results: TestResultsQueue
 
-server:
-  port: 8080
 
 logging:
   level:
