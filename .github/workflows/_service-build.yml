@@ -107,9 +107,10 @@ jobs:
             -pl ${{ inputs.service }} \
             --no-transfer-progress
         env:
-          # Prevents tests that need Kafka from hanging on CI (no broker available)
+          # Prevents tests that need Kafka or Redis from hanging on CI (no broker available)
           SPRING_AUTOCONFIGURE_EXCLUDE: >-
-            org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+            org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration,
+            org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration
 
       # ── 5. Upload test reports ───────────────────────────────────────────────
       - name: Upload Surefire test reports

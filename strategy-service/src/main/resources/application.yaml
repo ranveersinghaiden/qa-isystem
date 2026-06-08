@@ -19,6 +19,14 @@ spring:
     properties:
       reconnect.backoff.ms: 1000
       reconnect.backoff.max.ms: 10000
+  data:
+    redis:
+      # Default to localhost so the Docker Redis started by docker compose up -d works
+      # without any extra configuration.  Override with REDIS_HOST for production.
+      # Leave this at localhost — InMemoryPrTracker is used as fallback if the
+      # connection attempt times out, because RedisPrTracker is @ConditionalOnProperty.
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 kafka:
   topics:
