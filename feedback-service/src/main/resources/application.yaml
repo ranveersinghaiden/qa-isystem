@@ -1,0 +1,58 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: feedback-service
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST:localhost}:9092
+    consumer:
+      group-id: feedback-service-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}   # default: local Docker Redis; override for production
+      port: ${REDIS_PORT:6379}
+
+kafka:
+  topics:
+    feedback: FeedbackQueue
+
+github:
+  webhook-secret: ${GITHUB_WEBHOOK_SECRET:}
+
+aiqa:
+  github:
+    enabled: true                 # enables GitHubService, RepoContextService
+  target-repo:
+    url: ${TARGET_REPO_URL:}
+    branch: ${TARGET_REPO_BRANCH:main}
+    local-path: /tmp/qa-context-repo-feedback
+    fallback-local-path: ""
+    fallback-pull: false
+    auth:
+      type: none
+      token: ${TARGET_REPO_TOKEN:}
+      username: ${TARGET_REPO_USERNAME:}
+    modules:
+      api: tests/api
+      ui:  tests/ui
+      mobile: tests/mobile
+  # ── AI Generation — provider: openai (default) or copilot ──────────────────
+  # See strategy-service/src/main/resources/application.yaml for full docs.
+  ai:
+    provider: ${AI_PROVIDER:copilot}
+    openai:
+      api-key:  ${OPENAI_API_KEY:}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      model:    ${OPENAI_MODEL:gpt-4o}
+    copilot:
+      token:    ${GITHUB_COPILOT_TOKEN:}
+      base-url: ${COPILOT_BASE_URL:https://api.githubcopilot.com}
+      model:    ${COPILOT_MODEL:gpt-4o}
+
+logging:
+  level:
+    nz.co.eroad.qaisystem: INFO
+    org.apache.kafka: WARN

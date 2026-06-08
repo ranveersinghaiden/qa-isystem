@@ -39,6 +39,14 @@ kafka:
 # aiqa.codegen.enabled=false → strategy-service does NOT consume TestScriptsQueue
 # (codegen-service handles it). Set to true for legacy monolith mode.
 aiqa:
+  base-url: ${API_BASE_URL:http://localhost:8080}
+  ui:
+    base-url: ${UI_BASE_URL:http://localhost:3000}
+  mobile:
+    app-path: ${MOBILE_APP_PATH:}
+    device-name: ${MOBILE_DEVICE_NAME:emulator-5554}
+    platform: ${MOBILE_PLATFORM:Android}
+    appium-url: ${APPIUM_URL:http://localhost:4723/wd/hub}
   github:
     enabled: true                 # enables GitHubService, RepoContextService
   codegen:
