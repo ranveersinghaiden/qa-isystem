@@ -29,6 +29,12 @@
     <properties>
         <java.version>25</java.version>
         <spring-kafka.version>3.2.0</spring-kafka.version>
+        <!--
+            Spring AI — verify the version compatible with your Spring Boot build.
+            spring-ai-starter-mcp-server-webmvc is added per-service (opt-in).
+            Services that expose MCP tools add it to their own pom.xml.
+        -->
+        <spring-ai.version>1.0.0</spring-ai.version>
     </properties>
 
     <dependencyManagement>
@@ -37,6 +43,14 @@
                 <groupId>nz.co.eroad</groupId>
                 <artifactId>common</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <!-- Spring AI BOM — manages spring-ai-starter-mcp-server-webmvc versions -->
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

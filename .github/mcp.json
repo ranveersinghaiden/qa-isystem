@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "qa-pr-service": {
+      "type": "sse",
+      "url": "http://localhost:8080/mcp/message"
+    },
+    "qa-impact-service": {
+      "type": "sse",
+      "url": "http://localhost:8081/mcp/message"
+    },
+    "qa-strategy-service": {
+      "type": "sse",
+      "url": "http://localhost:8082/mcp/message"
+    },
+    "qa-codegen-service": {
+      "type": "sse",
+      "url": "http://localhost:8083/mcp/message"
+    },
+    "qa-feedback-service": {
+      "type": "sse",
+      "url": "http://localhost:8084/mcp/message"
+    }
+  }
+}
+

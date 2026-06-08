@@ -867,3 +867,36 @@ An optional future enhancement would add structural diff analysis for merged PRs
 - **Result:** automatic commits to `.qa-agent/instructions.md` in the test repo — a growing rule set derived from real human corrections
 
 This would complement the existing rejection-based feedback loop with learning from accepted-but-edited PRs.
+
+---
+
+## Cost Saving Decisions - CLI vs API
+
+┌─────────────────────────────────────────────────────────────────────┐
+│              COPILOT CLI vs DIRECT API COMPARISON                   │
+├─────────────────────────┬───────────────────────────────────────────┤
+│ Factor                  │ Assessment                                │
+├─────────────────────────┼───────────────────────────────────────────┤
+│ Cost Model (2024/2025)  │ Copilot: flat seat license (~$19-39/mo)   │
+│                         │ API: pay-per-usage (can spike)            │
+├─────────────────────────┼───────────────────────────────────────────┤
+│ Context Window          │ Copilot CLI: has repo context built-in    │
+│                         │ API: you manage context yourself          │
+├─────────────────────────┼───────────────────────────────────────────┤
+│ Quality (your finding)  │ Copilot CLI: ✅ Works great with repo     │
+│                         │ context + product context                 │
+├─────────────────────────┼───────────────────────────────────────────┤
+│ Rate Limits             │ Copilot: softer limits on seat license    │
+│                         │ API: hard token/RPM limits                │
+├─────────────────────────┼───────────────────────────────────────────┤
+│ Control                 │ API: full control over prompts/models     │
+│                         │ Copilot CLI: opaque, GitHub-controlled    │
+├─────────────────────────┼───────────────────────────────────────────┤
+│ Auditability            │ API: full request/response logging        │
+│                         │ Copilot CLI: limited visibility           │
+├─────────────────────────┼───────────────────────────────────────────┤
+│ CI/CD Integration       │ Both work, CLI needs GH Actions setup     │
+├─────────────────────────┼───────────────────────────────────────────┤
+│ Repo-awareness          │ Copilot CLI: native                       │
+│                         │ API: you build RAG/context pipeline       │
+└─────────────────────────┴───────────────────────────────────────────┘
