@@ -81,7 +81,8 @@ public class AIImpactEvaluator {
             double riskScore) {
 
         if (!props.isConfigured()) {
-            log.debug("[AIImpactEvaluator] AI evaluation disabled or not configured — skipping");
+            log.debug("[AIImpactEvaluator] AI evaluation disabled or not configured (provider={}) — skipping",
+                    props.getProvider());
             return Optional.empty();
         }
 
@@ -215,13 +216,19 @@ public class AIImpactEvaluator {
     private String callApi(String jsonPayload) throws Exception {
         HttpClient client = getHttpClient();
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(props.getBaseUrl() + "/chat/completions"))
+        // Build the request — add Copilot-specific header when using the Copilot provider
+        HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
+                .uri(URI.create(props.getEffectiveBaseUrl() + "/chat/completions"))
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + props.getApiKey())
+                .header("Authorization", "Bearer " + props.getEffectiveApiKey())
                 .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
-                .timeout(Duration.ofSeconds(props.getTimeoutSeconds()))
-                .build();
+                .timeout(Duration.ofSeconds(props.getTimeoutSeconds()));
+
+        if ("copilot".equalsIgnoreCase(props.getProvider())) {
+            reqBuilder.header("Copilot-Integration-Id", "qa-isystem");
+        }
+
+        HttpRequest request = reqBuilder.build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 

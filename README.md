@@ -60,63 +60,65 @@ produces executable test code, and stabilises failing tests — all without huma
 │                                         │                                    │
 │                                         ▼                                    │
 │  ┌────────────────────────────────────────────────────────────────────────┐  │
-│  │  strategy-service  :8082   Phases 2–7  (AI-native, self-improving)    │  │
+│  │  strategy-service  :8082   Phases 2–7  (AI-native, self-improving)     │  │
 │  │                                                                        │  │
-│  │  StrategyAgent ──► SKIP / UPDATE_TESTS / CREATE_TESTS                 │  │
+│  │  StrategyAgent ──► SKIP / UPDATE_TESTS / CREATE_TESTS                  │  │
 │  │       │              │             │                                   │  │
-│  │  Fallback Rules  BddGenerator  handleUpdateTests                      │  │
-│  │  (fullRegression  (AI + product    (inline delta)                     │  │
-│  │   expandedScope)   expert context)     │                              │  │
-│  │                       │               │                               │  │
-│  │               ┌───────▼───────────────▼───────┐                      │  │
-│  │               │     BDD Review PR on GitHub    │                      │  │
-│  │               │  PrTracker.trackBdd(branch)    │                      │  │
-│  │               └──────────────┬────────────────┘                      │  │
-│  │                              │                                        │  │
-│  │              ┌───────────────┴─────────────────────┐                 │  │
-│  │              │  GitHub pull_request webhook         │                 │  │
-│  │              │  POST /api/strategy/github-webhook   │                 │  │
-│  │              └──────────┬──────────────┬────────────┘                │  │
-│  │                    MERGED            REJECTED                        │  │
-│  │                         │                │                           │  │
-│  │                         ▼                ▼                           │  │
-│  │              TestScriptsQueue   PrFeedbackService                    │  │
-│  │              (Kafka, codegen)   .handleBddRejection()                │  │
-│  │                    │              │ fetch review comments            │  │
-│  │                    ▼              │ classify knowledge gap           │  │
-│  │            CodegenService         │ update productExpert/ (if gap)   │  │
-│  │          ┌──────┬──┴─────┐       │ re-generate BDD w/ AI            │  │
-│  │       API Runner UI Mobile        │ create revised BDD PR            │  │
-│  │          └──────┴──┬─────┘       └──────────────────────────────────┘  │  │
-│  │           StabilizationLoop                                             │  │
-│  │         (run → fail → fix, max 3×)                                      │  │
-│  │                    │                                                    │  │
-│  │               ┌────▼────────────────────────┐                          │  │
-│  │               │  Final Test PR on GitHub      │                         │  │
-│  │               │  PrTracker.trackTest(branch)  │                         │  │
+│  │  Fallback Rules  BddGenerator  handleUpdateTests                       │  │
+│  │  (fullRegression  (AI + product    (inline delta)                      │  │
+│  │   expandedScope)   expert context)     │                               │  │
+│  │                       │               │                                │  │
+│  │               ┌───────▼───────────────▼───────┐                        │  │
+│  │               │     BDD Review PR on GitHub    │                       │  │
+│  │               │  PrTracker.trackBdd(branch)    │                       │  │
+│  │               └──────────────┬────────────────┘                        │  │
+│  │                              │                                         │  │
+│  │              ┌───────────────┴──────────────────────┐                  │  │
+│  │              │  GitHub pull_request webhook         │                  │  │
+│  │              │  POST /api/strategy/github-webhook   │                  │  │
+│  │              └──────────┬──────────────┬────────────┘                  │  │
+│  │                    MERGED            REJECTED                          │  │
+│  │                         │                │                             │  │
+│  │                         ▼                ▼                             │  │
+│  │              TestScriptsQueue   PrFeedbackService                      │  │
+│  │              (Kafka, codegen)   .handleBddRejection()                  │  │
+│  │                    │              │ fetch review comments              │  │
+│  │                    ▼              │ classify knowledge gap             │  │
+│  │            CodegenService         │ update productExpert/ (if gap)     │  │
+│  │          ┌──────┬──┴─────┐        │ re-generate BDD w/ AI              │  │
+│  │       API Runner UI Mobile        │ create revised BDD PR              │  │
+│  │          └──────┴──┬─────┘        └─────────────────────────────────   │  │
+│  │           StabilizationLoop                                            │  │
+│  │         (run → fail → fix, max 3×)                                     │  │
+│  │                    │                                                   │  │
+│  │               ┌────▼─────────────────────────┐                         │  │
+│  │               │  Final Test PR on GitHub     │                         │  │
+│  │               │  PrTracker.trackTest(branch) │                         │  │
 │  │               └────────────┬─────────────────┘                         │  │
-│  │                            │                                            │  │
+│  │                            │                                           │  │
 │  │              ┌─────────────┴──────────────────────────┐                │  │
-│  │              │  GitHub pull_request webhook            │                │  │
+│  │              │  GitHub pull_request webhook           │                │  │
 │  │              └───────────┬──────────────┬─────────────┘                │  │
 │  │                     MERGED           REJECTED                          │  │
 │  │                          │               │                             │  │
-│  │               Pipeline complete   PrFeedbackService                   │  │
-│  │               (tests are in repo) .handleTestRejection()              │  │
-│  │                                     │ fetch review comments           │  │
-│  │                                     │ classify knowledge gap          │  │
-│  │                                     │ update productExpert/ (if gap)  │  │
-│  │                                     │ re-generate test code w/ AI     │  │
-│  │                                     │ create revised test PR          │  │
+│  │               Pipeline complete   PrFeedbackService                    │  │
+│  │               (tests are in repo) .handleTestRejection()               │  │
+│  │                                     │ fetch review comments            │  │
+│  │                                     │ classify knowledge gap           │  │
+│  │                                     │ update productExpert/ (if gap)   │  │
+│  │                                     │ re-generate test code w/ AI      │  │
+│  │                                     │ create revised test PR           │  │
 │  │                                     └────────────────────────────────  │  │
 │  │                                                                        │  │
-│  │  ── Product Knowledge ──────────────────────────────────────────────  │  │
+│  │  ── Product Knowledge ──────────────────────────────────────────────   │  │
 │  │  productExpert/{product}/*.md  read at startup via RepoContextService  │  │
 │  │  .aiqa/context.md              team-wide QA conventions                │  │
 │  │  .github/agents/*.md           agent instruction files                 │  │
-│  │  ─────────────────────────────────────────────────────────────────── │  │
-│  │  OPENAI_API_KEY  → AI generation mode (GPT-4o by default)             │  │
-│  │  No key set      → enhanced template fallback mode                    │  │
+│  │  ───────────────────────────────────────────────────────────────────   │  │
+│  │  OPENAI_API_KEY  → AI generation mode via OpenAI (default provider)    │  │
+│  │  GITHUB_COPILOT_TOKEN → AI generation mode via GitHub Copilot API      │  │
+│  │  AI_PROVIDER=copilot  → switch between providers at runtime            │  │
+│  │  No credential set  → enhanced template fallback mode                  │  │
 │  └────────────────────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -127,7 +129,7 @@ produces executable test code, and stabilises failing tests — all without huma
 
 | Module | Port | Responsibility |
 |--------|------|----------------|
-| [`common`](common/README.md) | — | Shared models, Kafka config, GitHub client (`GitHubService`), AI client (`AiClient`/`OpenAiClient`), `PrTracker` (in-memory or Redis), repo context (`RepoContext`/`RepoContextService`), `FeedbackEvent` model |
+| [`common`](common/README.md) | — | Shared models, Kafka config, GitHub client (`GitHubService`), AI client interface (`AiClient`) with two implementations (`OpenAiClient` for OpenAI/Azure/Ollama, `CopilotClient` for GitHub Copilot API), `AiClientConfig` (provider selection via `aiqa.ai.provider`), `PrTracker` (in-memory or Redis), repo context (`RepoContext`/`RepoContextService`), `FeedbackEvent` model |
 | [`pr-service`](pr-service/README.md) | 8080 | PR ingestion — webhook receiver, validation, Kafka publisher |
 | [`impact-service`](impact-service/README.md) | 8081 | Deterministic impact analysis — no AI or LLM |
 | [`strategy-service`](strategy-service/README.md) | 8082 | Strategy decision, BDD generation (AI or template), GitHub webhook entry point — publishes `FeedbackEvent` to Kafka for rejected PRs |
@@ -319,11 +321,17 @@ For a minimal local run **no environment variables are required** — all servic
 | `TARGET_REPO_TOKEN` | strategy-service | GitHub PAT with `repo` scope. **Optional for local dev** — if blank, GitHubService automatically calls `git credential fill` which reads the token IntelliJ stored in osxkeychain. Required for CI/production (no credential helper available). If `TARGET_REPO_URL` is set but no token can be resolved, **the service refuses to start**. For GitHub org repos, the PAT must have SSO authorized for the org. | *(none — falls back to osxkeychain / IntelliJ auth)* |
 | `TARGET_REPO_USERNAME` | strategy-service | GitHub username paired with the PAT | *(none)* |
 | `GITHUB_WEBHOOK_SECRET` | strategy-service | HMAC-SHA256 secret matching the value set in GitHub Repository → Webhooks. Required for the webhook (BDD PR merge/reject, test PR merge/reject) to work correctly. Leave blank in local dev to skip signature verification. | *(none — verification skipped with a warning)* |
-| `OPENAI_API_KEY` | strategy-service | API key for OpenAI or any OpenAI-compatible provider (Azure, Ollama). When set, enables **AI generation mode** for BDD scenarios and test code. When absent, the service falls back to enhanced template mode. | *(none — template mode)* |
-| `OPENAI_BASE_URL` | strategy-service | Base URL for the AI API endpoint. Override for Azure (`https://…openai.azure.com`) or local models (`http://localhost:11434`). | `https://api.openai.com` |
-| `OPENAI_MODEL` | strategy-service | Model name to use for completions. | `gpt-4o` |
+| `AI_PROVIDER` | strategy / codegen / feedback | Select AI backend: `openai` (default) or `copilot`. All three services share this setting. | `openai` |
+| `OPENAI_API_KEY` | strategy / codegen / feedback | Required when `AI_PROVIDER=openai`. API key for OpenAI or any OpenAI-compatible provider (Azure, Ollama, GitHub Models). When absent and using the default OpenAI endpoint, the service falls back to enhanced template mode. | *(none — template mode)* |
+| `OPENAI_BASE_URL` | strategy / codegen / feedback | Used when `AI_PROVIDER=openai`. Override for Azure (`https://…openai.azure.com`), Ollama (`http://localhost:11434`), or GitHub Models (`https://models.inference.ai.azure.com`). | `https://api.openai.com` |
+| `OPENAI_MODEL` | strategy / codegen / feedback | Used when `AI_PROVIDER=openai`. Model name to use for completions. | `gpt-4o` |
+| `GITHUB_COPILOT_TOKEN` | strategy / codegen / feedback | Required when `AI_PROVIDER=copilot`. GitHub personal access token, GitHub App token, or `GITHUB_TOKEN` (in Actions if Copilot is enabled for the repo). | *(none)* |
+| `COPILOT_BASE_URL` | strategy / codegen / feedback | Used when `AI_PROVIDER=copilot`. Override for GitHub Models gateway. | `https://api.githubcopilot.com` |
+| `COPILOT_MODEL` | strategy / codegen / feedback | Used when `AI_PROVIDER=copilot`. Model to request from Copilot API. | `gpt-4o` |
 | `AIQA_AI_ENABLED` | impact-service | Set `true` to enable AI-assisted risk scoring in the gray zone | `false` |
-| `AIQA_AI_API_KEY` | impact-service | OpenAI (or compatible) API key — required when AI is enabled | *(none)* |
+| `AI_PROVIDER` | impact-service | Select AI backend for gray-zone evaluation: `openai` (default) or `copilot` | `openai` |
+| `AIQA_AI_API_KEY` | impact-service | Used when `AI_PROVIDER=openai` — required when AI is enabled | *(none)* |
+| `GITHUB_COPILOT_TOKEN` | impact-service | Used when `AI_PROVIDER=copilot` — required when AI is enabled | *(none)* |
 | `AIQA_AI_MODEL` | impact-service | Model used for AI scoring | `gpt-4o-mini` |
 | `KAFKA_HOST` | all (production only) | Kafka broker hostname advertised to external clients | `localhost` |
 
@@ -335,17 +343,23 @@ export TARGET_REPO_URL=https://github.com/your-org/your-test-repo
 export TARGET_REPO_TOKEN=ghp_your_personal_access_token
 export TARGET_REPO_USERNAME=your_github_username
 
-# ── Optional: AI generation mode (strategy-service) ──────────────────────────
-# When set, enables AI-driven BDD generation, test code generation, and
-# feedback classification. Without this, the service uses enhanced template mode.
+# ── Optional: AI generation mode ─────────────────────────────────────────────
+# Choose ONE of the two provider options below:
+
+# Option A — OpenAI (or any OpenAI-compatible endpoint)
+export AI_PROVIDER=openai
 export OPENAI_API_KEY=sk-...
-export OPENAI_BASE_URL=https://api.openai.com  # or Azure/Ollama endpoint
+export OPENAI_BASE_URL=https://api.openai.com  # or Azure/Ollama/GitHub Models endpoint
 export OPENAI_MODEL=gpt-4o                     # or gpt-4o-mini for lower cost
+
+# Option B — GitHub Copilot API
+# export AI_PROVIDER=copilot
+# export GITHUB_COPILOT_TOKEN=ghp_...          # GitHub token with Copilot access
+# export COPILOT_MODEL=gpt-4o                  # optional
 
 # ── Optional: AI-assisted risk scoring (impact-service) ──────────────────────
 export AIQA_AI_ENABLED=true
-export AIQA_AI_API_KEY=sk-...
-export AIQA_AI_MODEL=gpt-4o-mini   # or gpt-4o for higher accuracy
+# Uses the same AI_PROVIDER / AIQA_AI_API_KEY or GITHUB_COPILOT_TOKEN set above
 ```
 
 > **Local only — no `.env` file needed.** These variables map to the `${VAR:}` placeholders in each service's `application.yaml`. You can also hard-code non-secret values directly in `application.yaml` for local development, but **never commit secrets to source control**.
@@ -736,11 +750,16 @@ These are read by `docker-compose.prod.yml` on startup. Copy `.env.example` to `
 | `TARGET_REPO_TOKEN` | strategy-service | Yes (for PRs) | GitHub PAT with `repo` scope; `git credential fill` is not available in Docker. For GitHub org repos, the PAT must have SSO authorized for the org. |
 | `TARGET_REPO_USERNAME` | strategy-service | Yes (for PRs) | GitHub username paired with the PAT |
 | `GITHUB_WEBHOOK_SECRET` | strategy-service | Yes (recommended) | HMAC-SHA256 secret matching the GitHub webhook setting — prevents unauthenticated codegen/feedback triggers |
-| `OPENAI_API_KEY` | strategy-service | No (enables AI mode) | OpenAI-compatible API key. When set, enables AI-driven BDD generation, test code generation, and feedback classification. Without it, the service uses enhanced template mode. |
-| `OPENAI_BASE_URL` | strategy-service | No | Override for Azure or local Ollama. Default: `https://api.openai.com` |
-| `OPENAI_MODEL` | strategy-service | No | Model name. Default: `gpt-4o` |
+| `AI_PROVIDER` | strategy / codegen / feedback / impact | No | AI backend: `openai` (default) or `copilot`. Controls which credential below is used. |
+| `OPENAI_API_KEY` | strategy / codegen / feedback | When `AI_PROVIDER=openai` | OpenAI-compatible API key. Enables AI-driven BDD generation, test code generation, and feedback classification. Without it, the service uses enhanced template mode. |
+| `OPENAI_BASE_URL` | strategy / codegen / feedback | No | Override for Azure (`https://…openai.azure.com`), Ollama (`http://localhost:11434`), or GitHub Models (`https://models.inference.ai.azure.com`). Default: `https://api.openai.com` |
+| `OPENAI_MODEL` | strategy / codegen / feedback | No | Model name. Default: `gpt-4o` |
+| `GITHUB_COPILOT_TOKEN` | strategy / codegen / feedback | When `AI_PROVIDER=copilot` | GitHub token with Copilot access (PAT, App token, or `GITHUB_TOKEN` if Copilot is enabled for the repo) |
+| `COPILOT_BASE_URL` | strategy / codegen / feedback | No | Override Copilot endpoint. Default: `https://api.githubcopilot.com` |
+| `COPILOT_MODEL` | strategy / codegen / feedback | No | Copilot model. Default: `gpt-4o` |
 | `AIQA_AI_ENABLED` | impact-service | No | Set `true` to enable AI-assisted risk scoring |
-| `AIQA_AI_API_KEY` | impact-service | If AI enabled | OpenAI-compatible API key |
+| `AIQA_AI_API_KEY` | impact-service | If AI enabled and `AI_PROVIDER=openai` | OpenAI-compatible API key for gray-zone risk evaluation |
+| `GITHUB_COPILOT_TOKEN` | impact-service | If AI enabled and `AI_PROVIDER=copilot` | GitHub token with Copilot access for gray-zone risk evaluation |
 
 ### Required repository variables
 

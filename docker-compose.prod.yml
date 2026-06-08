@@ -3,9 +3,9 @@
 # Production overlay for QA-ISystem.
 # Use with: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 #
-# This file defines the three application services using the GHCR images
-# built by CI. It extends the base docker-compose.yml which provides Kafka
-# and Zookeeper.
+# This file defines the five application services using the GHCR images
+# built by CI. It extends the base docker-compose.yml which provides Kafka,
+# Zookeeper, and Redis.
 #
 # Required environment variables (set in a .env file at DEPLOY_PATH on the server):
 #
@@ -16,14 +16,33 @@
 #   PR_SERVICE_TAG=latest
 #   IMPACT_SERVICE_TAG=latest
 #   STRATEGY_SERVICE_TAG=latest
+#   CODEGEN_SERVICE_TAG=latest
+#   FEEDBACK_SERVICE_TAG=latest
 #
-#   # strategy-service: target test repo (optional)
+#   # Target test repo (strategy / codegen / feedback services)
 #   TARGET_REPO_TOKEN=ghp_your_token
 #   TARGET_REPO_USERNAME=your_github_username
 #   TARGET_REPO_URL=https://github.com/your-org/your-test-repo
+#   GITHUB_WEBHOOK_SECRET=your_hmac_secret
+#
+#   # ── AI provider (shared by strategy / codegen / feedback / impact) ──────────
+#   # Set AI_PROVIDER to "openai" (default) or "copilot", then add the
+#   # corresponding credential:
+#   AI_PROVIDER=openai
+#
+#   # When AI_PROVIDER=openai:
+#   OPENAI_API_KEY=sk-proj-...              # or GitHub token for GitHub Models
+#   # OPENAI_BASE_URL=https://api.openai.com  # override for Azure/Ollama/GitHub Models
+#   # OPENAI_MODEL=gpt-4o
+#
+#   # When AI_PROVIDER=copilot:
+#   # GITHUB_COPILOT_TOKEN=ghp_...          # GitHub token with Copilot access
+#   # COPILOT_BASE_URL=https://api.githubcopilot.com
+#   # COPILOT_MODEL=gpt-4o
 #
 #   # impact-service: AI evaluator (optional — disabled by default)
-#   AIQA_AI_API_KEY=sk-proj-...
+#   AIQA_AI_ENABLED=false                   # set to "true" to activate
+#   # uses AI_PROVIDER / OPENAI_API_KEY or GITHUB_COPILOT_TOKEN above
 #
 #   # Kafka advertised listener — must be the server's IP or DNS name
 #   KAFKA_HOST=your-server-ip
@@ -63,10 +82,14 @@ services:
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SERVER_PORT: 8081
-      # AI last-resort evaluator — set AIQA_AI_API_KEY to enable
+      # AI last-resort evaluator — set AIQA_AI_ENABLED=true and configure
+      # the AI_PROVIDER + matching credential to activate
       AIQA_AI_ENABLED: ${AIQA_AI_ENABLED:-false}
+      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      # OpenAI provider credential (used when AI_PROVIDER=openai)
       AIQA_AI_API_KEY: ${AIQA_AI_API_KEY:-}
-      AIQA_AI_MODEL: ${AIQA_AI_MODEL:-gpt-4o-mini}
+      # Copilot provider credential (used when AI_PROVIDER=copilot)
+      GITHUB_COPILOT_TOKEN: ${GITHUB_COPILOT_TOKEN:-}
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8081/api/impact/status"]
       interval: 30s
@@ -91,6 +114,15 @@ services:
       AIQA_TARGET_REPO_URL: ${TARGET_REPO_URL:-}
       AIQA_TARGET_REPO_AUTH_TOKEN: ${TARGET_REPO_TOKEN:-}
       AIQA_TARGET_REPO_AUTH_USERNAME: ${TARGET_REPO_USERNAME:-}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
+      # AI provider — shared by strategy / codegen / feedback services
+      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
+      GITHUB_COPILOT_TOKEN: ${GITHUB_COPILOT_TOKEN:-}
+      COPILOT_BASE_URL: ${COPILOT_BASE_URL:-https://api.githubcopilot.com}
+      COPILOT_MODEL: ${COPILOT_MODEL:-gpt-4o}
     volumes:
       # Persist the cloned test repo between container restarts to avoid re-cloning every time
       - qa-repo-cache:/tmp/qa-context-repo
@@ -101,9 +133,84 @@ services:
       retries: 3
       start_period: 60s  # longer start period — repo clone takes time
 
+  # ── codegen-service ─────────────────────────────────────────────────────────
+  codegen-service:
+    image: ghcr.io/${GHCR_ORG}/qa-isystem/codegen-service:${CODEGEN_SERVICE_TAG:-latest}
+    container_name: qa-codegen-service
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATA_REDIS_HOST: redis
+      SERVER_PORT: 8083
+      TARGET_REPO_URL: ${TARGET_REPO_URL:-}
+      TARGET_REPO_TOKEN: ${TARGET_REPO_TOKEN:-}
+      TARGET_REPO_USERNAME: ${TARGET_REPO_USERNAME:-}
+      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
+      GITHUB_COPILOT_TOKEN: ${GITHUB_COPILOT_TOKEN:-}
+      COPILOT_BASE_URL: ${COPILOT_BASE_URL:-https://api.githubcopilot.com}
+      COPILOT_MODEL: ${COPILOT_MODEL:-gpt-4o}
+    volumes:
+      - qa-codegen-repo-cache:/tmp/qa-context-repo-codegen
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ── feedback-service ─────────────────────────────────────────────────────────
+  feedback-service:
+    image: ghcr.io/${GHCR_ORG}/qa-isystem/feedback-service:${FEEDBACK_SERVICE_TAG:-latest}
+    container_name: qa-feedback-service
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATA_REDIS_HOST: redis
+      SERVER_PORT: 8084
+      TARGET_REPO_URL: ${TARGET_REPO_URL:-}
+      TARGET_REPO_TOKEN: ${TARGET_REPO_TOKEN:-}
+      TARGET_REPO_USERNAME: ${TARGET_REPO_USERNAME:-}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
+      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
+      GITHUB_COPILOT_TOKEN: ${GITHUB_COPILOT_TOKEN:-}
+      COPILOT_BASE_URL: ${COPILOT_BASE_URL:-https://api.githubcopilot.com}
+      COPILOT_MODEL: ${COPILOT_MODEL:-gpt-4o}
+    volumes:
+      - qa-feedback-repo-cache:/tmp/qa-context-repo-feedback
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
 volumes:
-  # Shared cache volume for the cloned test repository
+  # Shared cache volumes for cloned test repositories
   qa-repo-cache:
+    driver: local
+  qa-codegen-repo-cache:
+    driver: local
+  qa-feedback-repo-cache:
     driver: local
 
 # Override Kafka advertised listener so services inside Docker can reach

@@ -9,10 +9,12 @@ test code, runs a bounded retry-and-fix stabilisation loop, raises human-review 
 **handles rejection feedback for both BDD and test code PRs** — re-generating improved content
 and updating product expert knowledge files when needed.
 
-> **AI-native.** When `OPENAI_API_KEY` is set, BDD generation and test code re-generation use
-> a real LLM with product expert context from the test repo. Without a key, the service uses
-> enhanced template mode — all other functionality (GitHub PRs, webhook handling, feedback loop,
-> stabilisation) works identically in both modes.
+> **AI-native.** Set `AI_PROVIDER` to select the AI backend:
+> - `AI_PROVIDER=openai` (default) + `OPENAI_API_KEY` — uses OpenAI or any OpenAI-compatible endpoint (Azure, Ollama, GitHub Models)
+> - `AI_PROVIDER=copilot` + `GITHUB_COPILOT_TOKEN` — uses the GitHub Copilot API
+>
+> Without any credential the service uses enhanced template mode — all other functionality
+> (GitHub PRs, webhook handling, feedback loop, stabilisation) works identically in both modes.
 
 ---
 
@@ -298,22 +300,39 @@ boolean isAvailable();
 
 ---
 
-#### OpenAiClient
-**`agent/OpenAiClient.java`**
+#### AI Client (AiClient / OpenAiClient / CopilotClient)
+**`common` module: `agent/AiClient.java`, `agent/OpenAiClient.java`, `agent/CopilotClient.java`**
 
-OpenAI-compatible implementation supporting:
+The active implementation is selected by `aiqa.ai.provider` (resolved via `AiClientConfig`):
+
+| `aiqa.ai.provider` | Implementation | Credential |
+|---|---|---|
+| `openai` (default) | `OpenAiClient` | `OPENAI_API_KEY` |
+| `copilot` | `CopilotClient` | `GITHUB_COPILOT_TOKEN` |
+
+**OpenAiClient** supports:
 - **OpenAI** — default when `OPENAI_API_KEY` is set
 - **Azure OpenAI** — set `OPENAI_BASE_URL` to your Azure endpoint
 - **Local models (Ollama, etc.)** — set `OPENAI_BASE_URL=http://localhost:11434` (no key required)
+- **GitHub Models** — set `OPENAI_BASE_URL=https://models.inference.ai.azure.com` + `OPENAI_API_KEY` to a GitHub token
 
-**`isAvailable()`** returns `true` when `OPENAI_API_KEY` is non-blank OR when a custom `OPENAI_BASE_URL` is configured (local models don't need keys).
+**CopilotClient** uses the GitHub Copilot API endpoint (`https://api.githubcopilot.com`). It authenticates with any GitHub token that has Copilot access — a PAT, a GitHub App installation token, or the `GITHUB_TOKEN` available in GitHub Actions when the repository has Copilot enabled.
+
+**`isAvailable()`** returns `true` when the active provider's credential is non-blank (or when using a custom `OPENAI_BASE_URL` for local models, which don't need keys).
 
 Configuration properties:
 ```yaml
-openai:
-  api-key:  ${OPENAI_API_KEY:}
-  base-url: ${OPENAI_BASE_URL:https://api.openai.com}
-  model:    ${OPENAI_MODEL:gpt-4o}
+aiqa:
+  ai:
+    provider: ${AI_PROVIDER:openai}               # openai | copilot
+    openai:
+      api-key:  ${OPENAI_API_KEY:}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      model:    ${OPENAI_MODEL:gpt-4o}
+    copilot:
+      token:    ${GITHUB_COPILOT_TOKEN:}
+      base-url: ${COPILOT_BASE_URL:https://api.githubcopilot.com}
+      model:    ${COPILOT_MODEL:gpt-4o}
 ```
 
 ---
@@ -1249,12 +1268,19 @@ kafka:
     test-scripts: TestScriptsQueue        # produced & consumed
 
 # ── AI generation (BDD + test code + feedback classification) ─────────────────
-# When api-key is set (or a custom base-url for local models), AI mode activates.
-# Without a key, the service uses enhanced template mode for all generation.
-openai:
-  api-key:  ${OPENAI_API_KEY:}                    # leave blank for template mode
-  base-url: ${OPENAI_BASE_URL:https://api.openai.com}  # override for Azure/Ollama
-  model:    ${OPENAI_MODEL:gpt-4o}
+# Set aiqa.ai.provider to select the AI backend.
+# Without a credential the service uses enhanced template mode for all generation.
+aiqa:
+  ai:
+    provider: ${AI_PROVIDER:openai}               # openai | copilot
+    openai:
+      api-key:  ${OPENAI_API_KEY:}                # leave blank for template mode
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}  # override for Azure/Ollama/GitHub Models
+      model:    ${OPENAI_MODEL:gpt-4o}
+    copilot:
+      token:    ${GITHUB_COPILOT_TOKEN:}          # GitHub token with Copilot access
+      base-url: ${COPILOT_BASE_URL:https://api.githubcopilot.com}
+      model:    ${COPILOT_MODEL:gpt-4o}
 
 aiqa:
   stabilization:
@@ -1299,9 +1325,13 @@ logging:
 | `TARGET_REPO_TOKEN` | For PRs | GitHub PAT with `repo` scope. For org repos: must have SSO authorized. |
 | `TARGET_REPO_USERNAME` | For PRs | GitHub username paired with the PAT |
 | `GITHUB_WEBHOOK_SECRET` | Recommended | HMAC-SHA256 secret — prevents unauthenticated triggers |
-| `OPENAI_API_KEY` | For AI mode | OpenAI or compatible API key. Without it, template mode is used. |
-| `OPENAI_BASE_URL` | No | Override for Azure or local Ollama. Default: `https://api.openai.com` |
+| `AI_PROVIDER` | No | AI backend: `openai` (default) or `copilot` |
+| `OPENAI_API_KEY` | When `AI_PROVIDER=openai` | OpenAI or compatible API key. Without it, template mode is used. |
+| `OPENAI_BASE_URL` | No | Override for Azure, Ollama, or GitHub Models. Default: `https://api.openai.com` |
 | `OPENAI_MODEL` | No | Model name. Default: `gpt-4o` |
+| `GITHUB_COPILOT_TOKEN` | When `AI_PROVIDER=copilot` | GitHub token with Copilot access |
+| `COPILOT_BASE_URL` | No | Copilot endpoint override. Default: `https://api.githubcopilot.com` |
+| `COPILOT_MODEL` | No | Copilot model. Default: `gpt-4o` |
 
 ### Product Expert Files in Test Repo
 

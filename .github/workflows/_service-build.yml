@@ -9,6 +9,11 @@
 #   codegen-service   — 8083  (NOTE: ships a full JDK image — see Dockerfile)
 #   feedback-service  — 8084
 #
+# AI provider (runtime config — not needed during CI build/test):
+#   The active AI backend is selected at runtime via the AI_PROVIDER env var
+#   in the server's .env file. CI tests run without any AI backend configured
+#   (template mode). See the per-service CD workflow for required env vars.
+#
 # Inputs:
 #   service      — module name, e.g. "pr-service"
 #   port         — container port the service listens on, e.g. 8080

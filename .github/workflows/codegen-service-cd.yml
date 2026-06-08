@@ -3,10 +3,22 @@
 # Auto-deploys to staging on develop, production on main.
 #
 # codegen-service requires these env vars on the server (.env file):
-#   OPENAI_API_KEY         — API key for the AI model used to generate test code
-#   GITHUB_TOKEN           — PAT with repo scope for committing generated tests
 #   TARGET_REPO_URL        — HTTPS URL of the target test repository
-#   GITHUB_WEBHOOK_SECRET  — HMAC-SHA256 secret set in GitHub webhook settings
+#   TARGET_REPO_TOKEN      — GitHub PAT with repo scope for committing generated tests
+#   TARGET_REPO_USERNAME   — GitHub username paired with the PAT
+#
+#   AI provider (choose one):
+#   AI_PROVIDER            — "openai" (default) or "copilot"
+#
+#   When AI_PROVIDER=openai:
+#   OPENAI_API_KEY         — OpenAI API key (or GitHub token for GitHub Models)
+#   OPENAI_BASE_URL        — (optional) override endpoint (Azure/Ollama/GitHub Models)
+#   OPENAI_MODEL           — (optional) model name, default gpt-4o
+#
+#   When AI_PROVIDER=copilot:
+#   GITHUB_COPILOT_TOKEN   — GitHub token with Copilot access
+#   COPILOT_BASE_URL       — (optional) override, default https://api.githubcopilot.com
+#   COPILOT_MODEL          — (optional) model name, default gpt-4o
 # ─────────────────────────────────────────────────────────────────────────────
 name: "CD — codegen-service"
 

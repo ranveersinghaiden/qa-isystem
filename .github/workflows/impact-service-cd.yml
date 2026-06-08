@@ -4,8 +4,14 @@
 # Auto-deploys impact-service to staging when CI succeeds on "develop".
 # Auto-deploys impact-service to production when CI succeeds on "main".
 #
-# Additional environment variables impact-service needs on the server:
-#   AIQA_AI_API_KEY  — LLM API key (only needed when aiqa.ai.enabled=true)
+# Additional environment variables impact-service needs on the server (.env):
+#   AI_PROVIDER            — "openai" (default) or "copilot" (only needed when aiqa.ai.enabled=true)
+#
+#   When AI_PROVIDER=openai:
+#   AIQA_AI_API_KEY        — OpenAI API key (or GitHub token for GitHub Models)
+#
+#   When AI_PROVIDER=copilot:
+#   GITHUB_COPILOT_TOKEN   — GitHub token with Copilot access
 #
 # Set these in the server's .env file at DEPLOY_PATH.
 # ─────────────────────────────────────────────────────────────────────────────

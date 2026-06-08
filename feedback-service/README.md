@@ -52,7 +52,19 @@ FeedbackEventConsumer deserialises FeedbackEvent
 ```yaml
 server.port: 8084
 spring.kafka.consumer.group-id: feedback-service-group
-openai.api-key: ${OPENAI_API_KEY:}  # Required for AI re-generation
+
+# AI provider: openai (default) or copilot
+aiqa.ai.provider: ${AI_PROVIDER:openai}
+
+# When AI_PROVIDER=openai:
+aiqa.ai.openai.api-key:  ${OPENAI_API_KEY:}   # Required for AI re-generation
+aiqa.ai.openai.base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+aiqa.ai.openai.model:    ${OPENAI_MODEL:gpt-4o}
+
+# When AI_PROVIDER=copilot:
+aiqa.ai.copilot.token:    ${GITHUB_COPILOT_TOKEN:}   # GitHub token with Copilot access
+aiqa.ai.copilot.base-url: ${COPILOT_BASE_URL:https://api.githubcopilot.com}
+aiqa.ai.copilot.model:    ${COPILOT_MODEL:gpt-4o}
 ```
 
 ## No Mocking Policy

@@ -104,21 +104,31 @@ github:
 
 # ── AI Generation ──────────────────────────────────────────────────────────────
 #
-# Enables AI-powered BDD scenario and test code generation.
-# Without an API key the system runs in "enhanced template mode" — templates are
-# still enriched with product expert context from the test repo, but the output
-# is deterministic rather than AI-generated.
+# Select a provider with aiqa.ai.provider:
 #
-# Supported backends (any OpenAI-compatible API):
-#   1. OpenAI          — set OPENAI_API_KEY (https://platform.openai.com)
-#   2. Azure OpenAI    — set OPENAI_API_KEY + OPENAI_BASE_URL (your Azure endpoint)
-#   3. Local Ollama    — set OPENAI_BASE_URL=http://localhost:11434 (no key needed)
-#   4. Any compatible  — set both env vars as needed
+#   provider: openai   (default)
+#     Supports any OpenAI-compatible endpoint:
+#       1. OpenAI          — set OPENAI_API_KEY
+#       2. Azure OpenAI    — set OPENAI_API_KEY + OPENAI_BASE_URL (your Azure endpoint)
+#       3. Local Ollama    — set OPENAI_BASE_URL=http://localhost:11434 (no key needed)
+#       4. GitHub Models   — set OPENAI_BASE_URL=https://models.inference.ai.azure.com
+#                             + OPENAI_API_KEY to a GitHub token
 #
-openai:
-  api-key:  ${OPENAI_API_KEY:}                         # e.g. sk-... or ghp_... for GitHub Models
-  base-url: ${OPENAI_BASE_URL:https://api.openai.com}  # override for Azure / Ollama
-  model:    ${OPENAI_MODEL:gpt-4o}                     # model name
+#   provider: copilot
+#     Uses the GitHub Copilot API (https://api.githubcopilot.com).
+#     Set GITHUB_COPILOT_TOKEN to a GitHub token with Copilot access.
+#     In GitHub Actions, secrets.GITHUB_TOKEN works if the repo has Copilot enabled.
+#
+  ai:
+    provider: ${AI_PROVIDER:openai}               # openai | copilot
+    openai:
+      api-key:  ${OPENAI_API_KEY:}                # sk-... or GitHub token for GitHub Models
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      model:    ${OPENAI_MODEL:gpt-4o}
+    copilot:
+      token:    ${GITHUB_COPILOT_TOKEN:}          # GitHub token with Copilot access
+      base-url: ${COPILOT_BASE_URL:https://api.githubcopilot.com}
+      model:    ${COPILOT_MODEL:gpt-4o}
 
 server:
   port: 8082

@@ -5,7 +5,19 @@
 #   TARGET_REPO_TOKEN      — GitHub PAT with repo scope (CI/production required)
 #   TARGET_REPO_USERNAME   — GitHub username paired with the PAT
 #   GITHUB_WEBHOOK_SECRET  — HMAC-SHA256 secret set in GitHub webhook settings
-#                            (enables BDD PR merge → auto codegen trigger)
+#
+#   AI provider (choose one):
+#   AI_PROVIDER            — "openai" (default) or "copilot"
+#
+#   When AI_PROVIDER=openai:
+#   OPENAI_API_KEY         — OpenAI API key (or GitHub token for GitHub Models)
+#   OPENAI_BASE_URL        — (optional) override endpoint (Azure/Ollama/GitHub Models)
+#   OPENAI_MODEL           — (optional) model name, default gpt-4o
+#
+#   When AI_PROVIDER=copilot:
+#   GITHUB_COPILOT_TOKEN   — GitHub token with Copilot access
+#   COPILOT_BASE_URL       — (optional) override, default https://api.githubcopilot.com
+#   COPILOT_MODEL          — (optional) model name, default gpt-4o
 name: "CD — strategy-service"
 
 on:
