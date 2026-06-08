@@ -15,6 +15,7 @@ import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -280,6 +281,173 @@ public class GitHubService {
         } catch (Exception e) {
             log.error("[GitHubService] Failed to create PR (head={}): {}", head, e.getMessage());
             return null;
+        }
+    }
+
+    // ─── PR review comments ───────────────────────────────────────────────────
+
+    /**
+     * Fetches all review comments on a pull request (both inline review comments
+     * and general issue-level comments) and returns them as a single aggregated string.
+     *
+     * @param prNumber GitHub PR number
+     * @return all comment bodies joined by newlines, empty string on failure
+     */
+    public String getPrAllComments(int prNumber) {
+        if (!isConfigured()) return "";
+        StringBuilder sb = new StringBuilder();
+
+        // 1. Pull request reviews (approve/request-changes bodies)
+        try {
+            String reviewsBody = restClient.get()
+                    .uri("/repos/{owner}/{repo}/pulls/{prNumber}/reviews",
+                            owner, repo, prNumber)
+                    .retrieve()
+                    .body(String.class);
+
+            List<Map<String, Object>> reviews =
+                    objectMapper.readValue(reviewsBody, new TypeReference<>() {});
+            reviews.forEach(r -> {
+                String body = (String) r.get("body");
+                if (body != null && !body.isBlank()) {
+                    sb.append("REVIEW (").append(r.get("state")).append("): ")
+                      .append(body.trim()).append("\n\n");
+                }
+            });
+        } catch (Exception e) {
+            log.warn("[GitHubService] Could not fetch PR reviews for #{}: {}", prNumber, e.getMessage());
+        }
+
+        // 2. Inline review comments (line-level feedback)
+        try {
+            String lineBody = restClient.get()
+                    .uri("/repos/{owner}/{repo}/pulls/{prNumber}/comments",
+                            owner, repo, prNumber)
+                    .retrieve()
+                    .body(String.class);
+
+            List<Map<String, Object>> comments =
+                    objectMapper.readValue(lineBody, new TypeReference<>() {});
+            comments.forEach(c -> {
+                String body = (String) c.get("body");
+                if (body != null && !body.isBlank()) {
+                    sb.append("INLINE (").append(c.get("path")).append("): ")
+                      .append(body.trim()).append("\n\n");
+                }
+            });
+        } catch (Exception e) {
+            log.warn("[GitHubService] Could not fetch inline comments for #{}: {}", prNumber, e.getMessage());
+        }
+
+        // 3. General issue-level comments
+        try {
+            String issueBody = restClient.get()
+                    .uri("/repos/{owner}/{repo}/issues/{prNumber}/comments",
+                            owner, repo, prNumber)
+                    .retrieve()
+                    .body(String.class);
+
+            List<Map<String, Object>> issueComments =
+                    objectMapper.readValue(issueBody, new TypeReference<>() {});
+            issueComments.forEach(c -> {
+                String body = (String) c.get("body");
+                if (body != null && !body.isBlank()) {
+                    sb.append("COMMENT: ").append(body.trim()).append("\n\n");
+                }
+            });
+        } catch (Exception e) {
+            log.warn("[GitHubService] Could not fetch issue comments for #{}: {}", prNumber, e.getMessage());
+        }
+
+        String result = sb.toString().trim();
+        log.info("[GitHubService] Fetched {} chars of review feedback for PR #{}",
+                result.length(), prNumber);
+        return result;
+    }
+
+    /**
+     * Reads a file from the repository on the given branch.
+     *
+     * @param filePath path inside the repo, e.g. {@code productExpert/payments/PRODUCT.md}
+     * @param branch   branch to read from (usually the default branch)
+     * @return decoded file content, or {@code null} if the file does not exist
+     */
+    public String getFileContent(String filePath, String branch) {
+        if (!isConfigured()) return null;
+        try {
+            String responseBody = restClient.get()
+                    .uri("/repos/{owner}/{repo}/contents/" + filePath + "?ref=" + branch,
+                            owner, repo)
+                    .retrieve()
+                    .body(String.class);
+
+            Map<String, Object> map = objectMapper.readValue(responseBody, new TypeReference<>() {});
+            String encoded = (String) map.get("content");
+            if (encoded == null) return null;
+            // GitHub wraps base64 with newlines — strip them
+            byte[] decoded = Base64.getDecoder().decode(encoded.replaceAll("\\s", ""));
+            return new String(decoded, StandardCharsets.UTF_8);
+
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 404) return null; // file doesn't exist yet
+            log.warn("[GitHubService] getFileContent('{}') failed: {}", filePath, e.getMessage());
+            return null;
+        } catch (Exception e) {
+            log.warn("[GitHubService] getFileContent('{}') failed: {}", filePath, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Updates an existing file in the repository.
+     * Requires the current file's blob SHA (obtained from {@link #getFileSha}).
+     *
+     * @return {@code true} on success
+     */
+    public boolean updateFile(String branch, String filePath,
+                               String content, String currentSha, String commitMessage) {
+        if (!isConfigured()) return false;
+        try {
+            String encoded = Base64.getEncoder()
+                    .encodeToString(content.getBytes(StandardCharsets.UTF_8));
+
+            Map<String, Object> body = currentSha != null
+                    ? Map.of("message", commitMessage, "content", encoded,
+                             "branch", branch, "sha", currentSha)
+                    : Map.of("message", commitMessage, "content", encoded, "branch", branch);
+
+            restClient.put()
+                    .uri("/repos/{owner}/{repo}/contents/" + filePath, owner, repo)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .toBodilessEntity();
+
+            log.info("[GitHubService] File '{}' updated on branch '{}'", filePath, branch);
+            return true;
+        } catch (Exception e) {
+            log.error("[GitHubService] Failed to update file '{}': {}", filePath, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Returns the blob SHA of a file on the given branch, or {@code null} if it
+     * does not exist. Required by {@link #updateFile} when modifying an existing file.
+     */
+    public String getFileSha(String filePath, String branch) {
+        if (!isConfigured()) return null;
+        try {
+            String responseBody = restClient.get()
+                    .uri("/repos/{owner}/{repo}/contents/" + filePath + "?ref=" + branch,
+                            owner, repo)
+                    .retrieve()
+                    .body(String.class);
+
+            Map<String, Object> map = objectMapper.readValue(responseBody, new TypeReference<>() {});
+            return (String) map.get("sha");
+        } catch (Exception e) {
+            return null; // file doesn't exist or can't be read
         }
     }
 

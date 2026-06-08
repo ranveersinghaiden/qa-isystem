@@ -22,6 +22,8 @@
         <module>pr-service</module>
         <module>impact-service</module>
         <module>strategy-service</module>
+        <module>codegen-service</module>
+        <module>feedback-service</module>
     </modules>
 
     <properties>

@@ -1,6 +1,7 @@
 package nz.co.eroad.qaisystem.service;
 
 import nz.co.eroad.qaisystem.config.TargetRepoProperties;
+import nz.co.eroad.qaisystem.context.ProductExpertContext;
 import nz.co.eroad.qaisystem.execution.RepoContext;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -332,6 +333,18 @@ public class RepoContextService {
         Map<String, Map<String, String>> agentInstructionsByType =
                 loadAgentInstructions(basePath);
 
+        // Load product expert context — shared across all modules
+        Map<String, ProductExpertContext> productExpertSections = loadProductExpert(basePath);
+        String repoAiqaContext = loadAiqaContext(basePath);
+
+        if (!productExpertSections.isEmpty()) {
+            log.info("[RepoContextService] Product expert loaded — products: {}",
+                    String.join(", ", productExpertSections.keySet()));
+        }
+        if (repoAiqaContext != null && !repoAiqaContext.isBlank()) {
+            log.info("[RepoContextService] .aiqa/context.md loaded ({} chars)", repoAiqaContext.length());
+        }
+
         // Build coverage index per module, then merge
         Map<String, List<String>> mergedIndex = new HashMap<>();
 
@@ -346,12 +359,91 @@ public class RepoContextService {
             cache.put(type, scanModule(type, props.modulePathFor(type),
                     basePath,
                     agentInstructionsByType.getOrDefault(type, Map.of()),
-                    moduleIndex));
+                    moduleIndex,
+                    productExpertSections,
+                    repoAiqaContext));
         }
 
         coverageIndex = Collections.unmodifiableMap(mergedIndex);
         log.info("[RepoContextService] Coverage index built — {} components tracked across all modules",
                 coverageIndex.size());
+    }
+
+    // ─── Product expert loading ────────────────────────────────────────────────
+
+    /**
+     * Scans {@code {repoRoot}/productExpert/} for subdirectories (one per product)
+     * and reads all {@code .md} files from each subdirectory.
+     *
+     * <p>Example layout:
+     * <pre>
+     * productExpert/
+     *   payments/
+     *     PRODUCT.md
+     *     PATTERNS.md
+     *   authentication/
+     *     PRODUCT.md
+     * </pre>
+     *
+     * @return map of productName → {@link ProductExpertContext}; empty if directory missing
+     */
+    private Map<String, ProductExpertContext> loadProductExpert(Path repoRoot) {
+        Path expertRoot = repoRoot.resolve("productExpert");
+        if (!Files.isDirectory(expertRoot)) {
+            log.debug("[RepoContextService] No productExpert/ directory — skipping product expert loading");
+            return Map.of();
+        }
+
+        Map<String, ProductExpertContext> result = new LinkedHashMap<>();
+        try (Stream<Path> products = Files.list(expertRoot)) {
+            products.filter(Files::isDirectory).forEach(productDir -> {
+                String productName = productDir.getFileName().toString();
+                Map<String, String> files = new LinkedHashMap<>();
+
+                try (Stream<Path> mdFiles = Files.list(productDir)) {
+                    mdFiles.filter(p -> p.getFileName().toString().endsWith(".md"))
+                           .forEach(mdFile -> {
+                               try {
+                                   String content = Files.readString(mdFile);
+                                   files.put(mdFile.getFileName().toString(), content);
+                               } catch (IOException e) {
+                                   log.warn("[RepoContextService] Could not read {}: {}",
+                                           mdFile, e.getMessage());
+                               }
+                           });
+                } catch (IOException e) {
+                    log.warn("[RepoContextService] Could not list {}: {}", productDir, e.getMessage());
+                }
+
+                if (!files.isEmpty()) {
+                    result.put(productName, new ProductExpertContext(productName, files));
+                    log.debug("[RepoContextService] Product expert '{}' loaded — files: {}",
+                            productName, String.join(", ", files.keySet()));
+                }
+            });
+        } catch (IOException e) {
+            log.warn("[RepoContextService] Could not scan productExpert/: {}", e.getMessage());
+        }
+        return Collections.unmodifiableMap(result);
+    }
+
+    /**
+     * Loads {@code {repoRoot}/.aiqa/context.md} — the repo-level QA context file.
+     *
+     * @return file content or {@code null} when the file does not exist
+     */
+    private String loadAiqaContext(Path repoRoot) {
+        Path contextFile = repoRoot.resolve(".aiqa").resolve("context.md");
+        if (!Files.exists(contextFile)) {
+            log.debug("[RepoContextService] No .aiqa/context.md found");
+            return null;
+        }
+        try {
+            return Files.readString(contextFile);
+        } catch (IOException e) {
+            log.warn("[RepoContextService] Could not read .aiqa/context.md: {}", e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -427,20 +519,26 @@ public class RepoContextService {
     private RepoContext scanModule(String testType, String moduleRelPath,
                                    Path basePath,
                                    Map<String, String> agentInstructions,
-                                   Map<String, List<String>> moduleCoverageIndex) {
+                                   Map<String, List<String>> moduleCoverageIndex,
+                                   Map<String, ProductExpertContext> productExpertSections,
+                                   String repoAiqaContext) {
         Path modulePath = basePath.resolve(moduleRelPath);
 
-        // If we have agent instructions, the context is usable even without test source files
-        boolean hasAgentFiles = !agentInstructions.isEmpty();
+        // If we have agent instructions or product expert content, context is usable
+        // even without test source files
+        boolean hasAgentFiles   = !agentInstructions.isEmpty();
+        boolean hasProductExpert = productExpertSections != null && !productExpertSections.isEmpty();
 
         if (!Files.isDirectory(modulePath)) {
-            if (hasAgentFiles) {
-                log.info("[RepoContextService] Module '{}' dir not found but agent instructions " +
-                        "are available — using agent-only context for {}", modulePath, testType);
+            if (hasAgentFiles || hasProductExpert) {
+                log.info("[RepoContextService] Module '{}' dir not found but agent/product expert " +
+                        "context is available — using context-only mode for {}", modulePath, testType);
                 return RepoContext.builder()
                         .testType(testType)
                         .contextAvailable(true)
                         .agentInstructions(agentInstructions)
+                        .productExpertSections(productExpertSections)
+                        .repoAiqaContext(repoAiqaContext)
                         .coverageIndex(Map.of())
                         .build();
             }
@@ -459,14 +557,16 @@ public class RepoContextService {
         Map<String, String> samples = loadSamples(testFiles);
 
         log.info("[RepoContextService] {} module: {} test files, package='{}', baseClass='{}', " +
-                        "agentFiles={}, coverageIndex={}",
+                        "agentFiles={}, productExperts={}, coverageIndex={}",
                 testType, testFiles.size(), basePackage, baseClass,
-                agentInstructions.size(), moduleCoverageIndex.size());
+                agentInstructions.size(), productExpertSections.size(), moduleCoverageIndex.size());
 
         return RepoContext.builder()
                 .testType(testType)
                 .contextAvailable(true)
                 .agentInstructions(agentInstructions)
+                .productExpertSections(productExpertSections)
+                .repoAiqaContext(repoAiqaContext)
                 .basePackage(basePackage)
                 .repoModulePath(modulePath.toString())
                 .existingTestFileNames(testFiles.stream()

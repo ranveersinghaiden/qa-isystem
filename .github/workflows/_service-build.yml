@@ -2,9 +2,16 @@
 # Reusable workflow: build, test, and push one service to GHCR.
 # Called by the per-service CI workflows.
 #
+# Services using this workflow and their ports:
+#   pr-service        — 8080
+#   impact-service    — 8081
+#   strategy-service  — 8082
+#   codegen-service   — 8083  (NOTE: ships a full JDK image — see Dockerfile)
+#   feedback-service  — 8084
+#
 # Inputs:
-#   service    — module name, e.g. "pr-service"
-#   port       — container port the service listens on, e.g. 8080
+#   service      — module name, e.g. "pr-service"
+#   port         — container port the service listens on, e.g. 8080
 #   java-version — Java version to use (default: 25)
 #
 # Secrets consumed (all optional — image push is skipped when not available):

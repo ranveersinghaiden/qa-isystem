@@ -2,6 +2,7 @@ package nz.co.eroad.qaisystem.execution;
 
 import lombok.Builder;
 import lombok.Data;
+import nz.co.eroad.qaisystem.context.ProductExpertContext;
 
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +38,29 @@ public class RepoContext {
      * (and AI tools) can see the project's explicit coding conventions at a glance.
      */
     private final Map<String, String> agentInstructions;
+
+    // ── Product expert context (productExpert/{product}/*.md) ─────────────────
+
+    /**
+     * Product-specific knowledge files loaded from {@code productExpert/} in the
+     * target test repo.  Map of product name → {@link ProductExpertContext}.
+     *
+     * <p>These files contain domain knowledge (what the product does, business flows,
+     * key entities) and testing patterns (how to test this product, known pitfalls).
+     * The AI generation pipeline uses them as the primary system prompt context.
+     *
+     * <p>Empty map when no {@code productExpert/} directory exists in the repo.
+     */
+    private final Map<String, ProductExpertContext> productExpertSections;
+
+    /**
+     * Content of {@code .aiqa/context.md} from the target test repo.
+     * This is a repo-level QA context file covering overarching conventions,
+     * environment setup, CI notes, etc.
+     *
+     * <p>{@code null} or blank when the file does not exist.
+     */
+    private final String repoAiqaContext;
 
     // ── Heuristically discovered conventions (fallback) ────────────────────────
 
@@ -89,6 +113,31 @@ public class RepoContext {
     /** True when at least one agent instruction file was loaded. */
     public boolean hasAgentInstructions() {
         return contextAvailable && agentInstructions != null && !agentInstructions.isEmpty();
+    }
+
+    /** True when at least one product expert file was loaded. */
+    public boolean hasProductExpert() {
+        return contextAvailable && productExpertSections != null && !productExpertSections.isEmpty();
+    }
+
+    /**
+     * Assembles all loaded product expert files into a single system-prompt section
+     * for use in AI generation calls.
+     * Returns an empty string when no product expert content is available.
+     */
+    public String productExpertSystemPrompt() {
+        if (!hasProductExpert()) return "";
+        StringBuilder sb = new StringBuilder();
+        productExpertSections.forEach((name, ctx) -> sb.append(ctx.asSystemPromptSection()));
+        return sb.toString();
+    }
+
+    /**
+     * Returns the repo-level {@code .aiqa/context.md} content, or empty string.
+     */
+    public String aiqaContextSection() {
+        if (repoAiqaContext == null || repoAiqaContext.isBlank()) return "";
+        return "=== REPO QA CONTEXT ===\n\n" + repoAiqaContext.trim() + "\n\n";
     }
 
     /**

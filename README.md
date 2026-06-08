@@ -24,8 +24,8 @@ produces executable test code, and stabilises failing tests — all without huma
 8. [Configuration](#configuration)
 9. [CI/CD Pipelines](#cicd-pipelines)
 10. [Technology Stack](#technology-stack)
-11. [Future Roadmap](#future-roadmap)
-    - [Feedback Service — Self-Improving Agents](#feedback-service--self-improving-agents)
+11. [AI-Native Feedback Loop](#ai-native-feedback-loop)
+12. [Future Roadmap](#future-roadmap)
 
 ---
 
@@ -59,44 +59,65 @@ produces executable test code, and stabilises failing tests — all without huma
 │                                ImpactResultsQueue (Kafka)                    │
 │                                         │                                    │
 │                                         ▼                                    │
-│  ┌────────────────────────────────────────────────────────┐                  │
-│  │  strategy-service  :8082   Phases 2-6                  │                  │
-│  │                                                        │                  │
-│  │  StrategyAgent ──► SKIP / UPDATE_TESTS / CREATE_TESTS  │                  │
-│  │       │              │             │                   │                  │
-│  │  Fallback Rules  BddGenerator  handleUpdateTests       │                  │
-│  │  (fullRegression  (templates)   (inline delta)         │                  │
-│  │   expandedScope)      │                                │                  │
-│  │                  BDD Review PR ◄── Human reviews       │                  │
-│  │                       │  POST /api/strategy/approve-bdd│                  │
-│  │                       ▼                                │                  │
-│  │              TestScriptsQueue (Kafka)                  │                  │
-│  │                       │                                │                  │
-│  │               CodegenService                           │                  │
-│  │            ┌──────┬───┴────┐                           │                  │
-│  │         API Runner  UI  Mobile                         │                  │
-│  │            └──────┴───┬────┘                           │                  │
-│  │               StabilizationLoop                        │                  │
-│  │            (run → fail → fix, max 3×)                  │                  │
-│  │                       │                                │                  │
-│  │               Final Test PR ◄── Human reviews          │                  │
-│  │                       │  (merge triggers feedback loop)│                  │
-│  └────────────────────────────────────────────────────────┘                  │
-│                                                                              │
-│  ┌──────────────────────────────────────────────────────┐                    │
-│  │  feedback-service  :8083   Phase 7 (PLANNED)         │                    │
-│  │                                                      │                    │
-│  │  On BDD PR merge:  AI blob vs merged blob            │                    │
-│  │  On Test PR merge: AI blob vs merged blob            │                    │
-│  │       │                                              │                    │
-│  │  FeedbackAnalyser (Gherkin + AST diff)               │                    │
-│  │       │                                              │                    │
-│  │  FeedbackClassifier (label each delta)               │                    │
-│  │       │                                              │                    │
-│  │  ContextWriter → commits .qa-agent/instructions.md  │                    │
-│  │                  back to the test repository         │                    │
-│  │                  (improves next generation cycle)    │                    │
-│  └──────────────────────────────────────────────────────┘                    │
+│  ┌────────────────────────────────────────────────────────────────────────┐  │
+│  │  strategy-service  :8082   Phases 2–7  (AI-native, self-improving)    │  │
+│  │                                                                        │  │
+│  │  StrategyAgent ──► SKIP / UPDATE_TESTS / CREATE_TESTS                 │  │
+│  │       │              │             │                                   │  │
+│  │  Fallback Rules  BddGenerator  handleUpdateTests                      │  │
+│  │  (fullRegression  (AI + product    (inline delta)                     │  │
+│  │   expandedScope)   expert context)     │                              │  │
+│  │                       │               │                               │  │
+│  │               ┌───────▼───────────────▼───────┐                      │  │
+│  │               │     BDD Review PR on GitHub    │                      │  │
+│  │               │  PrTracker.trackBdd(branch)    │                      │  │
+│  │               └──────────────┬────────────────┘                      │  │
+│  │                              │                                        │  │
+│  │              ┌───────────────┴─────────────────────┐                 │  │
+│  │              │  GitHub pull_request webhook         │                 │  │
+│  │              │  POST /api/strategy/github-webhook   │                 │  │
+│  │              └──────────┬──────────────┬────────────┘                │  │
+│  │                    MERGED            REJECTED                        │  │
+│  │                         │                │                           │  │
+│  │                         ▼                ▼                           │  │
+│  │              TestScriptsQueue   PrFeedbackService                    │  │
+│  │              (Kafka, codegen)   .handleBddRejection()                │  │
+│  │                    │              │ fetch review comments            │  │
+│  │                    ▼              │ classify knowledge gap           │  │
+│  │            CodegenService         │ update productExpert/ (if gap)   │  │
+│  │          ┌──────┬──┴─────┐       │ re-generate BDD w/ AI            │  │
+│  │       API Runner UI Mobile        │ create revised BDD PR            │  │
+│  │          └──────┴──┬─────┘       └──────────────────────────────────┘  │  │
+│  │           StabilizationLoop                                             │  │
+│  │         (run → fail → fix, max 3×)                                      │  │
+│  │                    │                                                    │  │
+│  │               ┌────▼────────────────────────┐                          │  │
+│  │               │  Final Test PR on GitHub      │                         │  │
+│  │               │  PrTracker.trackTest(branch)  │                         │  │
+│  │               └────────────┬─────────────────┘                         │  │
+│  │                            │                                            │  │
+│  │              ┌─────────────┴──────────────────────────┐                │  │
+│  │              │  GitHub pull_request webhook            │                │  │
+│  │              └───────────┬──────────────┬─────────────┘                │  │
+│  │                     MERGED           REJECTED                          │  │
+│  │                          │               │                             │  │
+│  │               Pipeline complete   PrFeedbackService                   │  │
+│  │               (tests are in repo) .handleTestRejection()              │  │
+│  │                                     │ fetch review comments           │  │
+│  │                                     │ classify knowledge gap          │  │
+│  │                                     │ update productExpert/ (if gap)  │  │
+│  │                                     │ re-generate test code w/ AI     │  │
+│  │                                     │ create revised test PR          │  │
+│  │                                     └────────────────────────────────  │  │
+│  │                                                                        │  │
+│  │  ── Product Knowledge ──────────────────────────────────────────────  │  │
+│  │  productExpert/{product}/*.md  read at startup via RepoContextService  │  │
+│  │  .aiqa/context.md              team-wide QA conventions                │  │
+│  │  .github/agents/*.md           agent instruction files                 │  │
+│  │  ─────────────────────────────────────────────────────────────────── │  │
+│  │  OPENAI_API_KEY  → AI generation mode (GPT-4o by default)             │  │
+│  │  No key set      → enhanced template fallback mode                    │  │
+│  └────────────────────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -106,10 +127,12 @@ produces executable test code, and stabilises failing tests — all without huma
 
 | Module | Port | Responsibility |
 |--------|------|----------------|
-| [`common`](common/README.md) | — | Shared models, Kafka config, Jackson config |
+| [`common`](common/README.md) | — | Shared models, Kafka config, GitHub client (`GitHubService`), AI client (`AiClient`/`OpenAiClient`), `PrTracker` (in-memory or Redis), repo context (`RepoContext`/`RepoContextService`), `FeedbackEvent` model |
 | [`pr-service`](pr-service/README.md) | 8080 | PR ingestion — webhook receiver, validation, Kafka publisher |
 | [`impact-service`](impact-service/README.md) | 8081 | Deterministic impact analysis — no AI or LLM |
-| [`strategy-service`](strategy-service/README.md) | 8082 | AI strategy, BDD generation, codegen, test stabilisation |
+| [`strategy-service`](strategy-service/README.md) | 8082 | Strategy decision, BDD generation (AI or template), GitHub webhook entry point — publishes `FeedbackEvent` to Kafka for rejected PRs |
+| [`codegen-service`](codegen-service/README.md) | 8083 | Test code generation (API/UI/Mobile), stabilisation loop, final test PR creation |
+| [`feedback-service`](feedback-service/README.md) | 8084 | AI-native feedback loop — consumes `FeedbackQueue`, re-generates rejected BDD/test PRs, updates product expert files |
 
 ---
 
@@ -119,9 +142,9 @@ produces executable test code, and stabilises failing tests — all without huma
 |-------|----------|----------|---------|
 | `FeatureUpdatesQueue` | pr-service | impact-service | `PullRequest` JSON |
 | `ImpactResultsQueue` | impact-service | strategy-service | `ImpactEnvelope` JSON |
-| `TestScriptsQueue` | strategy-service (approve-bdd / webhook) | strategy-service (codegen) | `BddScenario` JSON |
-| `TestResultsQueue` | strategy-service (stabilisation) | *(future consumers)* | `TestResult` JSON |
-| `FeedbackQueue` | feedback-service *(planned)* | feedback-service *(planned)* | `FeedbackBatch` JSON |
+| `TestScriptsQueue` | strategy-service (approve-bdd / webhook) | codegen-service | `BddScenario` JSON |
+| `TestResultsQueue` | codegen-service (stabilisation) | *(future consumers)* | `TestResult` JSON |
+| `FeedbackQueue` | strategy-service (rejected PR webhook) | feedback-service | `FeedbackEvent` JSON |
 
 ---
 
@@ -157,58 +180,90 @@ Phase 3 — Strategy Decision (strategy-service)  ← minimal AI
        confidence < 0.4  → fullRegressionRequired = true
        HIGH/CRITICAL     → expandedScope = true (widens test areas)
 
-Phase 4 — BDD Generation (strategy-service)
- 15. BddGenerator generates Gherkin scenarios (template-based)
-     — happy path, error path, boundary outline (if API_CHANGE)
- 16. GitHubService creates BDD branch + commits .feature file
+Phase 4 — BDD Generation (strategy-service)  ← AI or template
+ 15. RepoContextService loads product knowledge from test repo at startup:
+       productExpert/{product}/*.md  → per-product domain knowledge (PRODUCT.md, PATTERNS.md)
+       .aiqa/context.md              → team-wide QA conventions
+       .github/agents/*.md           → agent instruction files
+ 16. BddGenerator generates Gherkin scenarios:
+       AI mode (OPENAI_API_KEY set): builds rich system prompt with product expert context,
+         calls OpenAI-compatible API, parses Gherkin from response
+       Template mode (no key): template-based happy path + error path + boundary outline
+ 17. GitHubService creates BDD branch + commits .feature file
      TestPrService opens BDD Review PR on GitHub (qa/bdd/{prId}-{short})
-     BddScenarioStore registers scenario keyed by branch name
- 17. Human reviews the BDD PR on GitHub
+     PrTracker.trackBdd(branch, prNumber, scenario) registers PR for webhook lookup
+ 18. Human reviews the BDD PR on GitHub
 
-Phase 5 — Code Generation (strategy-service)
+Phase 5a — BDD PR MERGED → Code Generation (strategy-service)
      Two equivalent triggers for codegen:
 
      Path A — GitHub webhook (production):
- 18a. Human merges the BDD Review PR on GitHub
+ 19a. Human merges the BDD Review PR on GitHub
       GitHub fires pull_request webhook to POST /api/strategy/github-webhook
       GitHubWebhookController verifies HMAC-SHA256 signature
-      Looks up BddScenario in BddScenarioStore by merged branch name
+      PrTracker.findByBranch() → PrRecord(type=BDD)
       Publishes BddScenario → TestScriptsQueue
 
      Path B — Manual endpoint (local dev / testing):
- 18b. POST /api/strategy/approve-bdd  with the BddScenario JSON
+ 19b. POST /api/strategy/approve-bdd  with the BddScenario JSON
       StrategyController publishes BddScenario → TestScriptsQueue
 
- 19. TestScriptsConsumer → CodegenService routes by testType:
+ 20. TestScriptsConsumer → CodegenService routes by testType:
        API    → ApiTestRunner    (RestAssured + JUnit 5)
        UI     → UITestRunner     (Selenium + ChromeDriver)
        Mobile → MobileTestRunner (Appium + AndroidDriver)
 
+Phase 5b — BDD PR REJECTED → Feedback & Re-generation (strategy-service)
+ 21. Human closes the BDD Review PR without merging
+     GitHub fires pull_request webhook (action=closed, merged=false)
+     PrTracker.findByBranch() → PrRecord(type=BDD)
+     PrFeedbackService.handleBddRejection() runs on virtual thread:
+       a. Fetch all review comments from GitHub (inline + PR-level)
+       b. AI classifies feedback: KNOWLEDGE_GAP or STYLE_ONLY
+       c. If KNOWLEDGE_GAP:
+             Read productExpert/{product}/PRODUCT.md from repo
+             AI appends new knowledge section to file
+             Create PR: "[AI-QA] Product Expert Update: {product}"
+       d. AI re-generates BDD scenarios incorporating the review feedback
+       e. Create revised BDD PR → PrTracker.trackBdd() (loop repeats from step 18)
+
 Phase 6 — Test Stabilisation (strategy-service)
- 20. StabilizationLoop.execute() — up to 3 attempts:
+ 22. StabilizationLoop.execute() — up to 3 attempts:
        Attempt 1: add timeouts, retry-after config
        Attempt 2: add null guards, assertion retry wrapper
        Attempt 3: simplify to minimal smoke test
      TestExecutionEngine compiles generated Java with javax.tools.JavaCompiler
      and runs it via JUnit Platform Launcher + JupiterTestEngine
- 21. On pass (any attempt): GitHubService creates final-test branch + file,
+ 23. On pass (any attempt): GitHubService creates final-test branch + file,
      TestPrService opens Final Test PR on GitHub (qa/tests/{prId}-{short})
- 22. On 3× fail: ABANDONED — PR still raised for human review
+     PrTracker.trackTest(branch, prNumber, script) registers PR for webhook lookup
+ 24. On 3× fail: ABANDONED — PR still raised for human review
 
-Phase 7 — Feedback Loop (feedback-service)  ← PLANNED
- 23. Human edits and merges BDD PR or Final Test PR on GitHub
- 24. GitHub webhook fires to feedback-service
- 25. FeedbackAnalyser diffs AI-generated blob vs human-merged blob
-       — Gherkin structural diff for BDD scenarios
-       — AST diff (JavaParser) for test code
- 26. FeedbackClassifier labels each delta:
-       WRONG_ASSERTION | MISSING_CONTEXT | WRONG_TEST_TYPE |
-       WRONG_ENDPOINT  | STYLE_PREFERENCE | COVERAGE_GAP
- 27. ContextWriter commits .qa-agent/instructions.md to test repo
-       — growing rule set derived from real human corrections
-       — read by RepoContextService on next generation cycle
- 28. Next generation run starts with richer context → converges toward
-       zero-edit AI output over time
+Phase 7a — Final Test PR MERGED → Pipeline Complete
+ 25. Human merges the Final Test PR on GitHub
+     GitHub fires pull_request webhook (action=closed, merged=true)
+     PrTracker.findByBranch() → PrRecord(type=TEST) → response: TEST_PR_MERGED
+     Tests are now committed in the repo — pipeline complete for this PR.
+
+Phase 7b — Final Test PR REJECTED → Feedback & Re-generation (strategy-service)
+ 26. Human closes the Final Test PR without merging
+     GitHub fires pull_request webhook (action=closed, merged=false)
+     PrTracker.findByBranch() → PrRecord(type=TEST)
+     PrFeedbackService.handleTestRejection() runs on virtual thread:
+       a. Fetch all review comments from GitHub
+       b. AI classifies feedback: KNOWLEDGE_GAP or STYLE_ONLY
+       c. If KNOWLEDGE_GAP → same product expert update as step 21c
+       d. AI re-generates test code incorporating review feedback
+          (system prompt includes product expert context + existing test patterns)
+       e. Create revised test code PR → PrTracker.trackTest() (loop repeats from step 23)
+
+Self-Improving Product Expert Context
+     Every feedback cycle can update productExpert/ files in the test repo:
+     Cycle 1: AI generates generic tests  →  Human rejects: "missing auth flow knowledge"
+              AI opens product expert update PR, human merges it
+     Cycle 2: AI generates with auth flow context  →  Human requests style tweaks only
+              No product expert update needed
+     Cycle 3: AI output accepted with no changes  →  convergence achieved
 ```
 
 ---
@@ -223,13 +278,13 @@ Phase 7 — Feedback Loop (feedback-service)  ← PLANNED
 | Maven | 3.9+ | or use the `./mvnw` wrapper (included) |
 | Docker Desktop | any | must be running |
 
-### 1 — Start Kafka
+### 1 — Start Kafka and Redis
 
 ```bash
 # From the project root (docker-compose.yml is here)
 docker compose up -d
 
-# Poll until both containers show "(healthy)" — takes ~30-45 s
+# Poll until all containers show "(healthy)" — takes ~30-45 s
 docker compose ps
 ```
 
@@ -238,6 +293,7 @@ Expected:
 NAME            STATUS
 qa-zookeeper    Up (healthy)
 qa-kafka        Up (healthy)
+qa-redis        Up (healthy)
 ```
 
 > ⚠️ Do not start the Spring services until `qa-kafka` shows `(healthy)`. Starting services before Kafka is ready causes consumer group joins to fail silently.
@@ -260,9 +316,12 @@ For a minimal local run **no environment variables are required** — all servic
 | Variable | Service | Purpose | Default |
 |----------|---------|---------|---------|
 | `TARGET_REPO_URL` | strategy-service | URL of the test repository to clone for coverage context and to create BDD / test-code PRs in | *(none — coverage UNKNOWN, GitHub PR creation disabled)* |
-| `TARGET_REPO_TOKEN` | strategy-service | GitHub PAT with `repo` scope. **Optional for local dev** — if blank, GitHubService automatically calls `git credential fill` which reads the token IntelliJ stored in osxkeychain. Required for CI/production (no credential helper available). If `TARGET_REPO_URL` is set but no token can be resolved, **the service refuses to start**. | *(none — falls back to osxkeychain / IntelliJ auth)* |
+| `TARGET_REPO_TOKEN` | strategy-service | GitHub PAT with `repo` scope. **Optional for local dev** — if blank, GitHubService automatically calls `git credential fill` which reads the token IntelliJ stored in osxkeychain. Required for CI/production (no credential helper available). If `TARGET_REPO_URL` is set but no token can be resolved, **the service refuses to start**. For GitHub org repos, the PAT must have SSO authorized for the org. | *(none — falls back to osxkeychain / IntelliJ auth)* |
 | `TARGET_REPO_USERNAME` | strategy-service | GitHub username paired with the PAT | *(none)* |
-| `GITHUB_WEBHOOK_SECRET` | strategy-service | HMAC-SHA256 secret matching the value set in GitHub Repository → Webhooks. Required for the BDD PR merge to automatically trigger codegen. Leave blank in local dev to skip signature verification. | *(none — verification skipped with a warning)* |
+| `GITHUB_WEBHOOK_SECRET` | strategy-service | HMAC-SHA256 secret matching the value set in GitHub Repository → Webhooks. Required for the webhook (BDD PR merge/reject, test PR merge/reject) to work correctly. Leave blank in local dev to skip signature verification. | *(none — verification skipped with a warning)* |
+| `OPENAI_API_KEY` | strategy-service | API key for OpenAI or any OpenAI-compatible provider (Azure, Ollama). When set, enables **AI generation mode** for BDD scenarios and test code. When absent, the service falls back to enhanced template mode. | *(none — template mode)* |
+| `OPENAI_BASE_URL` | strategy-service | Base URL for the AI API endpoint. Override for Azure (`https://…openai.azure.com`) or local models (`http://localhost:11434`). | `https://api.openai.com` |
+| `OPENAI_MODEL` | strategy-service | Model name to use for completions. | `gpt-4o` |
 | `AIQA_AI_ENABLED` | impact-service | Set `true` to enable AI-assisted risk scoring in the gray zone | `false` |
 | `AIQA_AI_API_KEY` | impact-service | OpenAI (or compatible) API key — required when AI is enabled | *(none)* |
 | `AIQA_AI_MODEL` | impact-service | Model used for AI scoring | `gpt-4o-mini` |
@@ -276,6 +335,13 @@ export TARGET_REPO_URL=https://github.com/your-org/your-test-repo
 export TARGET_REPO_TOKEN=ghp_your_personal_access_token
 export TARGET_REPO_USERNAME=your_github_username
 
+# ── Optional: AI generation mode (strategy-service) ──────────────────────────
+# When set, enables AI-driven BDD generation, test code generation, and
+# feedback classification. Without this, the service uses enhanced template mode.
+export OPENAI_API_KEY=sk-...
+export OPENAI_BASE_URL=https://api.openai.com  # or Azure/Ollama endpoint
+export OPENAI_MODEL=gpt-4o                     # or gpt-4o-mini for lower cost
+
 # ── Optional: AI-assisted risk scoring (impact-service) ──────────────────────
 export AIQA_AI_ENABLED=true
 export AIQA_AI_API_KEY=sk-...
@@ -286,7 +352,7 @@ export AIQA_AI_MODEL=gpt-4o-mini   # or gpt-4o for higher accuracy
 >
 > **Production / Docker deployments** — copy `.env.example` to `.env` at your `DEPLOY_PATH` and fill in all values. The CD workflow picks this file up automatically via `docker-compose.prod.yml`.
 
-### 4 — Start the three services (separate terminals)
+### 4 — Start the services (separate terminals)
 
 ```bash
 # Terminal 1 — pr-service on :8080
@@ -295,8 +361,14 @@ export AIQA_AI_MODEL=gpt-4o-mini   # or gpt-4o for higher accuracy
 # Terminal 2 — impact-service on :8081
 ./mvnw spring-boot:run -pl impact-service
 
-# Terminal 3 — strategy-service on :8082
+# Terminal 3 — strategy-service on :8082  (strategy + BDD generation + webhook entry)
 ./mvnw spring-boot:run -pl strategy-service
+
+# Terminal 4 — codegen-service on :8083  (code generation + test stabilisation)
+./mvnw spring-boot:run -pl codegen-service
+
+# Terminal 5 — feedback-service on :8084  (PR rejection feedback loop)
+./mvnw spring-boot:run -pl feedback-service
 ```
 
 Watch for this line in each service log — it confirms the Kafka consumer is registered:
@@ -310,6 +382,8 @@ INFO  o.s.k.l.ConcurrentMessageListenerContainer - started
 curl http://localhost:8080/api/pr/health        # {"status":"UP","service":"PullRequestController"}
 curl http://localhost:8081/api/impact/health    # {"status":"UP"}
 curl http://localhost:8082/api/strategy/health  # {"status":"UP"}
+curl http://localhost:8083/api/codegen/health   # {"status":"UP"}
+curl http://localhost:8084/api/feedback/health  # {"status":"UP"}
 ```
 
 ### 6 — Trigger the full pipeline
@@ -499,7 +573,7 @@ Each service has its own `application.yaml`. Common properties:
 
 > **No Kafka or running services needed** — all tests are pure unit tests that run offline.
 
-### Run all tests (all 3 services at once)
+### Run all tests (all 6 services at once)
 
 ```bash
 ./mvnw test
@@ -511,8 +585,11 @@ Expected output:
 [INFO] Tests run: 18, Failures: 0, Errors: 0, Skipped: 0   ← pr-service
 [INFO] Tests run: 27, Failures: 0, Errors: 0, Skipped: 0   ← impact-service
 [INFO] Tests run: 26, Failures: 0, Errors: 0, Skipped: 0   ← strategy-service
+[INFO] Tests run:  7, Failures: 0, Errors: 0, Skipped: 0   ← codegen-service
 [INFO] BUILD SUCCESS
 ```
+
+**Total: 78 tests, 0 failures** (feedback-service has no unit tests yet — they are integration tests requiring Kafka)
 
 ### Run tests for a single service
 
@@ -539,17 +616,18 @@ Expected output:
 
 | Module | Test Class | Tests | What it covers |
 |--------|-----------|-------|----------------|
-| **pr-service** | `PRServiceTest` | 9 | enrichment, validation, Kafka publish |
-| **pr-service** | `PRControllerTest` | 4 | `/webhook`, `/submit`, `/demo`, `/health` endpoints |
+| **pr-service** | `PRServiceTest` | 9 | enrichment, validation, Kafka publish (via capturing test double) |
+| **pr-service** | `PRControllerTest` | 4 | `/webhook`, `/submit`, `/demo`, `/health` endpoints (via fixed PRService test double) |
 | **pr-service** | `PRControllerAdviceTest` | 5 | global exception handler, error response shapes |
 | **impact-service** | `GitDiffParserTest` | 7 | diff parsing, file types, extensions |
 | **impact-service** | `RiskScorerTest` | 11 | level thresholds, factor weights, normalisation |
 | **impact-service** | `TestCoverageServiceTest` | 9 | coverage ratio, NONE/GOOD/PARTIAL levels |
 | **strategy-service** | `RepoContextTest` | 9 | helper methods, agent instructions header |
 | **strategy-service** | `ApiTestRunnerTest` | 7 | code generation, repo context, agent header |
-| **strategy-service** | `StrategyAgentTest` | 10 | SKIP/CREATE logic, fallback rules, coverage override |
+| **strategy-service** | `StrategyAgentTest` | 10 | SKIP/CREATE logic, fallback rules, coverage override (no Mockito — real test doubles) |
+| **codegen-service** | `ApiTestRunnerTest` | 7 | code generation from codegen-service module |
 
-**Total: 71 tests, 0 failures**
+**Total: 78 tests, 0 failures — no Mockito in any test**
 
 ---
 <!-- end of README -->
@@ -655,9 +733,12 @@ These are read by `docker-compose.prod.yml` on startup. Copy `.env.example` to `
 | Variable | Service | Required | Purpose |
 |----------|---------|----------|---------|
 | `TARGET_REPO_URL` | strategy-service | Yes (for PRs) | HTTPS URL of the target test repository |
-| `TARGET_REPO_TOKEN` | strategy-service | Yes (for PRs) | GitHub PAT with `repo` scope; `git credential fill` is not available in Docker |
+| `TARGET_REPO_TOKEN` | strategy-service | Yes (for PRs) | GitHub PAT with `repo` scope; `git credential fill` is not available in Docker. For GitHub org repos, the PAT must have SSO authorized for the org. |
 | `TARGET_REPO_USERNAME` | strategy-service | Yes (for PRs) | GitHub username paired with the PAT |
-| `GITHUB_WEBHOOK_SECRET` | strategy-service | Yes (recommended) | HMAC-SHA256 secret matching the GitHub webhook setting — prevents unauthenticated codegen triggers |
+| `GITHUB_WEBHOOK_SECRET` | strategy-service | Yes (recommended) | HMAC-SHA256 secret matching the GitHub webhook setting — prevents unauthenticated codegen/feedback triggers |
+| `OPENAI_API_KEY` | strategy-service | No (enables AI mode) | OpenAI-compatible API key. When set, enables AI-driven BDD generation, test code generation, and feedback classification. Without it, the service uses enhanced template mode. |
+| `OPENAI_BASE_URL` | strategy-service | No | Override for Azure or local Ollama. Default: `https://api.openai.com` |
+| `OPENAI_MODEL` | strategy-service | No | Model name. Default: `gpt-4o` |
 | `AIQA_AI_ENABLED` | impact-service | No | Set `true` to enable AI-assisted risk scoring |
 | `AIQA_AI_API_KEY` | impact-service | If AI enabled | OpenAI-compatible API key |
 
@@ -691,212 +772,79 @@ docker compose -f docker-compose.yml up -d zookeeper kafka
 
 ---
 
-## Future Roadmap
+## AI-Native Feedback Loop
 
-### Feedback Service — Self-Improving Agents
+> **Status:** Implemented in `strategy-service`. No separate feedback service required.
 
-> **Status:** Planned — not yet implemented.
+### How It Works
 
-#### Motivation
+When a human rejects a QA-generated PR (BDD scenarios or test code), the system automatically:
 
-Every time a human reviews a BDD PR or a final test-code PR, they may edit, rewrite, or
-reject parts of what the AI generated.  Those edits are the most valuable signal in the
-entire pipeline because they reveal exactly where the AI's understanding of the codebase
-diverges from the team's intent.  Currently that signal is thrown away.
+1. **Fetches** all review comments from the GitHub PR
+2. **Classifies** the feedback via AI:
+   - `KNOWLEDGE_GAP: <description>` — reviewer revealed domain knowledge the AI lacked
+   - `STYLE_ONLY: <reason>` — structural or stylistic request, no knowledge gap
+3. **Updates product expert files** (if `KNOWLEDGE_GAP`):
+   - Reads `productExpert/{product}/PRODUCT.md` from the test repo
+   - AI appends a new knowledge section documenting what was missing
+   - Opens a PR titled `[AI-QA] Product Expert Update: {product}` for human review
+4. **Re-generates** the rejected content with the feedback as additional context
+5. **Creates a revised PR** — registered in `PrTracker` so the loop can repeat
 
-The **Feedback Service** closes the loop: it captures what the human changed, reasons
-about *why* those changes were needed, and writes updated context documents back to the
-test repository so that the next generation run is measurably better.
+This loop applies to **both PR types**:
 
----
+| PR Type | Trigger | Feedback handler | Revised PR title |
+|---------|---------|------------------|-----------------|
+| BDD scenarios | `qa/bdd/*` PR rejected | `PrFeedbackService.handleBddRejection()` | `[AI-QA] Revised BDD Scenarios for PR: {id}` |
+| Test code | `qa/tests/*` PR rejected | `PrFeedbackService.handleTestRejection()` | `[AI-QA] Revised Tests for PR: {id}` |
 
-#### How It Will Work
+### Self-Improving Product Expert Context
 
-```
-BDD PR (AI-generated)                Final Test PR (AI-generated)
-        │                                        │
-  Human edits & merges                   Human edits & merges
-        │                                        │
-        └──────────────────┬─────────────────────┘
-                           │
-                 GitHub pull_request webhook
-                 (action=closed, merged=true)
-                           │
-                           ▼
-               ┌────────────────────────┐
-               │    feedback-service    │
-               │                        │
-               │  1. Fetch both versions│
-               │     (AI blob vs merged │
-               │      blob via GH API)  │
-               │                        │
-               │  2. Diff analyser      │
-               │     — which scenarios  │
-               │       were removed?    │
-               │     — which steps were │
-               │       rewritten?       │
-               │     — which assertions │
-               │       were tightened?  │
-               │                        │
-               │  3. Pattern classifier │
-               │     tag each delta with│
-               │     a feedback label:  │
-               │     WRONG_ASSERTION,   │
-               │     MISSING_CONTEXT,   │
-               │     WRONG_TEST_TYPE,   │
-               │     WRONG_ENDPOINT,    │
-               │     STYLE_PREFERENCE   │
-               │                        │
-               │  4. Context writer     │
-               │     commit updated     │
-               │     agent instruction  │
-               │     files to test repo │
-               └────────────────────────┘
-```
-
----
-
-#### Detailed Design
-
-##### Step 1 — Capture Both Versions
-
-When a QA-generated PR (BDD or final test code) is merged, the `GitHubWebhookController`
-already fires.  It will be extended to also record:
-
-| Field | Source |
-|-------|--------|
-| `ai_blob` | The file content at the **head of the QA branch** (what the AI committed) |
-| `human_blob` | The file content at **merge commit** (what the human actually merged) |
-| `pr_type` | `BDD_REVIEW` or `FINAL_TEST_CODE` |
-| `source_pr_id` | The original feature PR that triggered generation |
-| `component_names` | Which components the scenarios/tests cover |
-
-Both blobs are fetched via `GET /repos/{owner}/{repo}/contents/{path}?ref={sha}`.
-
-##### Step 2 — Diff Analysis
-
-A `FeedbackAnalyser` computes the structural diff between the two blobs:
-
-- **For BDD scenarios (`.feature` files):** parse both with a Gherkin parser; compare at
-  the scenario, step, and tag level — not just line-by-line.
-- **For Java test code:** parse the AST (using JavaParser); compare at the method,
-  assertion, and annotation level to detect meaningful semantic changes rather than
-  whitespace noise.
-
-Each delta is represented as a `FeedbackDelta`:
-
-```
-FeedbackDelta {
-  deltaType:   SCENARIO_REMOVED | STEP_REWRITTEN | ASSERTION_CHANGED |
-               TAG_ADDED | ENDPOINT_CORRECTED | DEPENDENCY_ADDED | ...
-  aiVersion:   String   // what AI produced
-  humanVersion: String  // what the human replaced it with
-  component:   String   // affected component / feature area
-  confidence:  double   // 0..1 — how consistently this pattern appears
-}
-```
-
-##### Step 3 — Pattern Classification
-
-The `FeedbackClassifier` groups deltas into labelled patterns:
-
-| Label | Meaning | Example |
-|-------|---------|---------|
-| `WRONG_ASSERTION` | AI asserted the wrong HTTP status or field | AI: `status 200`, Human: `status 201` for a create endpoint |
-| `MISSING_CONTEXT` | AI did not know about an existing base class or helper | Human added `extends BaseApiTest` |
-| `WRONG_TEST_TYPE` | AI generated API test for a UI component | Human changed framework to Selenium |
-| `WRONG_ENDPOINT` | AI used a placeholder path that doesn't exist | Human corrected `/api/v1/foo` |
-| `STYLE_PREFERENCE` | Naming, formatting, or structural choice | Human renamed `shouldReturnFoo` to `getFoo_returnsExpected` |
-| `COVERAGE_GAP` | Human added scenarios AI didn't generate | Extra edge-case scenario added |
-
-##### Step 4 — Context Writer
-
-The `ContextWriter` translates classified patterns into **agent instruction files** committed
-directly to the test repository:
+The `productExpert/` directory in the test repo acts as a growing, human-curated knowledge base:
 
 ```
 {test-repo}/
-  .qa-agent/
-    instructions.md          ← natural-language rules the agent must follow
-    patterns/
-      wrong-assertions.md    ← list of corrected assertion examples
-      naming-conventions.md  ← inferred from STYLE_PREFERENCE deltas
-      base-classes.md        ← discovered base test classes
-      endpoint-map.md        ← verified real endpoint paths
-    history/
-      feedback-YYYY-MM-DD.json  ← raw delta log for audit / debugging
+  productExpert/
+    payments/
+      PRODUCT.md      ← domain flows, business rules, known edge cases
+      PATTERNS.md     ← preferred assertion patterns, test structure
+    auth/
+      PRODUCT.md
+  .aiqa/
+    context.md        ← team-wide QA conventions
+  .github/
+    agents/
+      api-conventions.md   ← agent instruction files (read by RepoContextService)
 ```
 
-`instructions.md` is a growing, curated file that `RepoContextService` already reads
-(it looks for `AGENT_INSTRUCTIONS` markers in the scanned repo).  The Feedback Service
-appends new rules derived from each batch of human corrections, so each generation cycle
-starts with richer context than the last.
-
----
-
-#### New Kafka Topic
-
-| Topic | Producer | Consumer | Payload |
-|-------|----------|----------|---------|
-| `FeedbackQueue` | feedback-service | feedback-service (internal batch processor) | `FeedbackBatch` JSON |
-
-The topic decouples the fast webhook handler (capture the blobs) from the slower analysis
-and context-write operations, and provides a natural audit log of every feedback event.
-
----
-
-#### New Service: `feedback-service`
-
-| Attribute | Value |
-|-----------|-------|
-| Port | `8083` |
-| Trigger | GitHub `pull_request` webhook — merged QA PRs only |
-| Reads from | Test repository (both blobs via GitHub API) |
-| Writes to | Test repository (`.qa-agent/` context files via GitHub API) |
-| Depends on | `TARGET_REPO_TOKEN`, `GITHUB_WEBHOOK_SECRET` |
-
-It shares the `common` module for models and Kafka config, and will reuse `GitHubService`
-(move it to `common`) for all repository I/O.
-
----
-
-#### Impact on Generation Quality
-
-Each feedback cycle tightens the gap between AI output and human expectation:
+Each rejection cycle can enrich these files, so subsequent generation runs start with richer context:
 
 ```
-Cycle 1  AI generates generic RestAssured skeleton
-         Human corrects: adds correct base class, fixes endpoint
+Cycle 1  AI generates generic tests  →  Human rejects: "missing OAuth token refresh flow"
+         AI opens Product Expert Update PR documenting the OAuth flow
+         Human reviews and merges the update PR
 
-         → ContextWriter appends to base-classes.md and endpoint-map.md
+Cycle 2  AI generates with OAuth context  →  Human requests minor style changes only
+         No product expert update — STYLE_ONLY feedback handled inline
 
-Cycle 2  AI reads updated context, generates with the correct base class
-         Human makes only minor naming adjustments
-
-         → ContextWriter appends naming convention rule
-
-Cycle 3  AI output is accepted with no changes → zero deltas
-         No context update needed — convergence achieved for this component
+Cycle 3  AI output accepted with no changes → convergence achieved for this component
 ```
 
-Over time, the `.qa-agent/instructions.md` file in the test repository becomes a
-living specification of the team's test-writing standards, derived entirely from real
-human corrections rather than being hand-authored upfront.
+### Async Execution
+
+Feedback handling runs on a **virtual thread** (`Thread.ofVirtual()`) so the GitHub webhook HTTP response is returned immediately (within GitHub's 10-second timeout). The re-generation work happens in the background.
 
 ---
 
-#### Implementation Checklist
+## Future Roadmap
 
-- [ ] Extend `GitHubWebhookController` to emit a `FeedbackEvent` when a QA PR merges
-- [ ] Create `feedback-service` module (Spring Boot, port 8083)
-- [ ] Implement `FeedbackAnalyser` — Gherkin + JavaParser structural diff
-- [ ] Implement `FeedbackClassifier` — tag each delta with a label
-- [ ] Implement `ContextWriter` — commit `.qa-agent/` files to test repo
-- [ ] Move `GitHubService` to `common` module (shared by strategy + feedback)
-- [ ] Add `FeedbackQueue` Kafka topic to `KafkaConfig`
-- [ ] Update `RepoContextService` to read `.qa-agent/instructions.md`
-- [ ] Add `feedback-service` to `docker-compose.yml` and `docker-compose.prod.yml`
-- [ ] Write unit tests for `FeedbackAnalyser` pattern detection
-- [ ] Write integration test: generate → human edit → feedback → regenerate, assert improved output
+### AST-Level Diff Feedback (not yet implemented)
 
+An optional future enhancement would add structural diff analysis for merged PRs:
 
+- **For BDD scenarios:** parse both AI-generated and human-merged `.feature` files with a Gherkin parser; compare at scenario/step/tag level
+- **For Java test code:** parse AST (JavaParser); compare at method/assertion/annotation level
+- **Output:** `FeedbackDelta` records tagged with labels (`WRONG_ASSERTION`, `MISSING_CONTEXT`, `WRONG_ENDPOINT`, `STYLE_PREFERENCE`, `COVERAGE_GAP`)
+- **Result:** automatic commits to `.qa-agent/instructions.md` in the test repo — a growing rule set derived from real human corrections
+
+This would complement the existing rejection-based feedback loop with learning from accepted-but-edited PRs.

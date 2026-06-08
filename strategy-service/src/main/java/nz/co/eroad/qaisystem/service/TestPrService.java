@@ -1,8 +1,8 @@
 package nz.co.eroad.qaisystem.service;
 
-import nz.co.eroad.qaisystem.github.BddScenarioStore;
 import nz.co.eroad.qaisystem.github.GitHubService;
 import nz.co.eroad.qaisystem.github.GitHubService.GitHubPrResult;
+import nz.co.eroad.qaisystem.github.PrTracker;
 import nz.co.eroad.qaisystem.config.TargetRepoProperties;
 import nz.co.eroad.qaisystem.model.BddScenario;
 import nz.co.eroad.qaisystem.model.TestResult;
@@ -43,7 +43,7 @@ import java.time.format.DateTimeFormatter;
 public class TestPrService {
 
     private final GitHubService        gitHubService;
-    private final BddScenarioStore     bddScenarioStore;
+    private final PrTracker            prTracker;
     private final TargetRepoProperties repoProps;
 
     private static final DateTimeFormatter FMT =
@@ -85,8 +85,8 @@ public class TestPrService {
             throw new GitHubPrException("GitHub API returned null for PR creation (head=" + branch + ")");
         }
 
-        // Register so the merge webhook can trigger codegen
-        bddScenarioStore.put(branch, scenario);
+        // Register so the merge/rejection webhook can route the event
+        prTracker.trackBdd(branch, result.prNumber(), scenario);
 
         log.info("[TestPrService] BDD Review PR #{} created: {}", result.prNumber(), result.url());
         return result.url();
@@ -132,6 +132,9 @@ public class TestPrService {
         }
 
         log.info("[TestPrService] Final Test PR #{} created: {}", pr.prNumber(), pr.url());
+
+        // Register so the rejection webhook can trigger re-generation
+        prTracker.trackTest(branch, pr.prNumber(), script);
         return pr.url();
     }
 

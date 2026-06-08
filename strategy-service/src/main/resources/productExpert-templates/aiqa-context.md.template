@@ -1,0 +1,49 @@
+# .aiqa/context.md — Repo-Level QA Context
+
+> **Instructions:** Create this file at `.aiqa/context.md` in the ROOT of your
+> test repository. It provides repo-level context that applies to ALL generated
+> tests, regardless of product.
+
+## Test repository overview
+
+{Brief description of what this repo contains and how it is organised.}
+
+Example: This is the E2E test suite for the Eroad Fleet Management platform.
+Tests are grouped by product area under `tests/api`, `tests/ui`, and `tests/mobile`.
+
+## Environment configuration
+
+| Environment | Base URL | Notes |
+|-------------|----------|-------|
+| Local dev   | `http://localhost:8080` | Uses Docker Compose |
+| CI/QA       | `https://qa.example.com` | Auto-deployed on PR |
+| Staging     | `https://staging.example.com` | Manual deploy |
+
+## Framework and conventions
+
+- **API tests**: RestAssured + JUnit 5. Base class: `ApiTestBase`
+- **UI tests**: Selenium 4 + JUnit 5. Base class: `UiTestBase`
+- **Mobile tests**: Appium + JUnit 5. Base class: `MobileTestBase`
+- **Assertions**: AssertJ only (no Hamcrest)
+- **Test naming**: `should{ActionOrState}{WhenCondition}()`
+
+## CI pipeline notes
+
+- All tests tagged `@smoke` run on every PR
+- Full regression runs nightly
+- `@slow` tests are excluded from PR checks
+- Flaky test retries: 2 attempts
+
+## Authentication
+
+- API tests use `TEST_API_TOKEN` env var (pre-seeded in CI)
+- UI tests use `TEST_USERNAME` / `TEST_PASSWORD` env vars
+- Never hardcode credentials in test files
+
+## Important conventions
+
+- Each test must be idempotent (safe to run multiple times)
+- Tests must clean up their own test data (use `@AfterEach`)
+- Use `@DisplayName("Given ... When ... Then ...")` for readable test output
+- Avoid `Thread.sleep()` — use Awaitility for async assertions
+

@@ -1,14 +1,18 @@
 # strategy-service
 
 **Port:** `8082`  
-**Phases:** 2–6 — Strategy, BDD Generation, Code Generation, Test Stabilisation  
+**Phases:** 2–7 — Strategy, BDD Generation, Code Generation, Test Stabilisation, AI-Native Feedback Loop  
 **Package root:** `nz.co.eroad.qaisystem`  
 **Role:** Consumes `ImpactEnvelope` from Kafka, makes the only AI-style decision in the
-system (minimal, rule-based), generates BDD scenarios, produces executable test code, runs a
-bounded retry-and-fix stabilisation loop, then raises human-review PRs.
+system (minimal, rule-based), generates BDD scenarios (AI or template), produces executable
+test code, runs a bounded retry-and-fix stabilisation loop, raises human-review PRs, and
+**handles rejection feedback for both BDD and test code PRs** — re-generating improved content
+and updating product expert knowledge files when needed.
 
-> **Minimal AI.** The strategy decision is rule-based (no LLM). The only "intelligence" is
-> the prioritised decision tree in `StrategyAgent`. Everything else is deterministic templates.
+> **AI-native.** When `OPENAI_API_KEY` is set, BDD generation and test code re-generation use
+> a real LLM with product expert context from the test repo. Without a key, the service uses
+> enhanced template mode — all other functionality (GitHub PRs, webhook handling, feedback loop,
+> stabilisation) works identically in both modes.
 
 ---
 
@@ -16,22 +20,25 @@ bounded retry-and-fix stabilisation loop, then raises human-review PRs.
 
 1. [Package Structure](#package-structure)
 2. [End-to-End Data Flow](#end-to-end-data-flow)
-   3. [Class-by-Class Breakdown](#class-by-class-breakdown)
+3. [Class-by-Class Breakdown](#class-by-class-breakdown)
    - [Kafka Layer](#kafka-layer)
    - [Agent Layer](#agent-layer)
+   - [Context Layer](#context-layer)
    - [Execution Layer](#execution-layer)
    - [Service Layer](#service-layer)
      - [E2ECoverageAnalyzer](#e2ecoverageanalyzer)
      - [RepoContextService](#repocontextservice)
      - [TestPrService](#testprservice)
+   - [GitHub Layer](#github-layer)
    - [Config Layer](#config-layer)
 4. [Strategy Decision Logic (Full Detail)](#strategy-decision-logic-full-detail)
 5. [Two-Phase Coverage Assessment](#two-phase-coverage-assessment)
 6. [RepoContextService Deep Dive](#repocontextservice-deep-dive)
 7. [StabilizationLoop Deep Dive](#stabilizationloop-deep-dive)
-7. [Kafka Topics](#kafka-topics)
-8. [API Endpoints](#api-endpoints)
-9. [Configuration](#configuration)
+8. [AI-Native Feedback Loop](#ai-native-feedback-loop)
+9. [Kafka Topics](#kafka-topics)
+10. [API Endpoints](#api-endpoints)
+11. [Configuration](#configuration)
 
 ---
 
@@ -50,10 +57,16 @@ nz/co/eroad/qaisystem/
 │   └── TestScriptsProducer.java           ← Publishes BddScenario to TestScriptsQueue
 ├── agent/
 │   ├── StrategyAgent.java                 ← Decision + fallback rules + UPDATE handler
-│   └── BddGenerator.java                  ← Template-based Gherkin scenario builder
+│   ├── BddGenerator.java                  ← AI (OpenAI-compatible) or template Gherkin builder
+│   ├── AiClient.java                      ← Interface: complete(systemPrompt, userPrompt)
+│   ├── OpenAiClient.java                  ← OpenAI-compatible implementation (GPT, Azure, Ollama)
+│   └── PrFeedbackService.java             ← Handles PR rejections: fetch comments → re-generate → new PR
+├── context/
+│   └── ProductExpertContext.java          ← Record: per-product knowledge from productExpert/{name}/*.md
 ├── github/
-│   ├── GitHubService.java                 ← GitHub REST API v3 client (branches, files, PRs)
-│   └── BddScenarioStore.java              ← In-memory branch→BddScenario map (webhook bridge)
+│   ├── GitHubService.java                 ← GitHub REST API v3 client (branches, files, PRs, comments)
+│   ├── PrTracker.java                     ← Thread-safe in-memory tracker for open BDD + TEST PRs
+│   └── BddScenarioStore.java              ← Legacy: superseded by PrTracker (kept for compatibility)
 ├── execution/
 │   ├── CodegenService.java                ← Routes BDD → API/UI/Mobile runner → stabilisation
 │   ├── ApiTestRunner.java                 ← Generates RestAssured + JUnit 5 test code
@@ -64,11 +77,11 @@ nz/co/eroad/qaisystem/
 │   └── RepoContext.java                   ← Value object: context extracted from target repo
 ├── service/
 │   ├── E2ECoverageAnalyzer.java           ← Scans cloned test repo; produces GOOD/PARTIAL/NONE coverage level
-│   ├── RepoContextService.java            ← Clones target repo, builds coverage index, scans test conventions
+│   ├── RepoContextService.java            ← Clones target repo, loads product expert, builds coverage index
 │   └── TestPrService.java                 ← Creates real GitHub PRs (BDD Review + Final Test Code)
 └── controller/
     ├── StrategyController.java            ← /status, /approve-bdd, /refresh-context
-    └── GitHubWebhookController.java       ← /github-webhook — handles pull_request merged events
+    └── GitHubWebhookController.java       ← /github-webhook — merged AND rejected PR events
 ```
 
 ---
@@ -89,78 +102,87 @@ nz/co/eroad/qaisystem/
    │ StrategyAgent.decide(ImpactEnvelope)                                │
    │                                                                     │
    │  ① e2eCoverageAnalyzer.analyze(envelope)                            │
-   │       ├─ repoContextService.getCoverageIndex()                       │
-   │       ├─ if index empty → propagate UNKNOWN (no repo configured)    │
-   │       └─ if index present → scan: GOOD / PARTIAL / NONE             │
+   │  ② computeDecision() → SKIP | UPDATE_TESTS | CREATE_TESTS           │
+   │  ③ buildStrategy()   → TestStrategy                                 │
+   │  ④ applyFallbackRules()                                              │
    │                                                                     │
-   │  ② computeDecision(envelope, realCoverage)                          │
-   │       → SKIP | UPDATE_TESTS | CREATE_TESTS                          │
-   │  ③ buildStrategy(...)       → TestStrategy                          │
-   │  ④ applyFallbackRules(...)  → may set fullRegression/expandedScope  │
-  │                                                                     │
-  │        ┌──────────┬─────────────────┬─────────────────────┐        │
-  │     SKIP          UPDATE_TESTS       CREATE_TESTS           │        │
-  │     (log only)  handleUpdateTests   bddGenerator.generate  │        │
-  │                       │                     │               │        │
-  │               testPrService          testPrService          │        │
-  │              .createBddPr()         .createBddPr()          │        │
-  └──────────────────────────────┬──────────────────────────────────────┘
-                                 │  BDD PR logged for human review
+   │        ┌──────────┬─────────────────┬──────────────────┐           │
+   │     SKIP          UPDATE_TESTS       CREATE_TESTS        │           │
+   │     (log only)  handleUpdateTests   bddGenerator.generate│           │
+   │                       │                     │            │           │
+   │   bddGenerator uses:  │                     │            │           │
+   │   • productExpert context (from repo)        │            │           │
+   │   • .aiqa/context.md                        │            │           │
+   │   • .github/agents/*.md                     │            │           │
+   │   • AI mode (OpenAI) or template fallback    │            │           │
+   │                       └──────────┬───────────┘            │           │
+   │                                  ▼                        │           │
+   │                         testPrService.createBddPr()       │           │
+   │                         prTracker.trackBdd(branch, ...)   │           │
+   └──────────────────────────────────────────────────────────────────────┘
+                                 │  BDD PR on GitHub (qa/bdd/*)
                                  │
-   ────────── Human reviews BDD PR ─────────────────────────────────────────
+   ─────────── GitHub pull_request webhook fires ────────────────────────────
+                                 │
+               ┌─────────────────┴──────────────────────────┐
+               │                                             │
+          action=closed,merged=true               action=closed,merged=false
+          (BDD PR MERGED)                         (BDD PR REJECTED)
+               │                                             │
+               ▼                                             ▼
+   PrTracker.findByBranch()                    PrFeedbackService
+   type=BDD → publish to TestScriptsQueue      .handleBddRejection() [virtual thread]
+                                                 │ fetch PR review comments
+                                                 │ AI classify: KNOWLEDGE_GAP or STYLE_ONLY
+                                                 │ if KNOWLEDGE_GAP:
+                                                 │   update productExpert/ → new PR
+                                                 │ AI re-generate BDD w/ feedback
+                                                 │ create revised BDD PR
+                                                 │ prTracker.trackBdd(revBranch, ...)
+                                                 └── (loop repeats from webhook)
+
+   Kafka: TestScriptsQueue
+           │
+           ▼
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ TestScriptsConsumer → CodegenService                                │
+   │  for each Scenario:                                                  │
+   │    repoContextService.getContext(testType) → RepoContext             │
+   │    route by testType:                                                │
+   │      "API"    → apiTestRunner.generateCode()                        │
+   │      "UI"     → uiTestRunner.generateCode()                         │
+   │      "MOBILE" → mobileTestRunner.generateCode()                     │
+   │    → TestScript                                                      │
+   │    stabilizationLoop.execute(script)                                 │
+   └──────────────────────────────┬──────────────────────────────────────┘
                                   │
-                  ┌───────────────┴──────────────────────┐
-                  │                                       │
-         Path A — GitHub webhook                 Path B — manual endpoint
-         (production)                            (local dev / testing)
-                  │                                       │
-    BDD PR merged on GitHub               POST /api/strategy/approve-bdd
-    → POST /api/strategy/github-webhook    with the BddScenario JSON
-                  │                                       │
-   GitHubWebhookController              StrategyController.approveBdd()
-   verifySignature()                            │
-   bddScenarioStore.findByBranch()             │
-                  └───────────────┬─────────────┘
-                                  │  testScriptsProducer.publishBddScenario()
                                   ▼
-                                 │  BddScenario JSON
-                                 ▼
-  Kafka: TestScriptsQueue
-          │
-          ▼
-  ┌─────────────────────────────────────────────────────────────────────┐
-  │ TestScriptsConsumer                                                 │
-  │  deserialise → codegenService.generateAndExecute(scenario)          │
-  └──────────────────────────────┬──────────────────────────────────────┘
-                                 │
-                                 ▼
-  ┌─────────────────────────────────────────────────────────────────────┐
-  │ CodegenService.generateAndExecute(BddScenario)                      │
-  │                                                                     │
-  │  for each Scenario in BddScenario:                                  │
-  │    repoContextService.getContext(testType)  → RepoContext           │
-  │    route by testType:                                               │
-  │      "API"    → apiTestRunner.generateCode()                        │
-  │      "UI"     → uiTestRunner.generateCode()                         │
-  │      "MOBILE" → mobileTestRunner.generateCode()                     │
-  │    → TestScript (Java source code as string)                        │
-  │    stabilizationLoop.execute(script)                                │
-  └──────────────────────────────┬──────────────────────────────────────┘
-                                 │
-                                 ▼
-  ┌─────────────────────────────────────────────────────────────────────┐
-  │ StabilizationLoop.execute(TestScript)                               │
-  │                                                                     │
-  │  attempt 1: testExecutionEngine.execute(script, 1)                  │
-  │    PASS → testPrService.createFinalTestPr() → DONE                  │
-  │    FAIL → applyFix(attempt=1) → sleep(retryDelayMs)                 │
-  │  attempt 2: testExecutionEngine.execute(script, 2)                  │
-  │    PASS → testPrService.createFinalTestPr() → DONE                  │
-  │    FAIL → applyFix(attempt=2)                                       │
-  │  attempt 3: testExecutionEngine.execute(script, 3)                  │
-  │    PASS → testPrService.createFinalTestPr(STABILIZED) → DONE        │
-  │    FAIL → status=ABANDONED → testPrService.createFinalTestPr()      │
-  └─────────────────────────────────────────────────────────────────────┘
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ StabilizationLoop  (attempt 1–3)                                    │
+   │  PASS → testPrService.createFinalTestPr()                           │
+   │         prTracker.trackTest(branch, ...)                            │
+   │  ABANDONED → still creates PR (⚠️ NEEDS REVIEW)                    │
+   └──────────────────────────────┬──────────────────────────────────────┘
+                                  │  Final Test PR on GitHub (qa/tests/*)
+                                  │
+   ─────────── GitHub pull_request webhook fires ────────────────────────────
+                                  │
+               ┌──────────────────┴────────────────────────┐
+               │                                            │
+          action=closed,merged=true            action=closed,merged=false
+          (TEST PR MERGED)                     (TEST PR REJECTED)
+               │                                            │
+               ▼                                            ▼
+   Pipeline complete                        PrFeedbackService
+   "tests are in the repo"                  .handleTestRejection() [virtual thread]
+   status: TEST_PR_MERGED                     │ fetch PR review comments
+                                              │ AI classify: KNOWLEDGE_GAP or STYLE_ONLY
+                                              │ if KNOWLEDGE_GAP:
+                                              │   update productExpert/ → new PR
+                                              │ AI re-generate test code w/ feedback
+                                              │ create revised test code PR
+                                              │ prTracker.trackTest(revBranch, ...)
+                                              └── (loop repeats from webhook)
 ```
 
 ---
@@ -242,15 +264,20 @@ confidence = min(1.0, (base + overallRiskScore) / 2.0)
 #### BddGenerator
 **`agent/BddGenerator.java`**
 
-Purely template-based. No intelligence, no ML, no LLM.
+Generates Gherkin BDD scenarios in two modes:
 
-For each `TestRequirement` in the `TestStrategy`, generates up to **3 scenarios**:
+**AI mode** (when `AiClient.isAvailable()` returns `true`):
+1. Builds a rich system prompt from all available context sources (in priority order):
+   - `productExpert/{product}/*.md` files — per-product domain knowledge
+   - `.aiqa/context.md` — team-wide QA conventions
+   - `.github/agents/*.md` — agent instruction files
+   - Sample existing tests from the repo
+2. Calls `aiClient.complete(systemPrompt, userPrompt)` 
+3. Parses the Gherkin response into `BddScenario` with a lightweight parser
 
-| Scenario | Type | When generated |
-|---------|------|---------------|
-| Happy path | `Scenario` | Always |
-| Error handling | `Scenario` | Always |
-| Boundary testing | `Scenario Outline` | Only when `API_CHANGE` in detected change types |
+**Template mode** (fallback when no AI key):
+- Generates up to 3 scenarios per requirement: happy path, error path, boundary outline (if `API_CHANGE`)
+- Uses domain-specific `Given` steps when product expert context is available
 
 **Tags added:**
 - `@api` / `@ui` / `@mobile` (from test type)
@@ -258,8 +285,88 @@ For each `TestRequirement` in the `TestStrategy`, generates up to **3 scenarios*
 - `@auto-generated`
 - `@smoke` (if risk is HIGH or CRITICAL)
 
-After building the `BddScenario`, calls `testPrService.createBddPr(bdd)` which logs the
-full Gherkin to the console as a formatted PR payload for human review.
+---
+
+#### AiClient
+**`agent/AiClient.java`**
+
+Interface abstracting the language model API:
+```java
+String complete(String systemPrompt, String userPrompt);
+boolean isAvailable();
+```
+
+---
+
+#### OpenAiClient
+**`agent/OpenAiClient.java`**
+
+OpenAI-compatible implementation supporting:
+- **OpenAI** — default when `OPENAI_API_KEY` is set
+- **Azure OpenAI** — set `OPENAI_BASE_URL` to your Azure endpoint
+- **Local models (Ollama, etc.)** — set `OPENAI_BASE_URL=http://localhost:11434` (no key required)
+
+**`isAvailable()`** returns `true` when `OPENAI_API_KEY` is non-blank OR when a custom `OPENAI_BASE_URL` is configured (local models don't need keys).
+
+Configuration properties:
+```yaml
+openai:
+  api-key:  ${OPENAI_API_KEY:}
+  base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+  model:    ${OPENAI_MODEL:gpt-4o}
+```
+
+---
+
+#### PrFeedbackService
+**`agent/PrFeedbackService.java`**
+
+Handles PR rejection events for both BDD and test code PRs. Runs asynchronously on a virtual thread (launched by `GitHubWebhookController`) so it never blocks the webhook HTTP response.
+
+**`handleBddRejection(PrRecord record, int prNumber)`**
+1. `gitHubService.getPrAllComments(prNumber)` — fetches all review comments (inline + PR-level)
+2. AI classify feedback: `KNOWLEDGE_GAP: <desc>` or `STYLE_ONLY: <reason>`
+3. If `KNOWLEDGE_GAP` → `handleProductExpertUpdate()` (see below)
+4. `regenerateBdd(original, feedback, context)` — AI re-generates scenarios
+5. `createRevisedBddPr()` → `prTracker.trackBdd(revBranch, ...)` → loop continues
+
+**`handleTestRejection(PrRecord record, int prNumber)`**
+1. Fetch all review comments
+2. AI classify feedback
+3. If `KNOWLEDGE_GAP` → `handleProductExpertUpdate()`
+4. `regenerateTestCode(original, feedback, context)` — AI re-generates test code with reviewer feedback as additional context; system prompt includes product expert + existing test patterns
+5. `createRevisedTestPr()` → `prTracker.trackTest(revBranch, ...)` → loop continues
+
+**`handleProductExpertUpdate(feedback, prId, context)` (shared)**
+1. AI prompt: `KNOWLEDGE_GAP: <desc>` classification (strict format)
+2. Read existing `productExpert/{product}/PRODUCT.md` (may not exist yet)
+3. AI appends new knowledge section to the file
+4. Create branch + commit + PR: `[AI-QA] Product Expert Update: {product}`
+5. Human reviews and merges the PR — next generation cycle starts with richer context
+
+---
+
+### Context Layer
+
+#### ProductExpertContext
+**`context/ProductExpertContext.java`**
+
+Immutable record holding per-product knowledge loaded from the test repository:
+
+```java
+public record ProductExpertContext(String productName, Map<String, String> files) {
+    public String asSystemPromptSection()  // formats all files as an AI system prompt section
+    public String productMd()              // content of PRODUCT.md
+    public String patternsMd()             // content of PATTERNS.md
+}
+```
+
+**Loaded from:** `productExpert/{productName}/*.md` in the test repo (any `.md` file in the
+product's subdirectory — `PRODUCT.md` for domain flows/business rules, `PATTERNS.md` for
+preferred test patterns, and any other `.md` files for supplementary knowledge).
+
+`RepoContextService` scans all subdirectories under `productExpert/` at startup and on each
+`refresh-context` call, storing results in `RepoContext.productExpertSections`.
 
 ---
 
@@ -475,14 +582,15 @@ API call fails so the caller gets an actionable error rather than silent failure
 1. Create branch `qa/bdd/{prId}-{scenarioId(6chars)}` from `main` HEAD SHA
 2. Commit `scenarios/{prId}.feature` with the Gherkin content (base64 encoded)
 3. Open PR titled `[AI-QA] BDD Scenarios for PR: {prId}` with review checklist body
-4. Register scenario in `BddScenarioStore` keyed by branch name (enables webhook lookup)
+4. `prTracker.trackBdd(branch, prNumber, scenario)` — registers PR for webhook lookup
 5. Return the PR HTML URL (e.g. `https://github.com/org/repo/pull/42`)
 
 **`createFinalTestPr(TestScript, TestResult)`** — raises a final test code PR:
 1. Create branch `qa/tests/{prId}-{scriptId(6chars)}` from `main`
 2. Commit `src/test/java/{package}/{fileName}` with the generated Java source
 3. Open PR titled `✅ [PASSING]` / `✅ [STABILIZED]` / `⚠️ [NEEDS REVIEW]` based on result
-4. Body includes execution summary table, failure details (if failed), full generated Java source, review checklist
+4. `prTracker.trackTest(branch, prNumber, script)` — registers PR for webhook lookup
+5. Body includes execution summary table, failure details (if failed), full generated Java source, review checklist
 
 > **Requires GitHub configuration.** Set `TARGET_REPO_URL` and ensure a token is available
 > via `TARGET_REPO_TOKEN` or the system git credential helper. See `GitHubService` below.
@@ -492,14 +600,30 @@ API call fails so the caller gets an actionable error rather than silent failure
 #### GitHubService
 **`github/GitHubService.java`**
 
+See [GitHub Layer](#github-layer) section below for full details.
+
+---
+
+#### BddScenarioStore (legacy)
+**`github/BddScenarioStore.java`**
+
+> **Superseded by `PrTracker`.** See [GitHub Layer](#github-layer) section below.
+
+---
+
+### GitHub Layer
+
+#### GitHubService
+**`github/GitHubService.java`**
+
 Thin REST client wrapping the GitHub API v3.  Constructed as a Spring `@Service` singleton
-and injected into `TestPrService`.
+and injected into `TestPrService` and `PrFeedbackService`.
 
 **Token resolution — priority order:**
 
 | Priority | Source | Notes |
 |----------|--------|-------|
-| 1 | `TARGET_REPO_TOKEN` env var | Explicit PAT — recommended for CI/production |
+| 1 | `TARGET_REPO_TOKEN` env var | Explicit PAT — recommended for CI/production. For GitHub org repos, the PAT must have SSO authorized for the org. |
 | 2 | `git credential fill` | Reads from the system credential helper. On macOS this is **osxkeychain**, which holds the token IntelliJ wrote when you connected it to GitHub — so local dev works with zero extra setup as long as IntelliJ is signed in. |
 | 3 | *(none)* | Service fails startup if `TARGET_REPO_URL` is set but no token was resolved |
 
@@ -515,40 +639,84 @@ integration (PR creation will throw `IllegalStateException` at runtime if invoke
 | `isConfigured()` | `true` when URL + token both available |
 | `createBranch(name, base)` | POST `/git/refs` — returns `true` on success or 422 (already exists) |
 | `createFile(branch, path, content, msg)` | PUT `/contents/{path}` — base64 encodes content |
+| `updateFile(branch, path, content, sha, msg)` | PUT `/contents/{path}` with existing file SHA — updates an existing file |
+| `getFileContent(path, branch)` | GET `/contents/{path}?ref={branch}` — returns decoded string content or `null` |
+| `getFileSha(path, branch)` | GET `/contents/{path}?ref={branch}` — returns the blob SHA needed for `updateFile` |
 | `createPullRequest(title, body, head, base)` | POST `/pulls` — returns `GitHubPrResult(prNumber, url, branch)` |
+| `getPrAllComments(prNumber)` | Fetches review comments + PR-level comments, concatenated as plain text |
 
 All methods return `false` / `null` (not throw) when `isConfigured()` is false, so callers
-(`TestPrService`) can check and throw their own typed exceptions.
+(`TestPrService`, `PrFeedbackService`) can check and throw their own typed exceptions.
+
+> **Branch SHA resolution:** Uses `GET /repos/{owner}/{repo}/branches/{branch}` (not
+> `git/ref/heads/{branch}`) to avoid Spring `RestClient` URI template encoding converting
+> `/` in `heads/main` to `%2F`, which GitHub does not decode and returns 404.
 
 ---
 
-#### BddScenarioStore
+#### PrTracker
+**`github/PrTracker.java`**
+
+Thread-safe in-memory tracker for **all open QA pull requests** — both BDD review PRs and
+final test code PRs. Replaces the legacy `BddScenarioStore` which only tracked BDD PRs.
+
+```java
+public enum PrType { BDD, TEST }
+
+public record PrRecord(
+    String branchName, int prNumber, PrType type,
+    BddScenario bddScenario,  // non-null for BDD PRs
+    TestScript testScript      // non-null for TEST PRs
+) {}
+
+public void trackBdd(String branch, int prNumber, BddScenario scenario)
+public void trackTest(String branch, int prNumber, TestScript script)
+public Optional<PrRecord> findByBranch(String branch)
+public void remove(String branch)
+public int size()
+```
+
+**Lifecycle of a BDD PR entry:**
+```
+TestPrService.createBddPr()
+  → prTracker.trackBdd("qa/bdd/PR-xxx-abc", 42, scenario)
+
+(human reviews BDD PR on GitHub)
+
+GitHubWebhookController receives action=closed
+  → prTracker.findByBranch("qa/bdd/PR-xxx-abc") → PrRecord(type=BDD)
+  → prTracker.remove(...)
+  → MERGED: publish to TestScriptsQueue
+  → REJECTED: PrFeedbackService.handleBddRejection() [virtual thread]
+               → createRevisedBddPr() → prTracker.trackBdd("qa/bdd/PR-xxx-rev-abc", 43, ...)
+```
+
+**Lifecycle of a TEST PR entry:**
+```
+StabilizationLoop passes → TestPrService.createFinalTestPr()
+  → prTracker.trackTest("qa/tests/PR-xxx-def", 44, script)
+
+(human reviews test code PR on GitHub)
+
+GitHubWebhookController receives action=closed
+  → prTracker.findByBranch("qa/tests/PR-xxx-def") → PrRecord(type=TEST)
+  → prTracker.remove(...)
+  → MERGED: status=TEST_PR_MERGED (pipeline complete)
+  → REJECTED: PrFeedbackService.handleTestRejection() [virtual thread]
+               → createRevisedTestPr() → prTracker.trackTest("qa/tests/PR-xxx-rev-def", 45, ...)
+```
+
+---
+
+#### BddScenarioStore (legacy)
 **`github/BddScenarioStore.java`**
 
-In-memory `ConcurrentHashMap<branchName, BddScenario>` that bridges the time between
-opening a BDD Review PR (in `TestPrService`) and receiving the GitHub merge webhook
-(in `GitHubWebhookController`).
+> **Superseded by `PrTracker`.** This class remains in the codebase for backward compatibility
+> but `GitHubWebhookController` no longer uses it. `PrTracker` tracks both BDD and TEST PRs
+> in a single unified store and is the canonical tracking mechanism.
 
-**Lifecycle of an entry:**
-
-```
-1. TestPrService.createBddPr()
-     → bddScenarioStore.put("qa/bdd/PR-xxx-abc123", scenario)
-
-2. (human reviews and merges the PR on GitHub)
-
-3. GitHubWebhookController.handleWebhook()
-     → bddScenarioStore.findByBranch("qa/bdd/PR-xxx-abc123")
-     → testScriptsProducer.publishBddScenario(scenario)
-     → bddScenarioStore.remove("qa/bdd/PR-xxx-abc123")
-```
-
-Also exposes `size()` for observability — the number of BDD PRs currently awaiting human
-review.
-
----
-
-### Config Layer
+Original role: in-memory `ConcurrentHashMap<branchName, BddScenario>` bridging the time
+between opening a BDD Review PR and receiving the GitHub merge webhook.
 
 #### KafkaConfig
 
@@ -640,7 +808,7 @@ This section explains the architectural choice of splitting coverage assessment 
  impact-service                          strategy-service
       │                                       │
       │  Has: PR diff + component types       │  Has: cloned test repo
-      │  No:  test repo access               │  Has: coverage index (inverted)
+      │  No:  test repo access                │  Has: coverage index (inverted)
       │                                       │
       │  Phase 1 output:                      │  Phase 2 output:
       │  CoverageReport(                      │  CoverageReport(
@@ -670,9 +838,13 @@ strategy-service already owns the repo lifecycle, so coverage analysis naturally
   if url not configured → log warning, all contexts = unavailable, skip
   else:
     cloneOrPull()     ← git clone (shallow --depth 1) or git pull
-    refreshCache()    ← scan three module directories
+    refreshCache()    ← scan three module directories + load product expert context
                          builds coverage index per module, then merges
 ```
+
+`refreshCache()` now also:
+- `loadProductExpert(repoRoot)` — scans `productExpert/` subdirectories, reads all `.md` files per product, stores as `Map<String, ProductExpertContext>` in each `RepoContext`
+- `loadAiqaContext(repoRoot)` — reads `.aiqa/context.md` if present, stored as `repoAiqaContext` string in each `RepoContext`
 
 `POST /api/strategy/refresh-context` calls `refresh()` which repeats `cloneOrPull()` +
 `refreshCache()` without a restart.
@@ -848,6 +1020,127 @@ PR is raised even on `ABANDONED` so humans can see and fix the partial code.
 
 ---
 
+## AI-Native Feedback Loop
+
+### Overview
+
+`GitHubWebhookController` handles the `pull_request` webhook for **all four outcomes**:
+
+| Event | PR Type | Action |
+|-------|---------|--------|
+| BDD PR merged | `PrType.BDD` | Publish `BddScenario` to `TestScriptsQueue` → codegen |
+| BDD PR rejected (closed, not merged) | `PrType.BDD` | `PrFeedbackService.handleBddRejection()` [async] |
+| TEST PR merged | `PrType.TEST` | Log `TEST_PR_MERGED` — pipeline complete |
+| TEST PR rejected (closed, not merged) | `PrType.TEST` | `PrFeedbackService.handleTestRejection()` [async] |
+
+`PrTracker.findByBranch(headBranch)` determines which PRs are QA-generated and what type they are. Any branch not in `PrTracker` gets response `NOT_A_QA_PR` (safe to ignore).
+
+### BDD PR Rejection Flow
+
+```
+GitHub webhook: action=closed, merged=false, branch=qa/bdd/PR-xxx-abc
+                          │
+           PrTracker.findByBranch() → PrRecord(type=BDD, scenario=...)
+           PrTracker.remove(branch)   ← prevent double-processing
+                          │
+           Thread.ofVirtual().start(() ->
+             PrFeedbackService.handleBddRejection(record, prNumber)
+           )
+                          │
+           ┌──────────────▼─────────────────────────────────────┐
+           │  1. gitHubService.getPrAllComments(prNumber)        │
+           │     → inline review comments + PR-level comments    │
+           │                                                     │
+           │  2. aiClient.complete(classify prompt)              │
+           │     Response format: "KNOWLEDGE_GAP: <desc>"        │
+           │                  or  "STYLE_ONLY: <reason>"         │
+           │                                                     │
+           │  3. IF KNOWLEDGE_GAP:                               │
+           │       read productExpert/{product}/PRODUCT.md       │
+           │       AI appends new knowledge section              │
+           │       createBranch("qa/product-expert/...")         │
+           │       createFile / updateFile                       │
+           │       createPullRequest("[AI-QA] Product Expert Update")│
+           │                                                     │
+           │  4. regenerateBdd(original, feedback, context)      │
+           │       AI mode: system prompt = product expert +     │
+           │                aiqa context + agent instructions    │
+           │       User prompt: "scenarios were REJECTED, here   │
+           │                     is the feedback, improve them"  │
+           │       Template fallback: embed feedback as comments  │
+           │                                                     │
+           │  5. createRevisedBddPr() → new branch qa/bdd/...-rev│
+           │     prTracker.trackBdd(newBranch, newPrNumber, ...)  │
+           └─────────────────────────────────────────────────────┘
+                          │
+           Webhook fires again when revised BDD PR is reviewed
+           → same flow repeats until human approves
+```
+
+### Test Code PR Rejection Flow
+
+```
+GitHub webhook: action=closed, merged=false, branch=qa/tests/PR-xxx-def
+                          │
+           PrTracker.findByBranch() → PrRecord(type=TEST, script=...)
+           PrTracker.remove(branch)
+                          │
+           Thread.ofVirtual().start(() ->
+             PrFeedbackService.handleTestRejection(record, prNumber)
+           )
+                          │
+           ┌──────────────▼─────────────────────────────────────┐
+           │  1. gitHubService.getPrAllComments(prNumber)        │
+           │                                                     │
+           │  2. AI classify feedback (same as BDD flow)         │
+           │                                                     │
+           │  3. IF KNOWLEDGE_GAP → product expert update PR     │
+           │                                                     │
+           │  4. regenerateTestCode(original, feedback, context) │
+           │       AI mode: system prompt includes product expert│
+           │                + existing test patterns + aiqa ctx  │
+           │       User prompt: "test code was REJECTED, here    │
+           │                     is the feedback:                │
+           │                     Original file: {fileName}       │
+           │                     Original code: {scriptContent}  │
+           │                     Feedback: {reviewComments}"     │
+           │       Template fallback: embed feedback as comments  │
+           │                                                     │
+           │  5. createRevisedTestPr() → new branch qa/tests/...-rev│
+           │     prTracker.trackTest(newBranch, newPrNumber, ...)  │
+           └─────────────────────────────────────────────────────┘
+                          │
+           Webhook fires again when revised test PR is reviewed
+           → same flow repeats until human approves
+```
+
+### Product Expert Update PR
+
+When a knowledge gap is detected in either BDD or test rejection:
+
+```
+PR body example:
+  ## 🧠 AI-Detected Product Knowledge Gap
+  Source PR: PR-12345678
+  Product: payments
+  Gap identified: OAuth token refresh flow not covered in existing knowledge
+
+  ### Context
+  A QA scenario PR was rejected with feedback that revealed a gap in the product
+  expert knowledge used to generate test scenarios. This PR updates the product
+  expert file so future test generation is more accurate.
+
+  ### Review Checklist
+  - [ ] The added knowledge is accurate
+  - [ ] Existing content is unchanged
+  - [ ] The description is clear for future AI context use
+```
+
+The update PR is independent of the revised content PR — the two are created in parallel.
+The product expert update feeds into *future* generation cycles, not the immediate retry.
+
+---
+
 ## Kafka Topics
 
 | Direction | Topic | Payload |
@@ -886,8 +1179,8 @@ curl -X POST http://localhost:8082/api/strategy/approve-bdd \
 ```
 
 ### `POST /api/strategy/github-webhook`
-Receives GitHub `pull_request` webhook events. Used in **production** as the automatic
-codegen trigger when a BDD Review PR is merged on GitHub.
+Receives GitHub `pull_request` webhook events. Handles **all four outcomes**:
+BDD merged, BDD rejected, TEST merged, TEST rejected.
 
 **GitHub Setup:**
 ```
@@ -899,16 +1192,23 @@ Repository Settings → Webhooks → Add webhook
 ```
 
 **Flow:**
-1. GitHub fires `pull_request` with `action=closed, merged=true`
+1. GitHub fires `pull_request` with `action=closed`
 2. Controller verifies `X-Hub-Signature-256` HMAC-SHA256 header
-3. Looks up the `BddScenario` in `BddScenarioStore` by the merged branch name
-4. Publishes to `TestScriptsQueue` → `CodegenService` handles from here
+3. `PrTracker.findByBranch(headBranch)` determines PR type (`BDD` or `TEST`)
+4. Routes to `handleMerged()` or `handleRejected()` based on `merged` flag:
+   - **Merged BDD** → publish to `TestScriptsQueue` → codegen
+   - **Rejected BDD** → `PrFeedbackService.handleBddRejection()` [virtual thread]
+   - **Merged TEST** → log and return `TEST_PR_MERGED`
+   - **Rejected TEST** → `PrFeedbackService.handleTestRejection()` [virtual thread]
 
 **Response examples:**
 ```json
-{ "status": "CODEGEN_TRIGGERED", "sourcePrId": "PR-XXXX", "scenarioId": "...", "mergedBranch": "qa/bdd/PR-XXXX-abc123" }
-{ "status": "NOT_A_QA_PR",       "branch": "feature/some-other-branch" }
-{ "status": "IGNORED",           "event": "issues" }
+{ "status": "CODEGEN_TRIGGERED",  "sourcePrId": "PR-XXXX", "scenarioId": "...", "mergedBranch": "qa/bdd/PR-XXXX-abc" }
+{ "status": "TEST_PR_MERGED",     "sourcePrId": "PR-XXXX", "branch": "qa/tests/PR-XXXX-def" }
+{ "status": "FEEDBACK_TRIGGERED", "prType": "BDD",  "prNumber": 42, "message": "Re-generation started — a new PR will be created shortly" }
+{ "status": "FEEDBACK_TRIGGERED", "prType": "TEST", "prNumber": 44, "message": "Re-generation started — a new PR will be created shortly" }
+{ "status": "NOT_A_QA_PR",        "branch": "feature/some-other-branch" }
+{ "status": "IGNORED",            "event": "issues" }
 ```
 
 > If `GITHUB_WEBHOOK_SECRET` is not set, signature verification is skipped with a warning —
@@ -948,6 +1248,14 @@ kafka:
     impact-results: ImpactResultsQueue    # consumed
     test-scripts: TestScriptsQueue        # produced & consumed
 
+# ── AI generation (BDD + test code + feedback classification) ─────────────────
+# When api-key is set (or a custom base-url for local models), AI mode activates.
+# Without a key, the service uses enhanced template mode for all generation.
+openai:
+  api-key:  ${OPENAI_API_KEY:}                    # leave blank for template mode
+  base-url: ${OPENAI_BASE_URL:https://api.openai.com}  # override for Azure/Ollama
+  model:    ${OPENAI_MODEL:gpt-4o}
+
 aiqa:
   stabilization:
     max-retries: 3              # max fix-and-retry attempts per script
@@ -982,3 +1290,39 @@ logging:
     nz.co.eroad.qaisystem: DEBUG
     org.apache.kafka: WARN
 ```
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `TARGET_REPO_URL` | For PRs | HTTPS URL of the test repository |
+| `TARGET_REPO_TOKEN` | For PRs | GitHub PAT with `repo` scope. For org repos: must have SSO authorized. |
+| `TARGET_REPO_USERNAME` | For PRs | GitHub username paired with the PAT |
+| `GITHUB_WEBHOOK_SECRET` | Recommended | HMAC-SHA256 secret — prevents unauthenticated triggers |
+| `OPENAI_API_KEY` | For AI mode | OpenAI or compatible API key. Without it, template mode is used. |
+| `OPENAI_BASE_URL` | No | Override for Azure or local Ollama. Default: `https://api.openai.com` |
+| `OPENAI_MODEL` | No | Model name. Default: `gpt-4o` |
+
+### Product Expert Files in Test Repo
+
+The service reads these files from the test repo at startup and on `refresh-context`:
+
+```
+{test-repo}/
+  productExpert/
+    {product-name}/
+      PRODUCT.md       ← domain flows, business rules, known edge cases
+      PATTERNS.md      ← preferred assertion patterns, test structure
+      *.md             ← any additional knowledge files
+  .aiqa/
+    context.md         ← team-wide QA conventions
+  .github/
+    agents/
+      api-*.md         ← API test agent instructions
+      ui-*.md          ← UI test agent instructions
+      *.md             ← shared conventions (applied to all test types)
+```
+
+None of these files are required — the service works with built-in templates when
+they are absent. Add them progressively as the AI's initial output needs improvement.
+

@@ -1,0 +1,71 @@
+# {Product Name} — Product Expert Knowledge
+
+> **Instructions:** Replace all `{placeholders}` and fill in real information
+> about your product. The more specific and accurate this is, the better the
+> AI-generated test scenarios will be.
+>
+> This file is automatically updated by the QA-ISystem when PR reviewers identify
+> knowledge gaps. Review those updates before merging.
+
+## What this module does
+
+{Brief description of what this product/module does. 2-4 sentences.}
+
+Example: The Payments module handles all financial transactions including charge
+creation, refund processing, and payment method management. It integrates with
+Stripe as the upstream payment processor.
+
+## Key domain concepts
+
+- **{Concept 1}**: {What it is and why it matters for testing}
+- **{Concept 2}**: {What it is and why it matters for testing}
+- **{Concept 3}**: {What it is and why it matters for testing}
+
+Example:
+- **Payment Intent**: A Stripe object representing the intent to collect a payment.
+  Must always have a `client_secret` before confirmation.
+- **Idempotency Key**: A unique key sent with each payment request to prevent
+  double-charges on network retries. Tests must verify idempotent behaviour.
+
+## Key API endpoints / operations
+
+| Operation | Endpoint | Description |
+|-----------|----------|-------------|
+| {Operation} | `{METHOD /path}` | {What it does} |
+
+Example:
+| Create payment  | `POST /api/payments` | Creates a new payment intent |
+| Confirm payment | `PUT /api/payments/{id}/confirm` | Confirms a pending payment |
+
+## Business rules that must be tested
+
+1. {Rule 1}
+2. {Rule 2}
+3. {Rule 3}
+
+Example:
+1. A payment cannot be confirmed if the account balance is insufficient
+2. Refunds can only be issued within 90 days of the original charge
+3. All amounts are in cents (integer), never decimals
+
+## Known edge cases and pitfalls
+
+- {Edge case 1}
+- {Edge case 2}
+
+Example:
+- Stripe webhooks may arrive out of order — tests should handle eventual consistency
+- Test cards `4000 0000 0000 0002` always decline — use `4242 4242 4242 4242` for success
+
+## Integration points
+
+- **Upstream**: {What services/APIs this module calls}
+- **Downstream**: {What services/APIs call this module}
+- **Events published**: {Kafka/event topics emitted by this module}
+
+## Test environment specifics
+
+- **Test data**: {Where to get/create test data}
+- **Sandbox/mock**: {Is there a sandbox? How to use it?}
+- **Known flaky areas**: {Any areas that are prone to intermittent failures in tests}
+

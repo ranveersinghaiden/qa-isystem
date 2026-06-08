@@ -54,6 +54,9 @@ public class KafkaConfig {
     @Value("${kafka.topics.test-results:TestResultsQueue}")
     private String testResultsTopic;
 
+    @Value("${kafka.topics.feedback:FeedbackQueue}")
+    private String feedbackTopic;
+
     // ── Consumer ─────────────────────────────────────────────────────────────
 
     @Bean
@@ -123,5 +126,9 @@ public class KafkaConfig {
 
     @Bean public NewTopic testResultsTopic() {
         return TopicBuilder.name(testResultsTopic).partitions(3).replicas(1).build();
+    }
+
+    @Bean public NewTopic feedbackTopic() {
+        return TopicBuilder.name(feedbackTopic).partitions(3).replicas(1).build();
     }
 }

@@ -1,0 +1,86 @@
+# {Product Name} — Testing Patterns
+
+> This file documents **how** to test this product — patterns, conventions,
+> common assertions, and pitfalls specific to this module.
+> The AI uses this alongside PRODUCT.md to generate tests that match your team's style.
+
+## Test types used for this module
+
+- [ ] **API tests** (RestAssured) — primary test layer
+- [ ] **UI tests** (Selenium/Playwright) — for user-facing flows
+- [ ] **Mobile tests** (Appium) — if mobile app exists
+- [ ] **Integration tests** (@SpringBootTest) — for service-layer behaviour
+
+## Common test patterns
+
+### Pattern: {Pattern name}
+
+```gherkin
+# Describe the Gherkin pattern
+Scenario: {Typical scenario title}
+  Given {typical setup}
+  When  {typical action}
+  Then  {typical assertion}
+```
+
+```java
+// Describe the Java test pattern
+@Test
+void should{DoSomething}() {
+    // Given
+    // setup code...
+
+    // When
+    // action code...
+
+    // Then
+    // assertion code...
+}
+```
+
+## Standard assertions for this module
+
+```java
+// Example: assert a payment response
+assertThat(response.statusCode()).isEqualTo(200);
+assertThat(response.jsonPath().getString("status")).isEqualTo("succeeded");
+assertThat(response.jsonPath().getString("id")).startsWith("pi_");
+```
+
+## Authentication / setup pattern
+
+```java
+// How tests authenticate for this module
+// Example:
+given()
+    .header("Authorization", "Bearer " + testAuthToken)
+    .header("Content-Type", "application/json")
+```
+
+## Test data setup
+
+```java
+// How to create test data for this module
+// Example: use the factory method
+var testPayment = PaymentTestFactory.create()
+    .withAmount(1000)
+    .withCurrency("NZD")
+    .build();
+```
+
+## What NOT to test here
+
+- {Thing to avoid} — reason
+- {Another thing} — reason
+
+Example:
+- Don't test Stripe internal behaviour — we trust Stripe's SDK
+- Don't assert on exact timestamps — use `isAfter` / `isBefore` range checks
+
+## Tags to use
+
+- `@{module-name}` — on all scenarios for this module
+- `@smoke` — for critical path tests only
+- `@regression` — for full regression suite
+- `@{specific-feature}` — for feature-specific grouping
+

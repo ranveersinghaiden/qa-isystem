@@ -26,8 +26,13 @@ kafka:
     impact-results: ImpactResultsQueue
     test-scripts: TestScriptsQueue
     test-results: TestResultsQueue
+    feedback: FeedbackQueue
 
+# aiqa.codegen.enabled=false → strategy-service does NOT consume TestScriptsQueue
+# (codegen-service handles it). Set to true for legacy monolith mode.
 aiqa:
+  codegen:
+    enabled: false
   stabilization:
     max-retries: 3
     retry-delay-ms: 2000
@@ -96,6 +101,24 @@ github:
   # Requests without a matching signature are rejected (401).
   # Leave blank in local dev to skip signature verification entirely.
   webhook-secret: ${GITHUB_WEBHOOK_SECRET:}
+
+# ── AI Generation ──────────────────────────────────────────────────────────────
+#
+# Enables AI-powered BDD scenario and test code generation.
+# Without an API key the system runs in "enhanced template mode" — templates are
+# still enriched with product expert context from the test repo, but the output
+# is deterministic rather than AI-generated.
+#
+# Supported backends (any OpenAI-compatible API):
+#   1. OpenAI          — set OPENAI_API_KEY (https://platform.openai.com)
+#   2. Azure OpenAI    — set OPENAI_API_KEY + OPENAI_BASE_URL (your Azure endpoint)
+#   3. Local Ollama    — set OPENAI_BASE_URL=http://localhost:11434 (no key needed)
+#   4. Any compatible  — set both env vars as needed
+#
+openai:
+  api-key:  ${OPENAI_API_KEY:}                         # e.g. sk-... or ghp_... for GitHub Models
+  base-url: ${OPENAI_BASE_URL:https://api.openai.com}  # override for Azure / Ollama
+  model:    ${OPENAI_MODEL:gpt-4o}                     # model name
 
 server:
   port: 8082

@@ -46,6 +46,19 @@ services:
       retries: 5
       start_period: 30s
 
+  # ── Redis — shared PrTracker store ─────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: qa-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # ── Kafka UI (optional — browse topics at http://localhost:8090) ───────────
   # Start with: docker compose --profile debug up -d
   kafka-ui:

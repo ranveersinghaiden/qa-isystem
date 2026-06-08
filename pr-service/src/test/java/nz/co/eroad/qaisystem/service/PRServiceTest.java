@@ -4,28 +4,44 @@ import nz.co.eroad.qaisystem.kafka.FeatureUpdatesProducer;
 import nz.co.eroad.qaisystem.model.PullRequest;
 import nz.co.eroad.qaisystem.parser.GitDiffParser;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.support.SendResult;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+/**
+ * PRService tests using real test-double classes (no Mockito).
+ */
 @DisplayName("PRService unit tests")
 class PRServiceTest {
-    @Mock FeatureUpdatesProducer featureUpdatesProducer;
-    @Spy  GitDiffParser gitDiffParser = new GitDiffParser();
-    @InjectMocks PRService prService;
-    PullRequest valid;
 
-    @BeforeEach void setUp() {
-        valid = PullRequest.builder().title("feat: login").author("dev@example.com").repositoryName("svc").build();
+    /** Captures published pull requests without calling Kafka. */
+    static class CapturingProducer extends FeatureUpdatesProducer {
+        final List<PullRequest> published = new ArrayList<>();
+        CapturingProducer() { super(null, null); }
+        @Override
+        public CompletableFuture<SendResult<String, String>> publishPullRequest(PullRequest pr) {
+            published.add(pr);
+            return CompletableFuture.completedFuture(null);
+        }
+    }
+
+    private CapturingProducer producer;
+    private PRService          prService;
+    private PullRequest        valid;
+
+    @BeforeEach
+    void setUp() {
+        producer  = new CapturingProducer();
+        prService = new PRService(producer, new GitDiffParser());
+        valid     = PullRequest.builder().title("feat: login").author("dev@example.com").repositoryName("svc").build();
     }
 
     @Test @DisplayName("assigns prId when missing")
     void assignsPrId() {
         assertThat(prService.processPullRequest(valid).getPrId()).startsWith("PR-");
-        verify(featureUpdatesProducer).publishPullRequest(any());
+        assertThat(producer.published).hasSize(1);
     }
 
     @Test @DisplayName("preserves existing prId")
@@ -49,7 +65,7 @@ class PRServiceTest {
         valid.setTitle("  ");
         assertThatThrownBy(() -> prService.processPullRequest(valid))
             .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("title");
-        verifyNoInteractions(featureUpdatesProducer);
+        assertThat(producer.published).isEmpty();
     }
 
     @Test @DisplayName("throws on missing author")
@@ -75,13 +91,11 @@ class PRServiceTest {
           + "@@ -1,1 +1,2 @@\n"
           + "+// added\n";
         valid.setRawDiffContent(rawDiff);
-
         PullRequest result = prService.processPullRequest(valid);
-
         assertThat(result.getDiffs()).hasSize(1);
         assertThat(result.getDiffs().get(0).getLinesAdded()).isEqualTo(1);
-        verify(featureUpdatesProducer).publishPullRequest(argThat(
-                pr -> pr.getDiffs() != null && pr.getDiffs().size() == 1));
+        assertThat(producer.published).hasSize(1);
+        assertThat(producer.published.get(0).getDiffs()).hasSize(1);
     }
 
     @Test @DisplayName("createSamplePullRequest builds valid PR with parseable diff")
@@ -89,7 +103,6 @@ class PRServiceTest {
         PullRequest s = prService.createSamplePullRequest();
         assertThat(s.getPrId()).isNotNull();
         assertThat(s.getRawDiffContent()).isNotBlank();
-        // processPullRequest should parse the raw diff on the sample too
         PullRequest processed = prService.processPullRequest(s);
         assertThat(processed.getDiffs()).isNotEmpty();
     }

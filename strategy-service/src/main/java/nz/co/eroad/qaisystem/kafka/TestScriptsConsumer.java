@@ -7,13 +7,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
+/**
+ * Listens to TestScriptsQueue only when aiqa.codegen.enabled=true (legacy monolith mode).
+ * In the standard deployment, codegen-service handles this queue instead.
+ * Set AIQA_CODEGEN_ENABLED=true in strategy-service to run as a monolith.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "aiqa.codegen.enabled", havingValue = "true", matchIfMissing = false)
 public class TestScriptsConsumer {
 
     private final ObjectMapper objectMapper;
