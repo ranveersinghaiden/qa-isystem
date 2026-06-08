@@ -85,7 +85,7 @@ services:
       # AI last-resort evaluator — set AIQA_AI_ENABLED=true and configure
       # the AI_PROVIDER + matching credential to activate
       AIQA_AI_ENABLED: ${AIQA_AI_ENABLED:-false}
-      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      AI_PROVIDER: ${AI_PROVIDER:-copilot}
       # OpenAI provider credential (used when AI_PROVIDER=openai)
       AIQA_AI_API_KEY: ${AIQA_AI_API_KEY:-}
       # Copilot provider credential (used when AI_PROVIDER=copilot)
@@ -116,7 +116,7 @@ services:
       AIQA_TARGET_REPO_AUTH_USERNAME: ${TARGET_REPO_USERNAME:-}
       GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
       # AI provider — shared by strategy / codegen / feedback services
-      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      AI_PROVIDER: ${AI_PROVIDER:-copilot}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
@@ -152,7 +152,7 @@ services:
       TARGET_REPO_URL: ${TARGET_REPO_URL:-}
       TARGET_REPO_TOKEN: ${TARGET_REPO_TOKEN:-}
       TARGET_REPO_USERNAME: ${TARGET_REPO_USERNAME:-}
-      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      AI_PROVIDER: ${AI_PROVIDER:-copilot}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
@@ -188,7 +188,7 @@ services:
       TARGET_REPO_TOKEN: ${TARGET_REPO_TOKEN:-}
       TARGET_REPO_USERNAME: ${TARGET_REPO_USERNAME:-}
       GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
-      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      AI_PROVIDER: ${AI_PROVIDER:-copilot}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}

@@ -8,7 +8,7 @@
 #   TARGET_REPO_USERNAME   — GitHub username paired with the PAT
 #
 #   AI provider (choose one):
-#   AI_PROVIDER            — "openai" (default) or "copilot"
+#   AI_PROVIDER            — "openai" or "copilot" (default)
 #
 #   When AI_PROVIDER=openai:
 #   OPENAI_API_KEY         — OpenAI API key (or GitHub token for GitHub Models)

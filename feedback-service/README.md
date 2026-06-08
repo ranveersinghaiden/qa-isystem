@@ -53,8 +53,8 @@ FeedbackEventConsumer deserialises FeedbackEvent
 server.port: 8084
 spring.kafka.consumer.group-id: feedback-service-group
 
-# AI provider: openai (default) or copilot
-aiqa.ai.provider: ${AI_PROVIDER:openai}
+# AI provider: openai or copilot (default)
+aiqa.ai.provider: ${AI_PROVIDER:copilot}
 
 # When AI_PROVIDER=openai:
 aiqa.ai.openai.api-key:  ${OPENAI_API_KEY:}   # Required for AI re-generation

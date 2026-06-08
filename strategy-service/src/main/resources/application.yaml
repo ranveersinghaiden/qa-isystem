@@ -120,7 +120,7 @@ github:
 #     In GitHub Actions, secrets.GITHUB_TOKEN works if the repo has Copilot enabled.
 #
   ai:
-    provider: ${AI_PROVIDER:openai}               # openai | copilot
+    provider: ${AI_PROVIDER:copilot}               # openai | copilot
     openai:
       api-key:  ${OPENAI_API_KEY:}                # sk-... or GitHub token for GitHub Models
       base-url: ${OPENAI_BASE_URL:https://api.openai.com}

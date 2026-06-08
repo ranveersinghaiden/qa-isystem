@@ -42,7 +42,7 @@ aiqa:
   #   copilot            — set GITHUB_COPILOT_TOKEN; uses GitHub Copilot API
   ai:
     enabled:    false                                # opt-in; set to true to activate
-    provider:   ${AI_PROVIDER:openai}               # openai | copilot
+    provider:   ${AI_PROVIDER:copilot}               # openai | copilot
     # OpenAI provider settings (used when provider=openai)
     api-key:    ${AIQA_AI_API_KEY:}                 # injected from env — never hard-code
     base-url:   https://api.openai.com/v1

@@ -324,7 +324,7 @@ Configuration properties:
 ```yaml
 aiqa:
   ai:
-    provider: ${AI_PROVIDER:openai}               # openai | copilot
+    provider: ${AI_PROVIDER:copilot}               # openai | copilot
     openai:
       api-key:  ${OPENAI_API_KEY:}
       base-url: ${OPENAI_BASE_URL:https://api.openai.com}
@@ -1272,7 +1272,7 @@ kafka:
 # Without a credential the service uses enhanced template mode for all generation.
 aiqa:
   ai:
-    provider: ${AI_PROVIDER:openai}               # openai | copilot
+    provider: ${AI_PROVIDER:copilot}               # openai | copilot
     openai:
       api-key:  ${OPENAI_API_KEY:}                # leave blank for template mode
       base-url: ${OPENAI_BASE_URL:https://api.openai.com}  # override for Azure/Ollama/GitHub Models
