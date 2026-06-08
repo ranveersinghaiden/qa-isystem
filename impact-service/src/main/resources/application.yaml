@@ -27,6 +27,9 @@ kafka:
     test-scripts: TestScriptsQueue
     test-results: TestResultsQueue
 
+# aiqa.github.enabled is intentionally absent here — impact-service uses only
+# deterministic analysis (no GitHub API, no AI client, no repo context clone).
+# See pr-service/application.yaml for a full explanation of the guard mechanism.
 aiqa:
   strategy:
     risk-threshold-high: 0.7

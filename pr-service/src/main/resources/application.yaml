@@ -21,6 +21,20 @@ kafka:
   topics:
     feature-updates: FeatureUpdatesQueue
 
+# ── GitHub / AI integration — intentionally disabled ──────────────────────────
+# pr-service is a pure ingestion service: it receives webhook events and
+# publishes them to Kafka. It has no business interacting with GitHub or any
+# AI provider. The common module contains GitHubService, RepoContextService, and
+# AiClientConfig, but all three are guarded by @ConditionalOnProperty:
+#
+#   aiqa.github.enabled=true   → enables GitHubService + RepoContextService + AiClient
+#   (absent / false)           → none of those beans are created
+#
+# Do NOT add aiqa.github.enabled: true here. Setting it would cause pr-service
+# to try to resolve GitHub credentials at startup and prompt for a username/token
+# via the git credential helper.
+# ───────────────────────────────────────────────────────────────────────────────
+
 
 logging:
   level:
