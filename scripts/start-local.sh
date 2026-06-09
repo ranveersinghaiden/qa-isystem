@@ -136,23 +136,52 @@ if [ "${ACTIVE_PROVIDER}" = "copilot-cli" ]; then
   fi
 fi
 
-# Port availability
-info "Checking port availability..."
+# Port checks
+# Infrastructure ports (Kafka :9092, Redis :6379) are owned by Docker — never
+# auto-kill those; fail fast if something else is already holding them.
+# Service ports (8080-8084) are freed on-demand just before each service starts.
+info "Checking infrastructure port availability..."
 port_busy() { lsof -i ":${1}" -sTCP:LISTEN -t &>/dev/null 2>&1; }
-BUSY=()
-for p in "${INFRA_PORTS[@]}" "${SVC_PORTS[@]}"; do
+
+# Helper used later (per-service, not here)
+kill_port() {
+  local port="${1}"
+  local pids
+  pids=$(lsof -i ":${port}" -sTCP:LISTEN -t 2>/dev/null || true)
+  if [ -n "${pids}" ]; then
+    for pid in ${pids}; do
+      local proc
+      proc=$(ps -p "${pid}" -o comm= 2>/dev/null || echo "unknown")
+      warn "Port :${port} in use by '${proc}' (PID ${pid}) -- killing..."
+      kill -TERM "${pid}" 2>/dev/null || true
+      local i=0
+      while kill -0 "${pid}" 2>/dev/null && [ "${i}" -lt 3 ]; do
+        sleep 1; i=$((i + 1))
+      done
+      if kill -0 "${pid}" 2>/dev/null; then
+        warn "Process ${pid} did not exit after SIGTERM -- sending SIGKILL"
+        kill -KILL "${pid}" 2>/dev/null || true
+        sleep 1
+      fi
+      success "Freed port :${port} (killed PID ${pid} '${proc}')"
+    done
+  fi
+}
+
+INFRA_BUSY=()
+for p in "${INFRA_PORTS[@]}"; do
   if port_busy "${p}"; then
     pid=$(lsof -i ":${p}" -sTCP:LISTEN -t 2>/dev/null | head -1 || true)
     proc=$(ps -p "${pid}" -o comm= 2>/dev/null || echo "unknown")
-    BUSY+=(":${p}  (PID ${pid} -- ${proc})")
+    INFRA_BUSY+=(":${p} (PID ${pid} -- ${proc})")
   fi
 done
-if [ ${#BUSY[@]} -gt 0 ]; then
-  error "Ports already in use -- stop conflicting processes or run --stop first:"
-  for b in "${BUSY[@]}"; do error "  ${b}"; done
-  exit 1
+if [ ${#INFRA_BUSY[@]} -gt 0 ]; then
+  error "Infrastructure ports are already in use by non-Docker processes:"
+  for b in "${INFRA_BUSY[@]}"; do error "  ${b}"; done
+  die "Stop the conflicting processes and retry."
 fi
-success "All ports free (8080-8084, 6379, 9092) ok"
+success "Infrastructure ports free (6379, 9092) ok"
 
 # JARs exist when --skip-build
 if [ "${SKIP_BUILD}" = true ]; then
@@ -247,6 +276,10 @@ for entry in "${SERVICES[@]}"; do
   IFS='|' read -r svc port jar_rel <<< "${entry}"
   jar="${ROOT_DIR}/${jar_rel}"
   log="${LOG_DIR}/${svc}.log"
+
+  # Free the service port just before launching (no-op if already free)
+  kill_port "${port}"
+
   info "  ${svc}  :${port}  ->  ${log}"
 
   ENV_PAIRS=()
