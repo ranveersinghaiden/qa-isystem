@@ -49,10 +49,14 @@ aiqa:
       api: tests/api
       ui:  tests/ui
       mobile: tests/mobile
-  # ── AI Generation — provider: openai (default) or copilot ──────────────────
+  # ── AI Generation — provider: copilot-cli (default) | copilot | openai ──────
   # See strategy-service/src/main/resources/application.yaml for full docs.
   ai:
-    provider: ${AI_PROVIDER:copilot}
+    provider: ${AI_PROVIDER:copilot-cli}           # copilot-cli (default) | copilot | openai
+    copilot-cli:
+      gh-cli-path: ${GH_CLI_PATH:gh}
+      model:       ${COPILOT_CLI_MODEL:gpt-4o}
+      timeout-seconds: ${COPILOT_CLI_TIMEOUT:120}
     openai:
       api-key:  ${OPENAI_API_KEY:}
       base-url: ${OPENAI_BASE_URL:https://api.openai.com}

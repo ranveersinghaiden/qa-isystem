@@ -1,10 +1,13 @@
 package nz.co.eroad.qaisystem.agent;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import nz.co.eroad.qaisystem.gate.AiCallGate;
 import nz.co.eroad.qaisystem.model.*;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.ChangeType;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.ImpactedComponent;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.RiskLevel;
 import nz.co.eroad.qaisystem.model.TestStrategy.StrategyDecision;
+import nz.co.eroad.qaisystem.monitor.AiCostMonitor;
 import nz.co.eroad.qaisystem.service.E2ECoverageAnalyzer;
 import nz.co.eroad.qaisystem.service.TestPrService;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +29,7 @@ class StrategyAgentTest {
     /** Records whether generate() was called. */
     static class CapturingBddGenerator extends BddGenerator {
         boolean generateCalled = false;
-        CapturingBddGenerator() { super(null, null, null); }
+        CapturingBddGenerator() { super(null, null, null, null, null); }
         @Override public BddScenario generate(TestStrategy s, ImpactEnvelope e) {
             generateCalled = true;
             return BddScenario.builder().scenarioId("SC-test").prId(s.getPrId())
@@ -55,6 +58,8 @@ class StrategyAgentTest {
     private CapturingBddGenerator bddGen;
     private SilentTestPrService   testPr;
     private FixedCoverageAnalyzer coverageAnalyzer;
+    private AiCallGate            gate;
+    private AiCostMonitor         monitor;
     private StrategyAgent         agent;
 
     private static final CoverageReport UNKNOWN = CoverageReport.builder()
@@ -71,7 +76,10 @@ class StrategyAgentTest {
         bddGen           = new CapturingBddGenerator();
         testPr           = new SilentTestPrService();
         coverageAnalyzer = new FixedCoverageAnalyzer(UNKNOWN);
-        agent            = new StrategyAgent(bddGen, testPr, coverageAnalyzer);
+        gate             = new AiCallGate();
+        monitor          = new AiCostMonitor(new SimpleMeterRegistry());
+        monitor.initMetrics();
+        agent            = new StrategyAgent(bddGen, testPr, coverageAnalyzer, gate, monitor);
     }
 
     // ── Core decision tests ───────────────────────────────────────────────────

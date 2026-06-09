@@ -1,10 +1,12 @@
 package nz.co.eroad.qaisystem.agent;
 
+import nz.co.eroad.qaisystem.gate.AiCallGate;
 import nz.co.eroad.qaisystem.model.*;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.ChangeType;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.RiskLevel;
 import nz.co.eroad.qaisystem.model.TestStrategy.StrategyDecision;
 import nz.co.eroad.qaisystem.model.TestStrategy.TestRequirement;
+import nz.co.eroad.qaisystem.monitor.AiCostMonitor;
 import nz.co.eroad.qaisystem.service.E2ECoverageAnalyzer;
 import nz.co.eroad.qaisystem.service.TestPrService;
 import lombok.RequiredArgsConstructor;
@@ -37,9 +39,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class StrategyAgent {
 
-    private final BddGenerator       bddGenerator;
-    private final TestPrService      testPrService;
+    private final BddGenerator        bddGenerator;
+    private final TestPrService       testPrService;
     private final E2ECoverageAnalyzer e2eCoverageAnalyzer;
+    private final AiCallGate          gate;
+    private final AiCostMonitor       monitor;
 
     private static final double LOW_CONFIDENCE_THRESHOLD = 0.4;
 
@@ -47,8 +51,17 @@ public class StrategyAgent {
         log.info("[StrategyAgent] Evaluating strategy for PR '{}'", envelope.getPrId());
 
         // Perform real E2E/integration coverage analysis against the test repo.
-        // This replaces the UNKNOWN-level coverage from impact-service with actual data.
         CoverageReport coverage = e2eCoverageAnalyzer.analyze(envelope);
+
+        // Evaluate the gate and log its advisory output — does not override computeDecision()
+        AiCallGate.GateDecision gateDecision = gate.evaluate(envelope);
+        if (!gateDecision.shouldCallAi()) {
+            log.info("[StrategyAgent] AI gated out for PR '{}' — outcome={} reason={}",
+                    envelope.getPrId(), gateDecision.outcome(), gateDecision.reason());
+        } else {
+            log.debug("[StrategyAgent] Gate says NEEDS_AI for PR '{}' — reason={}",
+                    envelope.getPrId(), gateDecision.reason());
+        }
 
         StrategyDecision decision = computeDecision(envelope, coverage);
         TestStrategy strategy     = buildStrategy(envelope, coverage, decision);
@@ -84,9 +97,6 @@ public class StrategyAgent {
             return StrategyDecision.CREATE_TESTS;
         }
 
-        // No diff was parsed — webhook had no content and GitHub fetch didn't run / failed.
-        // Default conservatively to CREATE_TESTS so the PR is never silently skipped.
-        // Note: "0 == 0" would otherwise match the test-files-only SKIP rule below.
         if (env.getTotalFilesChanged() == 0) {
             log.warn("[StrategyAgent] PR '{}' has zero parsed diff files — " +
                     "webhook had no diff content. Defaulting to CREATE_TESTS. " +
@@ -95,28 +105,22 @@ public class StrategyAgent {
             return StrategyDecision.CREATE_TESTS;
         }
 
-        // Only infra/config changes with LOW risk → SKIP
         boolean onlyInfra = env.getDetectedChangeTypes().stream()
                 .allMatch(ct -> ct == ChangeType.CONFIGURATION_CHANGE
                         || ct == ChangeType.DEPENDENCY_UPDATE);
         if (onlyInfra && env.getRiskLevel() == RiskLevel.LOW) return StrategyDecision.SKIP;
 
-        // All changes are test files only → developer already handled it
         if (env.getTotalFilesChanged() == env.getAffectedTestFiles()) return StrategyDecision.SKIP;
 
-        // HIGH/CRITICAL → always CREATE
         if (env.getRiskLevel() == RiskLevel.HIGH || env.getRiskLevel() == RiskLevel.CRITICAL)
             return StrategyDecision.CREATE_TESTS;
 
-        // New feature → CREATE
         if (env.getDetectedChangeTypes().contains(ChangeType.NEW_FEATURE))
             return StrategyDecision.CREATE_TESTS;
 
-        // Partial coverage → UPDATE existing tests to cover the new delta
         if (coverage.getLevel() == CoverageReport.CoverageLevel.PARTIAL)
             return StrategyDecision.UPDATE_TESTS;
 
-        // Existing tests in diff → UPDATE
         if (!env.getExistingTestFiles().isEmpty()) return StrategyDecision.UPDATE_TESTS;
 
         return StrategyDecision.CREATE_TESTS;
@@ -135,25 +139,21 @@ public class StrategyAgent {
         List<String> expandedAreas = new ArrayList<>(
                 strategy.getTestAreasTocover() != null ? strategy.getTestAreasTocover() : List.of());
 
-        // Rule 1: LOW confidence → full regression
         if (strategy.getConfidenceScore() < LOW_CONFIDENCE_THRESHOLD) {
             log.warn("[StrategyAgent] LOW confidence ({}) → full regression flagged for PR '{}'",
                     String.format("%.2f", strategy.getConfidenceScore()), strategy.getPrId());
             fullRegression = true;
         }
 
-        // Rule 2: HIGH / CRITICAL risk → expand scope
         if (env.getRiskLevel() == RiskLevel.HIGH || env.getRiskLevel() == RiskLevel.CRITICAL) {
             log.warn("[StrategyAgent] {} risk → expanding scope for PR '{}'",
                     env.getRiskLevel(), strategy.getPrId());
             expandScope = true;
-            // Add transitive dependencies as additional test areas
             if (env.getTransitiveDependencies() != null) {
                 env.getTransitiveDependencies().stream()
                         .filter(dep -> !expandedAreas.contains(dep))
                         .forEach(expandedAreas::add);
             }
-            // Add all impacted component names
             if (env.getImpactedComponents() != null) {
                 env.getImpactedComponents().stream()
                         .map(ImpactEnvelope.ImpactedComponent::getComponentName)
@@ -201,8 +201,6 @@ public class StrategyAgent {
             }
         }
 
-        // Prefer uncovered components from E2E analysis as the test areas to focus on.
-        // Fall back to suggestedTestAreas from the envelope (populated by impact-service).
         List<String> testAreas = !coverage.getUntestedComponents().isEmpty()
                 ? coverage.getUntestedComponents()
                 : env.getSuggestedTestAreas();
@@ -320,6 +318,4 @@ public class StrategyAgent {
         };
     }
 }
-
-
 

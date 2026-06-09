@@ -3,13 +3,16 @@ package nz.co.eroad.qaisystem.agent;
 /**
  * Abstraction over a language-model API for test generation.
  *
- * <p>Two implementations are provided, selected via the {@code aiqa.ai.provider}
+ * <p>Three implementations are provided, selected via the {@code aiqa.ai.provider}
  * configuration property:
  * <ul>
- *   <li>{@link OpenAiClient} ({@code provider=openai}, the default) — calls any
- *       OpenAI-compatible endpoint (OpenAI, Azure OpenAI, local Ollama, GitHub Models).</li>
+ *   <li>{@link CopilotCliClient} ({@code provider=copilot-cli}, the default) — calls the
+ *       GitHub Copilot API via the {@code gh api} CLI subprocess. No token management
+ *       required; authentication is handled by {@code gh auth login}.</li>
+ *   <li>{@link OpenAiClient} ({@code provider=openai}) — calls any OpenAI-compatible
+ *       endpoint (OpenAI, Azure OpenAI, local Ollama, GitHub Models).</li>
  *   <li>{@link CopilotClient} ({@code provider=copilot}) — calls the GitHub Copilot API
- *       using a GitHub token instead of an OpenAI API key.</li>
+ *       using a GitHub token set via {@code GITHUB_COPILOT_TOKEN}.</li>
  * </ul>
  *
  * <p>When the active client is not configured {@link #isAvailable()} returns
@@ -34,4 +37,3 @@ public interface AiClient {
      */
     boolean isAvailable();
 }
-

@@ -51,6 +51,8 @@ aiqa:
     enabled: true                 # enables GitHubService, RepoContextService
   codegen:
     enabled: false
+  monitor:
+    report-interval-ms: ${AI_MONITOR_INTERVAL_MS:300000}   # 5 minutes default
   stabilization:
     max-retries: 3
     retry-delay-ms: 2000
@@ -124,7 +126,12 @@ github:
 #
 # Select a provider with aiqa.ai.provider:
 #
-#   provider: openai   (default)
+#   provider: copilot-cli  (default)
+#     Uses the GitHub Copilot API via the gh CLI subprocess.
+#     Prerequisites: brew install gh && gh auth login
+#     No token env var needed — gh CLI manages credentials automatically.
+#
+#   provider: openai
 #     Supports any OpenAI-compatible endpoint:
 #       1. OpenAI          — set OPENAI_API_KEY
 #       2. Azure OpenAI    — set OPENAI_API_KEY + OPENAI_BASE_URL (your Azure endpoint)
@@ -138,7 +145,11 @@ github:
 #     In GitHub Actions, secrets.GITHUB_TOKEN works if the repo has Copilot enabled.
 #
   ai:
-    provider: ${AI_PROVIDER:copilot}               # openai | copilot
+    provider: ${AI_PROVIDER:copilot-cli}           # copilot-cli (default) | copilot | openai
+    copilot-cli:
+      gh-cli-path: ${GH_CLI_PATH:gh}              # path to gh executable (must be on PATH)
+      model:       ${COPILOT_CLI_MODEL:gpt-4o}    # model passed in the JSON body
+      timeout-seconds: ${COPILOT_CLI_TIMEOUT:120}
     openai:
       api-key:  ${OPENAI_API_KEY:}                # sk-... or GitHub token for GitHub Models
       base-url: ${OPENAI_BASE_URL:https://api.openai.com}

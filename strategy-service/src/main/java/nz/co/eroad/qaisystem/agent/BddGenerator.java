@@ -1,9 +1,11 @@
 package nz.co.eroad.qaisystem.agent;
 
+import nz.co.eroad.qaisystem.cache.PromptResponseCache;
 import nz.co.eroad.qaisystem.execution.RepoContext;
 import nz.co.eroad.qaisystem.model.BddScenario;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope;
 import nz.co.eroad.qaisystem.model.TestStrategy;
+import nz.co.eroad.qaisystem.monitor.AiCostMonitor;
 import nz.co.eroad.qaisystem.service.RepoContextService;
 import nz.co.eroad.qaisystem.service.TestPrService;
 import lombok.RequiredArgsConstructor;
@@ -18,19 +20,12 @@ import java.util.stream.Collectors;
  *
  * <h3>Generation modes</h3>
  * <ol>
- *   <li><b>AI mode</b> (preferred) — when {@link AiClient#isAvailable()} is {@code true},
- *       calls the AI with a rich system prompt containing:
- *       <ul>
- *         <li>Product expert context from {@code productExpert/} in the test repo</li>
- *         <li>Repo QA conventions from {@code .aiqa/context.md}</li>
- *         <li>Agent instructions from {@code .github/agents/}</li>
- *         <li>Sample existing BDD scenarios for style reference</li>
- *       </ul>
- *       The AI returns a complete Gherkin feature file which is parsed into a
- *       {@link BddScenario}.</li>
- *   <li><b>Enhanced template mode</b> (fallback) — when no AI is configured, uses
- *       structured templates enriched with product expert content as comments.
- *       This still reflects the product's domain language even without AI.</li>
+ *   <li><b>Cache mode</b> (fastest) — returns a previously AI-generated response when a
+ *       matching {@link PromptResponseCache.CacheKey} exists in Redis.</li>
+ *   <li><b>AI mode</b> (preferred when cache misses) — when {@link AiClient#isAvailable()} is
+ *       {@code true}, calls the AI with a rich system prompt and caches the response.</li>
+ *   <li><b>Enhanced template mode</b> (fallback) — when no AI is configured or the AI returns
+ *       empty, uses structured templates enriched with product expert content.</li>
  * </ol>
  */
 @Slf4j
@@ -38,21 +33,50 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BddGenerator {
 
-    private final TestPrService      testPrService;
-    private final AiClient           aiClient;
-    private final RepoContextService repoContextService;
+    private final TestPrService       testPrService;
+    private final AiClient            aiClient;
+    private final RepoContextService  repoContextService;
+    private final PromptResponseCache cache;
+    private final AiCostMonitor       monitor;
 
     public BddScenario generate(TestStrategy strategy, ImpactEnvelope envelope) {
         log.info("[BddGenerator] Generating for strategy '{}' PR '{}'",
                 strategy.getStrategyId(), envelope.getPrId());
 
+        monitor.recordRequest();
+
         // Load repo context (includes product expert + agent instructions)
         RepoContext context = repoContextService.getContext("API");
 
+        var cacheKey = buildCacheKey(envelope, strategy, context);
+        var cached   = cache.get(cacheKey);
+
         List<BddScenario.Scenario> scenarios;
 
-        if (aiClient.isAvailable()) {
-            scenarios = generateWithAi(strategy, envelope, context);
+        if (cached.isPresent()) {
+            monitor.recordCacheHit();
+            log.info("[BddGenerator] CACHE HIT for PR '{}' — skipping AI call", envelope.getPrId());
+            scenarios = parseGherkinToScenarios(cached.get(), envelope);
+
+        } else if (aiClient.isAvailable()) {
+            String systemPrompt = buildSystemPrompt(context);
+            String userPrompt   = buildUserPrompt(strategy, envelope, context);
+
+            log.debug("[BddGenerator] Calling AI for BDD generation (systemPrompt={} chars, userPrompt={} chars)",
+                    systemPrompt.length(), userPrompt.length());
+
+            String gherkin = aiClient.complete(systemPrompt, userPrompt);
+            if (gherkin != null && !gherkin.isBlank()) {
+                log.info("[BddGenerator] AI returned {} chars of Gherkin", gherkin.length());
+                cache.put(cacheKey, gherkin);
+                monitor.recordAiExecuted();
+                scenarios = parseGherkinToScenarios(gherkin, envelope);
+            } else {
+                log.warn("[BddGenerator] AI returned empty response — falling back to templates");
+                monitor.recordAiFailure();
+                scenarios = generateWithTemplates(strategy, envelope, context);
+            }
+
         } else {
             scenarios = generateWithTemplates(strategy, envelope, context);
         }
@@ -78,26 +102,28 @@ public class BddGenerator {
         return bdd;
     }
 
-    // ─── AI generation ─────────────────────────────────────────────────────────
+    // ─── Cache key builder ─────────────────────────────────────────────────────
 
-    private List<BddScenario.Scenario> generateWithAi(TestStrategy strategy,
-                                                       ImpactEnvelope envelope,
-                                                       RepoContext context) {
-        String systemPrompt = buildSystemPrompt(context);
-        String userPrompt   = buildUserPrompt(strategy, envelope, context);
+    /** Builds a cache key from the envelope's primary classification attributes. */
+    private PromptResponseCache.CacheKey buildCacheKey(ImpactEnvelope envelope,
+                                                        TestStrategy strategy,
+                                                        RepoContext context) {
+        var changeTypes = envelope.getDetectedChangeTypes();
+        String changeType = (changeTypes == null || changeTypes.isEmpty())
+                ? "UNKNOWN" : changeTypes.get(0).name();
 
-        log.debug("[BddGenerator] Calling AI for BDD generation (systemPrompt={} chars, userPrompt={} chars)",
-                systemPrompt.length(), userPrompt.length());
+        var components = envelope.getImpactedComponents();
+        String componentType = (components == null || components.isEmpty())
+                ? "UNKNOWN" : components.get(0).getType().name();
 
-        String gherkin = aiClient.complete(systemPrompt, userPrompt);
-        if (gherkin != null && !gherkin.isBlank()) {
-            log.info("[BddGenerator] AI returned {} chars of Gherkin", gherkin.length());
-            return parseGherkinToScenarios(gherkin, envelope);
-        }
+        String repoName = (context != null && context.getBasePackage() != null)
+                ? context.getBasePackage() : "default";
 
-        log.warn("[BddGenerator] AI returned empty response — falling back to templates");
-        return generateWithTemplates(strategy, envelope, context);
+        return new PromptResponseCache.CacheKey(
+                changeType, componentType, envelope.getRiskLevel().name(), repoName);
     }
+
+    // ─── AI prompt builders ────────────────────────────────────────────────────
 
     private String buildSystemPrompt(RepoContext context) {
         StringBuilder sb = new StringBuilder();
@@ -108,24 +134,17 @@ public class BddGenerator {
         sb.append("- Tagged appropriately (@api, @ui, @mobile, @smoke, @regression)\n");
         sb.append("- Specific to the product and changes described\n\n");
 
-        // Product expert context — highest priority
         if (context.hasProductExpert()) {
             sb.append(context.productExpertSystemPrompt()).append("\n");
         }
-
-        // Repo-level QA context
         if (context.getRepoAiqaContext() != null && !context.getRepoAiqaContext().isBlank()) {
             sb.append(context.aiqaContextSection()).append("\n");
         }
-
-        // Agent instructions from .github/agents/
         if (context.hasAgentInstructions()) {
             sb.append("=== REPOSITORY AGENT INSTRUCTIONS ===\n\n");
             context.getAgentInstructions().forEach((file, content) ->
                     sb.append("-- ").append(file).append(" --\n").append(content).append("\n\n"));
         }
-
-        // Style samples from existing tests
         if (context.getSampleTests() != null && !context.getSampleTests().isEmpty()) {
             sb.append("=== EXISTING TEST STYLE (follow these patterns) ===\n\n");
             context.getSampleTests().forEach((name, src) ->
@@ -173,7 +192,7 @@ public class BddGenerator {
 
     /**
      * Very lightweight Gherkin parser — converts the AI's response into
-     * {@link BddScenario.Scenario} objects.  Each block starting with
+     * {@link BddScenario.Scenario} objects. Each block starting with
      * "Scenario:" or "Scenario Outline:" becomes one scenario.
      */
     private List<BddScenario.Scenario> parseGherkinToScenarios(String gherkin,
@@ -215,9 +234,9 @@ public class BddGenerator {
 
             if (current == null) continue;
 
-            if (line.startsWith("Given ")) { currentKeyword = "given"; given.add(line.substring(6).trim()); }
-            else if (line.startsWith("When "))  { currentKeyword = "when";  when.add(line.substring(5).trim()); }
-            else if (line.startsWith("Then "))  { currentKeyword = "then";  then.add(line.substring(5).trim()); }
+            if (line.startsWith("Given "))       { currentKeyword = "given"; given.add(line.substring(6).trim()); }
+            else if (line.startsWith("When "))   { currentKeyword = "when";  when.add(line.substring(5).trim()); }
+            else if (line.startsWith("Then "))   { currentKeyword = "then";  then.add(line.substring(5).trim()); }
             else if (line.startsWith("And ") || line.startsWith("But ")) {
                 String step = line.substring(4).trim();
                 if      ("given".equals(currentKeyword)) given.add(step);
@@ -279,8 +298,6 @@ public class BddGenerator {
                                                        RepoContext context) {
         List<BddScenario.Scenario> list = new ArrayList<>();
         List<String> tags = buildTags(req, envelope);
-
-        // Enrich given steps with product context when available
         List<String> givenSteps = buildGivenSteps(req, context);
 
         list.add(BddScenario.Scenario.builder()
@@ -320,7 +337,6 @@ public class BddGenerator {
         List<String> steps = new ArrayList<>();
         steps.add("the system is running");
         steps.add("a valid user session exists");
-        // If product expert has context, add a domain-specific step
         if (context.hasProductExpert()) {
             String productName = context.getProductExpertSections().keySet().iterator().next();
             steps.add("the " + productName + " service is available");
