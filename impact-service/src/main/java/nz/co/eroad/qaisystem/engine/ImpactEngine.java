@@ -104,6 +104,7 @@ public class ImpactEngine {
         ImpactEnvelope envelope = ImpactEnvelope.builder()
                 .envelopeId(UUID.randomUUID().toString())
                 .prId(pr.getPrId())
+                .prTitle(pr.getTitle())
                 .repositoryName(pr.getRepositoryName())
                 .analyzedAt(LocalDateTime.now())
                 .impactedComponents(components)

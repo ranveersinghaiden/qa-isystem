@@ -63,7 +63,7 @@ public class TestPrService {
 
         String branch = "qa/bdd/" + scenario.getPrId() + "-"
                 + scenario.getScenarioId().substring(0, 6);
-        String title  = "[AI-QA] BDD Scenarios for PR: " + scenario.getPrId();
+        String title  = buildBddPrTitle(scenario);
         String body   = buildBddPrBody(scenario);
 
         log.info("[TestPrService] Creating BDD PR on GitHub — branch='{}' base='{}'",
@@ -151,6 +151,17 @@ public class TestPrService {
 
     // ─── Content builders ─────────────────────────────────────────────────────
 
+    /**
+     * BDD review PR title: uses the original PR title when available,
+     * e.g. "[AI-QA] VSF-3670: Limit fault tags to 2 with +N overflow indicator"
+     */
+    private String buildBddPrTitle(BddScenario scenario) {
+        if (scenario.getPrTitle() != null && !scenario.getPrTitle().isBlank()) {
+            return "[AI-QA] " + scenario.getPrTitle();
+        }
+        return "[AI-QA] BDD Scenarios for PR: " + scenario.getPrId();
+    }
+
     private String buildFeatureFileContent(BddScenario scenario) {
         StringBuilder sb = new StringBuilder();
         sb.append("Feature: ").append(scenario.getFeatureTitle()).append("\n\n");
@@ -201,6 +212,9 @@ public class TestPrService {
         String status = result != null && result.isPassed()
                 ? (result.isStabilized() ? "\u2705 [STABILIZED]" : "\u2705 [PASSING]")
                 : "\u26A0\uFE0F [NEEDS REVIEW]";
+        if (script.getPrTitle() != null && !script.getPrTitle().isBlank()) {
+            return status + " [AI-QA] " + script.getPrTitle();
+        }
         return status + " AI-Generated Tests for PR: " + script.getPrId();
     }
 

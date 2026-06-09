@@ -87,6 +87,7 @@ public class BddGenerator {
                 .featureDescription(envelope.getChangesSummary())
                 .scenarios(scenarios)
                 .prId(envelope.getPrId())
+                .prTitle(envelope.getPrTitle())
                 .strategyId(strategy.getStrategyId())
                 .bddType(BddScenario.BddType.NEW)
                 .build();

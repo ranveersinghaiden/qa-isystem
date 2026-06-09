@@ -18,6 +18,8 @@ public class ImpactEnvelope {
 
     private String envelopeId;
     private String prId;
+    /** Original title of the source pull request (e.g. "VSF-3670: Limit fault tags"). */
+    private String prTitle;
     private String repositoryName;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")

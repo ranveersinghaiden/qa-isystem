@@ -91,11 +91,14 @@ Git / Webhook
 
 | Topic | Producer | Consumer | Payload |
 |-------|----------|----------|---------|
-| `FeatureUpdatesQueue` | pr-service | impact-service | `PullRequest` |
-| `ImpactResultsQueue` | impact-service | strategy-service | `ImpactEnvelope` |
-| `TestScriptsQueue` | strategy-service | codegen-service | `BddScenario` |
+| `FeatureUpdatesQueue` | pr-service | impact-service | `PullRequest` — includes `title`, `products` |
+| `ImpactResultsQueue` | impact-service | strategy-service | `ImpactEnvelope` — carries `prTitle` copied from `PullRequest.title` |
+| `TestScriptsQueue` | strategy-service | codegen-service | `BddScenario` — carries `prTitle` for GitHub PR naming |
 | `TestResultsQueue` | codegen-service | *(future)* | `TestResult` |
-| `FeedbackQueue` | strategy-service | feedback-service | `FeedbackEvent` |
+| `FeedbackQueue` | strategy-service | feedback-service | `FeedbackEvent` — wraps `BddScenario` or `TestScript`, both carrying `prTitle` |
+
+> **`prTitle` propagation:** `PullRequest.title` → `ImpactEnvelope.prTitle` → `BddScenario.prTitle` → `TestScript.prTitle`.
+> All QA-generated GitHub PR titles (initial + revised) derive from this field, falling back to `"… for PR: {prId}"` when absent.
 
 ---
 
@@ -103,12 +106,12 @@ Git / Webhook
 
 ```
 PR webhook → pr-service → FeatureUpdatesQueue
-                                │
+                                │  PullRequest {prId, title, products, raw_diff, …}
                          impact-service (no AI)
                          GitDiffParser · DependencyGraph
                          ChangeTypeDetector · RiskScorer
-                         → ImpactEnvelope → ImpactResultsQueue
-                                │
+                         → ImpactEnvelope {prId, prTitle, …} → ImpactResultsQueue
+                                │  prTitle copied from PullRequest.title
                          strategy-service
                          ① AiCallGate.evaluate(envelope)
                               SKIP          → done
@@ -120,16 +123,19 @@ PR webhook → pr-service → FeatureUpdatesQueue
                               HIT  → reuse cached gherkin, no AI call
                               MISS → AiClient.complete() → cache response
                          ④ TestPrService → BDD Review PR (qa/bdd/*)
+                              title: "[AI-QA] {prTitle}"  (e.g. "[AI-QA] VSF-3670: …")
                                 │
                     ┌───────────┴────────────┐
                  MERGED                  REJECTED
                     │                       │
              TestScriptsQueue       PrFeedbackService
-                    │               (re-gen + product expert update)
+                    │  BddScenario          (re-gen + product expert update)
+                    │  {prId, prTitle, …}    revised title: "[AI-QA] Revised: {prTitle}"
              codegen-service
              API/UI/Mobile runner
              StabilizationLoop (max 3×)
              → Final Test PR (qa/tests/*)
+                  title: "✅ [AI-QA] {prTitle}"
 ```
 
 ---
@@ -217,6 +223,7 @@ curl -X POST http://localhost:8080/api/pr/submit \
     "author": "dev@example.com",
     "repositoryName": "payment-service",
     "sourceBranch": "feature/payments",
+    "products": "payments, auth",
     "rawDiffContent": "diff --git a/PaymentService.java ..."
   }'
 
@@ -253,6 +260,19 @@ curl -X POST http://localhost:8082/api/strategy/refresh-context
 | `POST` | `/api/pr/submit` | Manual `PullRequest` JSON |
 | `POST` | `/api/pr/demo` | Built-in demo pipeline trigger |
 | `GET`  | `/api/pr/health` | Health check |
+
+#### `PullRequest` payload fields
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `title` | `String` | **Required.** Used as the GitHub PR title — e.g. `"[AI-QA] VSF-3670: …"` |
+| `author` | `String` | **Required.** |
+| `repositoryName` | `String` | **Required.** |
+| `raw_diff` | `String` | Unified diff string; parsed into structured `GitDiff` objects by pr-service |
+| `products` | `String` \| `String[]` | Optional. Products affected — accepts JSON array `["payments","auth"]` **or** comma-separated string `"payments, auth"`. Normalised to `List<String>`. |
+| `jira_ids` | `String[]` | Optional. Linked Jira ticket IDs |
+| `pr_id` | `String` | Optional. Auto-generated as `PR-{UUID8}` when absent |
+| `repo_owner` / `owner` / `org` | `String` | Optional. Org/user for GitHub diff fetching |
 
 ### impact-service `:8081`
 
@@ -418,10 +438,14 @@ When a QA-generated PR is rejected, the system automatically:
 4. Re-generates the rejected content with feedback as additional context
 5. Creates a revised PR — loop repeats until accepted
 
-| PR type | Branch prefix | Handler |
-|---------|--------------|---------|
-| BDD scenarios | `qa/bdd/*` | `PrFeedbackService.handleBddRejection()` |
-| Test code | `qa/tests/*` | `PrFeedbackService.handleTestRejection()` |
+| PR type | Branch prefix | Title format | Handler |
+|---------|--------------|--------------|---------|
+| BDD scenarios (initial) | `qa/bdd/*` | `[AI-QA] {prTitle}` | `BddGenerator → TestPrService` |
+| BDD scenarios (revised) | `qa/bdd/*-rev-*` | `[AI-QA] Revised: {prTitle}` | `PrFeedbackService.handleBddRejection()` |
+| Test code (initial) | `qa/tests/*` | `✅ [AI-QA] {prTitle}` | `CodegenService → TestPrService` |
+| Test code (revised) | `qa/tests/*-rev-*` | `[AI-QA] Revised Tests: {prTitle}` | `PrFeedbackService.handleTestRejection()` |
+
+`{prTitle}` falls back to `"… for PR: {prId}"` when no title was provided in the webhook payload.
 
 Feedback runs on a **virtual thread** so the GitHub webhook HTTP response is returned immediately.
 
@@ -452,20 +476,21 @@ Feedback runs on a **virtual thread** so the GitHub webhook HTTP response is ret
 
 Expected output:
 ```
-Tests run: 18   ← pr-service
+Tests run: 25   ← pr-service
 Tests run: 27   ← impact-service
 Tests run: 26   ← strategy-service
 Tests run:  7   ← codegen-service
 BUILD SUCCESS
 ```
 
-**Total: 78 tests, 0 failures — zero Mockito (real test doubles only)**
+**Total: 85 tests, 0 failures — zero Mockito (real test doubles only)**
 
 | Module | Class | Tests | Covers |
 |--------|-------|-------|--------|
 | pr-service | `PRServiceTest` | 9 | enrichment, validation, Kafka publish |
 | pr-service | `PRControllerTest` | 4 | webhook, submit, demo, health |
 | pr-service | `PRControllerAdviceTest` | 5 | global exception handler |
+| pr-service | `ProductsFieldDeserializerTest` | 7 | `products` JSON array + comma-string, whitespace trim, null/empty |
 | impact-service | `GitDiffParserTest` | 7 | diff parsing, file types |
 | impact-service | `RiskScorerTest` | 11 | thresholds, weights, normalisation |
 | impact-service | `TestCoverageServiceTest` | 9 | coverage ratio, levels |

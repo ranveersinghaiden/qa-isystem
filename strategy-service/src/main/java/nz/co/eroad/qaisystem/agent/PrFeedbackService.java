@@ -417,8 +417,11 @@ public class PrFeedbackService {
                 > **Merge this PR** to trigger automatic test code generation.
                 """.formatted(original.getPrId(), originalPrNumber, originalPrNumber, revisedGherkin);
 
+        String revisedBddTitle = (original.getPrTitle() != null && !original.getPrTitle().isBlank())
+                ? "[AI-QA] Revised: " + original.getPrTitle()
+                : "[AI-QA] Revised BDD Scenarios for PR: " + original.getPrId();
         GitHubPrResult result = gitHubService.createPullRequest(
-                "[AI-QA] Revised BDD Scenarios for PR: " + original.getPrId(),
+                revisedBddTitle,
                 prBody, branch, repoProps.getBranch());
 
         if (result != null) {
@@ -460,8 +463,11 @@ public class PrFeedbackService {
                 """.formatted(original.getPrId(), original.getFileName(),
                 originalPrNumber, originalPrNumber, revisedCode);
 
+        String revisedTestTitle = (original.getPrTitle() != null && !original.getPrTitle().isBlank())
+                ? "[AI-QA] Revised Tests: " + original.getPrTitle()
+                : "[AI-QA] Revised Tests for PR: " + original.getPrId();
         GitHubPrResult result = gitHubService.createPullRequest(
-                "[AI-QA] Revised Tests for PR: " + original.getPrId(),
+                revisedTestTitle,
                 prBody, branch, repoProps.getBranch());
 
         if (result != null) {

@@ -75,6 +75,7 @@ public class CodegenService {
                 .scriptId(UUID.randomUUID().toString())
                 .bddScenarioId(parent.getScenarioId())
                 .prId(parent.getPrId())
+                .prTitle(parent.getPrTitle())
                 .testType(TestScript.TestType.valueOf(type))
                 .scriptContent(content)
                 .fileName(toFileName(scenario.getTitle(), type, context))

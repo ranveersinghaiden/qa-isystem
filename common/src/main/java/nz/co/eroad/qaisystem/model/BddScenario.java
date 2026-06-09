@@ -18,6 +18,8 @@ public class BddScenario {
     private String featureDescription;
     private List<Scenario> scenarios;
     private String prId;
+    /** Original title of the source pull request — used as the GitHub PR title. */
+    private String prTitle;
     private String strategyId;
     private BddType bddType;        // NEW or UPDATED
 

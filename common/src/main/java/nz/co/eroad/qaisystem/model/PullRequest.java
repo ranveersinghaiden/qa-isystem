@@ -3,6 +3,7 @@ package nz.co.eroad.qaisystem.model;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -58,6 +59,15 @@ public class PullRequest {
 
     @JsonProperty("changed_files")
     private List<String> changedFiles;
+
+    /**
+     * Products affected by this PR.
+     * Accepted as a JSON array {@code ["payments","auth"]} or a comma-separated
+     * string {@code "payments, auth"} — both are normalised to a {@code List<String>}.
+     * Used to enrich BDD scenario generation with product-specific context.
+     */
+    @JsonDeserialize(using = CommaSeparatedListDeserializer.class)
+    private List<String> products;
 
     public enum PrStatus {
         OPEN, CLOSED, MERGED, DRAFT

@@ -16,6 +16,8 @@ public class TestScript {
     private String scriptId;
     private String bddScenarioId;
     private String prId;
+    /** Original title of the source pull request — used as the GitHub test PR title. */
+    private String prTitle;
     private TestType testType;
     private String scriptContent;
     private String fileName;
