@@ -41,6 +41,14 @@ on:
         description: "Port the service exposes inside the container"
         required: true
         type: number
+      install-gh-cli:
+        description: >
+          Install and configure the GitHub CLI (gh) on the deploy server.
+          Required when AI_PROVIDER=copilot-cli (the default).
+          Set to true for strategy-service, codegen-service, feedback-service.
+        required: false
+        type: boolean
+        default: false
     secrets:
       DEPLOY_HOST:
         required: true
@@ -92,10 +100,51 @@ jobs:
             DEPLOY_PATH="${{ vars.DEPLOY_PATH }}"
             SERVICE="${{ inputs.service }}"
             IMAGE="${{ steps.image.outputs.ref }}"
+            INSTALL_GH="${{ inputs.install-gh-cli }}"
 
             echo "=== Deploying ${SERVICE} ==="
             echo "Image: ${IMAGE}"
             echo "Path:  ${DEPLOY_PATH}"
+
+            # ── Install + authenticate gh CLI when requested ──────────────────
+            # Required for the copilot-cli AI provider (the default).
+            # Installs gh on Ubuntu/Debian if missing, then authenticates using
+            # GITHUB_COPILOT_TOKEN from the server .env file.
+            if [ "${INSTALL_GH}" = "true" ]; then
+              if ! command -v gh &>/dev/null; then
+                echo "Installing gh CLI..."
+                curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+                  | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg 2>/dev/null
+                sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+                echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+                  | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+                sudo apt-get update -q && sudo apt-get install -y gh
+                echo "gh CLI installed: $(gh --version | head -1)"
+              else
+                echo "gh CLI already present: $(gh --version | head -1)"
+              fi
+
+              # Authenticate using token from .env (GITHUB_COPILOT_TOKEN preferred,
+              # fallback to GITHUB_TOKEN if defined in the environment)
+              GH_TOKEN_VAL=""
+              if [ -f "${DEPLOY_PATH}/.env" ]; then
+                GH_TOKEN_VAL=$(grep -E '^GITHUB_COPILOT_TOKEN=' "${DEPLOY_PATH}/.env" \
+                  | cut -d= -f2- | tr -d '"' || true)
+              fi
+              if [ -z "${GH_TOKEN_VAL:-}" ]; then
+                GH_TOKEN_VAL="${GITHUB_TOKEN:-}"
+              fi
+
+              if [ -n "${GH_TOKEN_VAL:-}" ]; then
+                echo "${GH_TOKEN_VAL}" | gh auth login --with-token
+                echo "gh auth status:"
+                gh auth status || true
+              else
+                echo "WARN: No GITHUB_COPILOT_TOKEN found in .env — gh CLI not authenticated."
+                echo "      AI generation will fall back to templates until authenticated."
+                echo "      Run: echo '<token>' | gh auth login --with-token  on the server."
+              fi
+            fi
 
             # Log in to GHCR on the server so it can pull the new image
             echo "${{ secrets.GHCR_TOKEN }}" | \

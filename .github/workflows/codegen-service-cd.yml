@@ -7,18 +7,22 @@
 #   TARGET_REPO_TOKEN      — GitHub PAT with repo scope for committing generated tests
 #   TARGET_REPO_USERNAME   — GitHub username paired with the PAT
 #
-#   AI provider (choose one):
-#   AI_PROVIDER            — "openai" or "copilot" (default)
+#   AI provider (choose one — default is copilot-cli):
+#   AI_PROVIDER            — "copilot-cli" (default) | "copilot" | "openai"
 #
-#   When AI_PROVIDER=openai:
-#   OPENAI_API_KEY         — OpenAI API key (or GitHub token for GitHub Models)
-#   OPENAI_BASE_URL        — (optional) override endpoint (Azure/Ollama/GitHub Models)
-#   OPENAI_MODEL           — (optional) model name, default gpt-4o
+#   When AI_PROVIDER=copilot-cli (default):
+#   GITHUB_COPILOT_TOKEN   — Token used to authenticate gh CLI on the server
+#                            The deploy workflow installs gh automatically.
 #
 #   When AI_PROVIDER=copilot:
 #   GITHUB_COPILOT_TOKEN   — GitHub token with Copilot access
 #   COPILOT_BASE_URL       — (optional) override, default https://api.githubcopilot.com
 #   COPILOT_MODEL          — (optional) model name, default gpt-4o
+#
+#   When AI_PROVIDER=openai:
+#   OPENAI_API_KEY         — OpenAI API key (or GitHub token for GitHub Models)
+#   OPENAI_BASE_URL        — (optional) override endpoint (Azure/Ollama/GitHub Models)
+#   OPENAI_MODEL           — (optional) model name, default gpt-4o
 # ─────────────────────────────────────────────────────────────────────────────
 name: "CD — codegen-service"
 
@@ -87,6 +91,7 @@ jobs:
       environment: production
       image-tag: ${{ needs.check-ci.outputs.image-tag }}
       port: 8083
+      install-gh-cli: true
     secrets:
       DEPLOY_HOST:    ${{ secrets.DEPLOY_HOST }}
       DEPLOY_USER:    ${{ secrets.DEPLOY_USER }}
@@ -103,9 +108,9 @@ jobs:
       environment: staging
       image-tag: ${{ needs.check-ci.outputs.image-tag }}
       port: 8083
+      install-gh-cli: true
     secrets:
       DEPLOY_HOST:    ${{ secrets.STAGING_DEPLOY_HOST }}
       DEPLOY_USER:    ${{ secrets.STAGING_DEPLOY_USER }}
       DEPLOY_SSH_KEY: ${{ secrets.STAGING_DEPLOY_SSH_KEY }}
       GHCR_TOKEN:     ${{ secrets.GHCR_TOKEN }}
-

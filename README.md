@@ -199,6 +199,43 @@ export GITHUB_WEBHOOK_SECRET=...       # HMAC secret matching GitHub webhook set
 
 ### 4 — Start services (separate terminals)
 
+**Option A — automated script (recommended)**
+
+```bash
+# Full start: Docker infra + build + all 5 services + health checks
+./scripts/start-local.sh
+
+# With optional GitHub PR creation
+TARGET_REPO_URL=https://github.com/your-org/your-test-repo \
+TARGET_REPO_TOKEN=ghp_... \
+TARGET_REPO_USERNAME=your_username \
+./scripts/start-local.sh
+
+# Skip rebuild (use existing JARs)
+./scripts/start-local.sh --skip-build
+
+# Clean start (clears stale ZooKeeper state — use after NodeExistsException)
+./scripts/start-local.sh --fresh
+
+# Include Kafka UI at http://localhost:8090
+./scripts/start-local.sh --with-kafka-ui
+
+# Stop everything
+./scripts/start-local.sh --stop
+```
+
+The script performs these pre-flight checks before starting anything:
+- Java 25+ on PATH
+- Maven wrapper (`mvnw`) present
+- Docker daemon running + `docker compose` v2 available
+- `gh` CLI installed and authenticated (warns and continues if not — AI falls back to templates)
+- All 7 ports free (8080-8084, 9092, 6379) — exits with port list if any are taken
+- All JARs present when `--skip-build` is passed
+
+Service logs land in `logs/{service-name}.log`. Each service is health-polled up to 60s after launch.
+
+**Option B — manual**
+
 ```bash
 ./mvnw spring-boot:run -pl pr-service        # :8080
 ./mvnw spring-boot:run -pl impact-service    # :8081
@@ -207,7 +244,6 @@ export GITHUB_WEBHOOK_SECRET=...       # HMAC secret matching GitHub webhook set
 ./mvnw spring-boot:run -pl feedback-service  # :8084
 ```
 
-Watch for `ConcurrentMessageListenerContainer - started` in each service log.
 
 ### 5 — Trigger the pipeline
 
@@ -402,7 +438,16 @@ Metrics via Micrometer, exposed at `GET /api/qa/cost/report`:
 **CI:** checkout → Java 25 (Temurin) → Maven cache → `mvn install -pl common` →
 `mvn verify -pl {service}` → upload Surefire reports → Docker build → push to GHCR (push only).
 
-**CD:** CI success → SSH → `docker pull` → `docker compose up -d --no-deps --force-recreate` → health check.
+**CD:** CI success → SSH → install/authenticate `gh` CLI (AI services only) → `docker pull` → `docker compose up -d --no-deps --force-recreate` → health check.
+
+### gh CLI on the deploy server
+
+Services that use the `copilot-cli` AI provider (strategy, codegen, feedback) need `gh` on the server.
+The `_service-deploy.yml` reusable workflow handles this automatically when `install-gh-cli: true` is set:
+
+1. Installs `gh` via the official apt repo if not already present.
+2. Reads `GITHUB_COPILOT_TOKEN` from the server's `.env` file and runs `gh auth login --with-token`.
+3. If the token is absent, logs a warning — the service starts but AI falls back to templates.
 
 ### Required secrets
 
