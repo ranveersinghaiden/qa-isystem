@@ -25,6 +25,16 @@
 #   TARGET_REPO_URL=https://github.com/your-org/your-test-repo
 #   GITHUB_WEBHOOK_SECRET=your_hmac_secret
 #
+#   # ── Security: admin API key ──────────────────────────────────────────────────
+#   # Protects POST /api/strategy/approve-bdd, POST /api/strategy/refresh-context,
+#   # GET /api/strategy/pending-bdd. Callers must send: -H "X-Admin-Key: <value>"
+#   # Generate with: openssl rand -hex 32
+#   AIQA_ADMIN_KEY=<your-random-secret>
+#
+#   # Reject GitHub webhooks when GITHUB_WEBHOOK_SECRET is not set (fail-secure).
+#   # Set to "true" in production. Set to "false" only for local dev without ngrok.
+#   GITHUB_WEBHOOK_REQUIRE_SECRET=true
+#
 #   # ── AI provider (shared by strategy / codegen / feedback / impact) ──────────
 #   # Set AI_PROVIDER to "openai" (default) or "copilot", then add the
 #   # corresponding credential:
@@ -115,6 +125,8 @@ services:
       AIQA_TARGET_REPO_AUTH_TOKEN: ${TARGET_REPO_TOKEN:-}
       AIQA_TARGET_REPO_AUTH_USERNAME: ${TARGET_REPO_USERNAME:-}
       GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
+      GITHUB_WEBHOOK_REQUIRE_SECRET: ${GITHUB_WEBHOOK_REQUIRE_SECRET:-true}
+      AIQA_ADMIN_KEY: ${AIQA_ADMIN_KEY:-}
       # AI provider — shared by strategy / codegen / feedback services
       AI_PROVIDER: ${AI_PROVIDER:-copilot}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}

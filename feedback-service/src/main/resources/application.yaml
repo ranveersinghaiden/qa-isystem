@@ -60,3 +60,14 @@ logging:
   level:
     nz.co.eroad.qaisystem: INFO
     org.apache.kafka: WARN
+
+# ── Security: restrict actuator exposure ──────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+

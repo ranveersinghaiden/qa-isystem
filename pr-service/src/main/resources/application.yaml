@@ -41,3 +41,19 @@ logging:
     nz.co.eroad.qaisystem: INFO
     org.springframework.kafka: WARN
     org.apache.kafka: WARN
+
+# ── Security: restrict actuator exposure ──────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+# ── Security: request size limits (guards against OOM via huge diff payloads) ─
+server:
+  tomcat:
+    max-http-form-post-size: 10MB
+

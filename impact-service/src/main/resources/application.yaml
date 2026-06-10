@@ -68,3 +68,14 @@ logging:
     nz.co.eroad.qaisystem: DEBUG
     org.springframework.kafka: INFO
     org.apache.kafka: WARN
+
+# ── Security: restrict actuator exposure ──────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+

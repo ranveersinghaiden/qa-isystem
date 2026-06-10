@@ -167,3 +167,31 @@ logging:
     nz.co.eroad.qaisystem: DEBUG
     org.springframework.kafka: INFO
     org.apache.kafka: WARN
+
+# ── Security: restrict actuator exposure ──────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+# ── Security: admin API key for sensitive endpoints ───────────────────────────
+# Set AIQA_ADMIN_KEY env var in production to protect:
+#   POST /api/strategy/approve-bdd
+#   POST /api/strategy/refresh-context
+#   GET  /api/strategy/pending-bdd
+# When blank (default), endpoints are open — acceptable for local dev only.
+aiqa:
+  api:
+    admin-key: ${AIQA_ADMIN_KEY:}
+
+# ── Security: webhook secret (fail-secure in production) ─────────────────────
+# Set GITHUB_WEBHOOK_SECRET and set require-secret=true in production.
+# Disable require-secret ONLY for local dev when no webhook secret is configured.
+github:
+  webhook:
+    require-secret: ${GITHUB_WEBHOOK_REQUIRE_SECRET:false}
+

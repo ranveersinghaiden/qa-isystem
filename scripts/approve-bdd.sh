@@ -28,6 +28,10 @@ header()  { echo -e "\n${BOLD}${CYAN}== $* ==${NC}"; }
 STRATEGY_URL="http://localhost:8082"
 FILTER_PR_ID=""
 LIST_ONLY=false
+# Admin key — set AIQA_ADMIN_KEY env var when strategy-service is configured with one
+ADMIN_KEY="${AIQA_ADMIN_KEY:-}"
+# Build curl auth header arg (empty string = no header added)
+admin_header() { [ -n "${ADMIN_KEY}" ] && echo "-H" "X-Admin-Key: ${ADMIN_KEY}" || echo ""; }
 AUTO_YES=false
 
 ARGS=("$@")
@@ -51,7 +55,7 @@ curl -sf --max-time 3 "${STRATEGY_URL}/api/strategy/status" &>/dev/null \
 
 # -- Fetch pending BDD scenarios ------------------------------------------
 header "Fetching Pending BDD Scenarios"
-PENDING=$(curl -sf "${STRATEGY_URL}/api/strategy/pending-bdd") \
+PENDING=$(curl -sf $(admin_header) "${STRATEGY_URL}/api/strategy/pending-bdd") \
   || die "Failed to call /api/strategy/pending-bdd"
 
 COUNT=$(echo "${PENDING}" | jq 'length')
@@ -125,6 +129,7 @@ while IFS= read -r scenario_json; do
 
   RESPONSE=$(curl -sf -X POST "${STRATEGY_URL}/api/strategy/approve-bdd" \
     -H "Content-Type: application/json" \
+    $(admin_header) \
     -d "${scenario_json}") || {
     error "Request failed for PR '${pr_id}'. Is codegen-service running?"
     FAILED=$((FAILED + 1))

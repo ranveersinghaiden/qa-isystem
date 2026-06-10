@@ -46,6 +46,10 @@ public class GitHubWebhookController {
     @Value("${github.webhook-secret:}")
     private String webhookSecret;
 
+    /** When true (default), reject requests that arrive without a configured secret. Disable only for local dev. */
+    @Value("${github.webhook.require-secret:true}")
+    private boolean requireSecret;
+
     @PostMapping
     public ResponseEntity<Map<String, Object>> handleWebhook(
             @RequestHeader("X-GitHub-Event")                               String event,
@@ -95,7 +99,7 @@ public class GitHubWebhookController {
         } catch (Exception e) {
             log.error("[GitHubWebhookController] Error processing webhook: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", "Webhook processing failed"));
         }
     }
 
@@ -150,10 +154,20 @@ public class GitHubWebhookController {
 
     private boolean verifySignature(String payload, String signature) {
         if (webhookSecret == null || webhookSecret.isBlank()) {
-            log.warn("[GitHubWebhookController] GITHUB_WEBHOOK_SECRET not configured — skipping check");
+            if (requireSecret) {
+                log.error("[GitHubWebhookController] GITHUB_WEBHOOK_SECRET is not configured " +
+                          "and github.webhook.require-secret=true — rejecting all webhook requests. " +
+                          "Set GITHUB_WEBHOOK_SECRET or set github.webhook.require-secret=false for local dev.");
+                return false;
+            }
+            log.warn("[GitHubWebhookController] GITHUB_WEBHOOK_SECRET not configured — " +
+                     "signature check skipped (require-secret=false). DO NOT use in production.");
             return true;
         }
-        if (signature == null || !signature.startsWith("sha256=")) return false;
+        if (signature == null || !signature.startsWith("sha256=")) {
+            log.warn("[GitHubWebhookController] Missing or malformed X-Hub-Signature-256 header");
+            return false;
+        }
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(webhookSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));

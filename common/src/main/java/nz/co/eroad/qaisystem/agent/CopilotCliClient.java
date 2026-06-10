@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -80,8 +81,12 @@ public class CopilotCliClient implements AiClient {
             );
             String bodyJson = objectMapper.writeValueAsString(body);
 
-            // Write to a temp file to avoid shell escaping and arg-length issues
-            bodyFile = Files.createTempFile("copilot-body-", ".json");
+            // Write to a temp file to avoid shell escaping and arg-length issues.
+            // Owner-only read/write (600) — file contains the full AI prompt which may include
+            // code diffs; prevent other OS users from reading it.
+            bodyFile = Files.createTempFile("copilot-body-", ".json",
+                    PosixFilePermissions.asFileAttribute(
+                            PosixFilePermissions.fromString("rw-------")));
             Files.writeString(bodyFile, bodyJson);
 
             List<String> command = List.of(
