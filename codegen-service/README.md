@@ -25,7 +25,7 @@ Consumer group: `codegen-service-group`
 | `MobileTestRunner` | Generates Appium test code |
 | `StabilizationLoop` | Bounded retry-and-fix loop (max 3 attempts) |
 | `TestExecutionEngine` | Compiles and runs generated Java via `javax.tools.JavaCompiler` + JUnit Platform |
-| `TestPrService` | Creates final test code PR on GitHub via `GitHubService` (from common) |
+| `TestPrService` | Creates final test code PR on GitHub via `GitHubService` (from common). Title: `✅ [AI-QA] {prTitle}` (passing) or `⚠️ [NEEDS REVIEW] {prTitle}` (abandoned). `prTitle` sourced from `BddScenario.prTitle` → `PullRequest.title`. |
 
 ## Shared from `common`
 

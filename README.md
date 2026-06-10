@@ -78,7 +78,7 @@ Git / Webhook
 
 | Module | Port | Responsibility |
 |--------|------|----------------|
-| `common` | — | Shared models, Kafka/Redis config, `AiClient` interface + 3 implementations (`CopilotCliClient` · `CopilotClient` · `OpenAiClient`), `AiClientConfig`, `GitHubService`, `RepoContextService`, `PrTracker` |
+| `common` | — | Shared models, Kafka/Redis config, `AiClient` interface + 3 implementations (`CopilotCliClient`  `CopilotClient`  `OpenAiClient`), `AiClientConfig`, `GitHubService`, `RepoContextService`, `PrTracker` (`InMemoryPrTracker` default · `RedisPrTracker` when Redis is up) |
 | `pr-service` | 8080 | Webhook receiver, PR validation, Kafka publisher |
 | `impact-service` | 8081 | Deterministic impact analysis — no AI |
 | `strategy-service` | 8082 | `AiCallGate` · `StrategyAgent` · `BddGenerator` · `PromptResponseCache` · `AiCostMonitor` · GitHub webhook · codegen trigger |

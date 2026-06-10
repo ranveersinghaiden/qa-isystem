@@ -38,6 +38,7 @@ FeedbackEventConsumer deserialises FeedbackEvent
     │     3. If KNOWLEDGE_GAP → create product expert update PR
     │     4. Re-generate BDD scenarios with feedback context
     │     5. Create revised BDD PR → PrTracker.trackBdd()
+    │        Title: `[AI-QA] Revised: {prTitle}` (falls back to `… for PR: {prId}`)
     │
     └─ PrType.TEST → PrFeedbackService.handleTestRejection()
           1. Fetch GitHub review comments
@@ -45,7 +46,18 @@ FeedbackEventConsumer deserialises FeedbackEvent
           3. If KNOWLEDGE_GAP → create product expert update PR
           4. Re-generate test code with feedback context
           5. Create revised test PR → PrTracker.trackTest()
+             Title: `[AI-QA] Revised Tests: {prTitle}` (falls back to `… for PR: {prId}`)
 ```
+
+## Revised PR Title Format
+
+| PR type | Title format |
+|---------|-------------|
+| Revised BDD | `[AI-QA] Revised: {prTitle}` |
+| Revised test code | `[AI-QA] Revised Tests: {prTitle}` |
+
+`{prTitle}` comes from `FeedbackEvent → BddScenario.prTitle` / `TestScript.prTitle`,
+which originates from `PullRequest.title` at the pipeline entry point.
 
 ## Configuration
 

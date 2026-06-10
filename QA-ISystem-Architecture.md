@@ -1031,5 +1031,5 @@ curl -X POST http://localhost:8082/api/strategy/approve-bdd \
 | `E2ECoverageAnalyzer` | service | Phase 2 coverage: scan repo index → GOOD/PARTIAL/NONE |
 | `RepoContextService` | service | Clone test repo + build coverage index + extract conventions |
 | `TestPrService` | service | Simulate GitHub PR creation (real API call in production) |
-| `StrategyController` | controller | REST: /status, /approve-bdd, /refresh-context |
+| `StrategyController` | controller | REST: /status, /pending-bdd, /approve-bdd, /refresh-context |
 
