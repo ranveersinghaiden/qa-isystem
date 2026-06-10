@@ -1,8 +1,11 @@
 package nz.co.eroad.qaisystem.controller;
 
 import nz.co.eroad.qaisystem.github.BddScenarioStore;
+import nz.co.eroad.qaisystem.github.PrTracker;
 import nz.co.eroad.qaisystem.kafka.TestScriptsProducer;
 import nz.co.eroad.qaisystem.model.BddScenario;
+import nz.co.eroad.qaisystem.model.PrRecord;
+import nz.co.eroad.qaisystem.model.PrType;
 import nz.co.eroad.qaisystem.service.RepoContextService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,6 +31,7 @@ public class StrategyController {
     private final TestScriptsProducer testScriptsProducer;
     private final RepoContextService  repoContextService;
     private final BddScenarioStore    bddScenarioStore;
+    private final PrTracker           prTracker;
 
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> status() {
@@ -66,6 +71,26 @@ public class StrategyController {
                 "baseClass",  ctx.getBaseTestClass() != null ? ctx.getBaseTestClass() : "none",
                 "naming",     ctx.getTestNamingConvention() != null
                         ? ctx.getTestNamingConvention() : "*Test.java");
+    }
+
+    /**
+     * Returns all currently tracked BDD scenario PRs waiting for human review.
+     * Used by the approve-bdd.sh script to discover pending scenarios
+     * without needing to know the branch name or scenario ID.
+     *
+     * <p>Response: list of {@code {branch, prNumber, bddScenario}} objects.
+     */
+    @GetMapping("/pending-bdd")
+    public ResponseEntity<List<Map<String, Object>>> pendingBdd() {
+        List<Map<String, Object>> pending = prTracker.findAll().stream()
+                .filter(r -> r.getType() == PrType.BDD && r.getBddScenario() != null)
+                .map(r -> Map.<String, Object>of(
+                        "branch",      r.getBranchName(),
+                        "prNumber",    r.getPrNumber(),
+                        "bddScenario", r.getBddScenario()))
+                .toList();
+        log.info("[StrategyController] Returning {} pending BDD scenario(s)", pending.size());
+        return ResponseEntity.ok(pending);
     }
 
     /**

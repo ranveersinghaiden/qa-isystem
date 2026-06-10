@@ -272,7 +272,16 @@ curl -X POST http://localhost:8080/api/pr/submit \
 ### 6 — Useful runtime commands
 
 ```bash
-# Manually trigger codegen after BDD PR is generated (local dev gate)
+# List pending BDD scenarios (shows what's waiting for approval)
+./scripts/approve-bdd.sh --list
+
+# Approve all pending BDD scenarios → triggers codegen for each
+./scripts/approve-bdd.sh --yes
+
+# Approve only a specific PR ID
+./scripts/approve-bdd.sh --pr-id PR-XXXXXXXX --yes
+
+# Manually trigger codegen after BDD PR is generated (local dev gate — raw JSON)
 curl -X POST http://localhost:8082/api/strategy/approve-bdd \
   -H "Content-Type: application/json" \
   -d '{...BddScenario JSON...}'
@@ -321,8 +330,9 @@ curl -X POST http://localhost:8082/api/strategy/refresh-context
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET`  | `/api/strategy/status` | Status |
-| `POST` | `/api/strategy/approve-bdd` | Manually trigger codegen from BDD JSON (local dev) |
+| `GET`  | `/api/strategy/status` | Status + pending BDD review count |
+| `GET`  | `/api/strategy/pending-bdd` | List all tracked BDD scenarios waiting for approval |
+| `POST` | `/api/strategy/approve-bdd` | Manually trigger codegen from BDD JSON (local dev / no ngrok) |
 | `POST` | `/api/strategy/github-webhook` | GitHub `pull_request` webhook (BDD/test PR merge/reject) |
 | `POST` | `/api/strategy/refresh-context` | Re-pull target test repo, refresh coverage cache |
 | `GET`  | `/api/qa/cost/report` | AI call gating / cache / cost metrics |

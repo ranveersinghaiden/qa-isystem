@@ -2,6 +2,7 @@ package nz.co.eroad.qaisystem.github;
 import nz.co.eroad.qaisystem.model.BddScenario;
 import nz.co.eroad.qaisystem.model.PrRecord;
 import nz.co.eroad.qaisystem.model.TestScript;
+import java.util.Collection;
 import java.util.Optional;
 /**
  * Tracks open QA-generated Pull Requests so the GitHub webhook can route
@@ -15,6 +16,8 @@ public interface PrTracker {
     void trackBdd(String branchName, int prNumber, BddScenario scenario);
     void trackTest(String branchName, int prNumber, TestScript script);
     Optional<PrRecord> findByBranch(String branchName);
+    /** Returns all currently tracked PR records (BDD + TEST). */
+    Collection<PrRecord> findAll();
     void remove(String branchName);
     int size();
 }
