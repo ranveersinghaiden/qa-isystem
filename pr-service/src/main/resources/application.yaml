@@ -1,5 +1,8 @@
 server:
   port: 8080
+  # ── Security: request size limit (guards against OOM via huge diff payloads) ─
+  tomcat:
+    max-http-form-post-size: 10MB
 
 spring:
   application:
@@ -51,9 +54,3 @@ management:
   endpoint:
     health:
       show-details: never
-
-# ── Security: request size limits (guards against OOM via huge diff payloads) ─
-server:
-  tomcat:
-    max-http-form-post-size: 10MB
-

@@ -54,11 +54,21 @@ aiqa:
   monitor:
     report-interval-ms: ${AI_MONITOR_INTERVAL_MS:300000}   # 5 minutes default
   stabilization:
-    max-retries: 3
+    max-retries:    3
     retry-delay-ms: 2000
   strategy:
     risk-threshold-high: 0.7
     risk-threshold-medium: 0.4
+    # Pull latest test repo commits before every coverage analysis.
+    # Ensures tests already merged into the repo are visible — prevents duplicate
+    # scenario generation when the same PR payload is submitted more than once.
+    # Set to false only for high-throughput scenarios where git pull latency matters.
+    refresh-on-analysis: ${AIQA_REFRESH_ON_ANALYSIS:true}
+  # ── Security: admin API key for sensitive endpoints ───────────────────────────
+  # Protects POST /api/strategy/approve-bdd, POST /api/strategy/refresh-context,
+  # GET /api/strategy/pending-bdd. Set AIQA_ADMIN_KEY in production.
+  api:
+    admin-key: ${AIQA_ADMIN_KEY:}
   target-repo:
     url: ${TARGET_REPO_URL:}             # e.g. https://github.com/your-org/your-test-repo
     branch: main
@@ -121,6 +131,10 @@ github:
   # Requests without a matching signature are rejected (401).
   # Leave blank in local dev to skip signature verification entirely.
   webhook-secret: ${GITHUB_WEBHOOK_SECRET:}
+  webhook:
+    # Fail-secure: reject webhook requests when no secret configured.
+    # Set GITHUB_WEBHOOK_REQUIRE_SECRET=true in production.
+    require-secret: ${GITHUB_WEBHOOK_REQUIRE_SECRET:false}
 
 # ── AI Generation ──────────────────────────────────────────────────────────────
 #
@@ -178,20 +192,8 @@ management:
     health:
       show-details: never
 
-# ── Security: admin API key for sensitive endpoints ───────────────────────────
-# Set AIQA_ADMIN_KEY env var in production to protect:
-#   POST /api/strategy/approve-bdd
-#   POST /api/strategy/refresh-context
-#   GET  /api/strategy/pending-bdd
-# When blank (default), endpoints are open — acceptable for local dev only.
-aiqa:
-  api:
-    admin-key: ${AIQA_ADMIN_KEY:}
 
 # ── Security: webhook secret (fail-secure in production) ─────────────────────
-# Set GITHUB_WEBHOOK_SECRET and set require-secret=true in production.
-# Disable require-secret ONLY for local dev when no webhook secret is configured.
-github:
-  webhook:
-    require-secret: ${GITHUB_WEBHOOK_REQUIRE_SECRET:false}
+# Already merged into the github: block above.
+# Set GITHUB_WEBHOOK_SECRET and GITHUB_WEBHOOK_REQUIRE_SECRET=true in production.
 
