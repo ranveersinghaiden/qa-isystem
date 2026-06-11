@@ -580,5 +580,7 @@ detect human edits, emit `FeedbackDelta` records (`WRONG_ASSERTION`, `MISSING_CO
 `COVERAGE_GAP`), auto-commit to `.qa-agent/instructions.md` in the test repo. This would
 complement the rejection-based feedback loop with learning from accepted-but-edited PRs.
 
+Read feature changes and acceptance criteria from Jira tickets linked in the PR, to enhance impact analysis and test strategy decisions.
+
 ````
 
