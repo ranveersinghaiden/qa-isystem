@@ -2,6 +2,7 @@ package nz.co.eroad.qaisystem.service;
 
 import nz.co.eroad.qaisystem.kafka.FeatureUpdatesProducer;
 import nz.co.eroad.qaisystem.model.GitDiff;
+import nz.co.eroad.qaisystem.model.PrContext;
 import nz.co.eroad.qaisystem.model.PullRequest;
 import nz.co.eroad.qaisystem.parser.GitDiffParser;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class PRService {
 
     private final FeatureUpdatesProducer featureUpdatesProducer;
     private final GitDiffParser          gitDiffParser;
+    private final PrContextExtractor     prContextExtractor;
 
     public PullRequest processPullRequest(PullRequest pr) {
         log.info("[PRService] Received PR from '{}': '{}'", pr.getAuthor(), pr.getTitle());
@@ -94,12 +96,15 @@ public class PRService {
                 .repositoryUrl(pr.getRepositoryUrl()).repoOwner(pr.getRepoOwner())
                 .createdAt(pr.getCreatedAt()).status(pr.getStatus())
                 .diffs(parsed).rawDiffContent(pr.getRawDiffContent())
-                .jiraIds(pr.getJiraIds()).changedFiles(pr.getChangedFiles())
+                .jiraIds(pr.getJiraIds()).jiraLinks(pr.getJiraLinks())
+                .confluenceLinks(pr.getConfluenceLinks())
+                .labels(pr.getLabels()).changedFiles(pr.getChangedFiles())
+                .products(pr.getProducts())
                 .build();
     }
 
     private PullRequest enrich(PullRequest pr) {
-        return PullRequest.builder()
+        PullRequest base = PullRequest.builder()
                 .prId(pr.getPrId() != null ? pr.getPrId()
                         : "PR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .title(pr.getTitle()).description(pr.getDescription()).author(pr.getAuthor())
@@ -111,8 +116,16 @@ public class PRService {
                 .status(pr.getStatus() != null ? pr.getStatus() : PullRequest.PrStatus.OPEN)
                 .diffs(pr.getDiffs() != null ? pr.getDiffs() : new ArrayList<>())
                 .rawDiffContent(pr.getRawDiffContent())
-                .jiraIds(pr.getJiraIds()).changedFiles(pr.getChangedFiles())
+                .jiraIds(pr.getJiraIds()).jiraLinks(pr.getJiraLinks())
+                .confluenceLinks(pr.getConfluenceLinks())
+                .labels(pr.getLabels()).changedFiles(pr.getChangedFiles())
+                .products(pr.getProducts())
                 .build();
+
+        // Extract and attach all external context (Jira, Confluence, labels, products)
+        PrContext ctx = prContextExtractor.extract(base);
+        log.debug("[PRService] Extracted context hasContext={} for PR '{}'", ctx.hasContext(), base.getPrId());
+        return base;
     }
 
     private void validate(PullRequest pr) {

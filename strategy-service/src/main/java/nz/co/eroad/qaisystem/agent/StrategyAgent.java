@@ -238,6 +238,7 @@ public class StrategyAgent {
                 .prId(envelope.getPrId())
                 .strategyId(strategy.getStrategyId())
                 .bddType(BddScenario.BddType.UPDATED)
+                .prContext(envelope.getPrContext())
                 .build();
 
         testPrService.createBddPr(bddScenario);

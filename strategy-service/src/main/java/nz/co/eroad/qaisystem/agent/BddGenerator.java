@@ -90,6 +90,7 @@ public class BddGenerator {
                 .prTitle(envelope.getPrTitle())
                 .strategyId(strategy.getStrategyId())
                 .bddType(BddScenario.BddType.NEW)
+                .prContext(envelope.getPrContext())
                 .build();
 
         // Human review PR — codegen triggered after merge
@@ -165,6 +166,9 @@ public class BddGenerator {
                 : envelope.getDetectedChangeTypes().stream()
                            .map(Enum::name).collect(Collectors.joining(", "));
 
+        String externalCtx = (envelope.getPrContext() != null)
+                ? envelope.getPrContext().asPromptSection() : "";
+
         return """
                 Generate a Gherkin feature file for the following code change.
                 
@@ -178,7 +182,7 @@ public class BddGenerator {
                 
                 Full regression needed : %s
                 Expanded scope         : %s
-                
+                %s
                 Return ONLY the Gherkin feature file content starting with "Feature:".
                 Include @tags on each scenario. Do not add any explanation outside the Gherkin.
                 """.formatted(
@@ -188,7 +192,8 @@ public class BddGenerator {
                 envelope.getChangesSummary(),
                 reqs,
                 strategy.isFullRegressionRequired(),
-                strategy.isExpandedScope());
+                strategy.isExpandedScope(),
+                externalCtx.isBlank() ? "" : "\n" + externalCtx);
     }
 
     /**
@@ -299,8 +304,8 @@ public class BddGenerator {
                                                        RepoContext context) {
         List<BddScenario.Scenario> list = new ArrayList<>();
         List<String> tags = buildTags(req, envelope);
-        List<String> givenSteps = buildGivenSteps(req, context);
-
+        List<String> givenSteps = buildGivenSteps(req, envelope, context);
+        // ...existing scenario building code...
         list.add(BddScenario.Scenario.builder()
                 .scenarioId(UUID.randomUUID().toString())
                 .title("Successful operation of " + req.getFeatureName())
@@ -334,13 +339,22 @@ public class BddGenerator {
         return list;
     }
 
-    private List<String> buildGivenSteps(TestStrategy.TestRequirement req, RepoContext context) {
+    private List<String> buildGivenSteps(TestStrategy.TestRequirement req,
+                                         ImpactEnvelope envelope,
+                                         RepoContext context) {
         List<String> steps = new ArrayList<>();
         steps.add("the system is running");
         steps.add("a valid user session exists");
-        if (context.hasProductExpert()) {
+        // Prefer PrContext product info over repo context product expert
+        var prCtx = envelope.getPrContext();
+        if (prCtx != null && prCtx.hasProducts()) {
+            prCtx.getProducts().forEach(p -> steps.add("the " + p + " service is available"));
+        } else if (context.hasProductExpert()) {
             String productName = context.getProductExpertSections().keySet().iterator().next();
             steps.add("the " + productName + " service is available");
+        }
+        if (prCtx != null && prCtx.hasJira()) {
+            steps.add("the changes for " + String.join(", ", prCtx.getJiraIds()) + " are deployed");
         }
         return steps;
     }

@@ -15,48 +15,58 @@ Traditionally, a human QA engineer looks at the changed code, figures out which 
 
 **QA-ISystem automates this entire workflow:**
 
-1. A PR is submitted → the system receives it
+1. A PR is submitted → the system receives it and extracts external context (Jira tickets, Confluence docs, labels, products)
 2. The system analyses the code change (which files changed, what kind of change, how risky it is)
 3. It checks whether the changed components already have integration or end-to-end tests
 4. It makes a decision: skip / update existing tests / create new tests
-5. It generates BDD (Gherkin) scenarios for human review
-6. After human approval, it generates executable test code
+5. It generates BDD (Gherkin) scenarios for human review, enriched with Jira/Confluence context
+6. After human approval, it generates executable test code embedding the PR context
 7. It runs the test, self-heals minor failures, and opens a final PR
 
 ---
 
 ## 2. System Overview
 
-The system is split into **three microservices** and one **shared library** (`common`). Each service runs independently and communicates via **Apache Kafka** (a message queue).
+The system is split into **microservices** and one **shared library** (`common`). Each service runs independently and communicates via **Apache Kafka** (a message queue). External context (Jira, Confluence, labels, products) is extracted at ingestion and carried unchanged through the full pipeline.
 
 ```
   Developer opens PR
         │
         ▼
-┌──────────────────┐       Kafka: FeatureUpdatesQueue
-│   pr-service     │ ─────────────────────────────────────────►
-│   port 8080      │
-└──────────────────┘
+┌──────────────────────────────────┐       Kafka: FeatureUpdatesQueue
+│   pr-service  (port 8080)        │ ──────────────────────────────────►
+│   • Webhook ingestion            │
+│   • Context extraction           │
+│     (Jira IDs, Confluence links, │
+│      labels, products → PrContext│
+└──────────────────────────────────┘
 
                           ┌──────────────────────────────────┐
-                          │         impact-service            │
-                          │         port 8081                 │
-                          │                                   │
-                          │  Parse diff → graph → risk score  │
-                          │  → identify components needing    │
-                          │    integration tests              │
+                          │   impact-service  (port 8081)     │
+                          │   • Parse diff → graph → risk     │
+                          │   • Forward PrContext in envelope │
                           └──────────────────────────────────┘
                                          │
-                       Kafka: ImpactResultsQueue
+                       Kafka: ImpactResultsQueue (envelope + PrContext)
                                          │
                                          ▼
                           ┌──────────────────────────────────┐
-                          │       strategy-service            │
-                          │       port 8082                   │
-                          │                                   │
-                          │  Scan test repo → real coverage   │
-                          │  → decision → BDD generation →    │
-                          │  code generation → stabilisation  │
+                          │   strategy-service  (port 8082)   │
+                          │   • Scan test repo → real coverage│
+                          │   • BDD generation with PrContext │
+                          │     injected into AI prompt       │
+                          │   • Code generation + PrContext   │
+                          │     embedded in test class        │
+                          └──────────────────────────────────┘
+                                         │
+                       Kafka: TestScriptsQueue (BddScenario + PrContext)
+                                         │
+                                         ▼
+                          ┌──────────────────────────────────┐
+                          │   codegen-service  (port 8083)    │
+                          │   • Generates test code           │
+                          │   • PrContext in test Javadoc     │
+                          │   • Stabilisation loop            │
                           └──────────────────────────────────┘
 ```
 
@@ -103,14 +113,30 @@ The input to the system. Represents a code change that a developer wants reviewe
 ```
 PullRequest
 ├── prId            "PR-A1B2C3D4"
-├── title           "feat: Add payment gateway"
+├── title           "VSF-3670: Add payment gateway"
+├── description     "Implements payment flow. See https://jira.example.com/browse/VSF-3670
+│                    and https://wiki.example.com/wiki/spaces/PAYMENTS/pages/123"
 ├── author          "dev@example.com"
 ├── repositoryName  "payment-service"
 ├── sourceBranch    "feature/payments"
 ├── targetBranch    "main"
 ├── rawDiffContent  "diff --git a/src/PaymentService.java ..."
-└── diffs           List<GitDiff>  (pre-parsed, optional)
+├── diffs           List<GitDiff>  (pre-parsed, optional)
+├── jiraIds         ["VSF-3670"]              (explicit or extracted from title/desc)
+├── jiraLinks       ["https://jira.../VSF-3670"] (extracted from description)
+├── confluenceLinks ["https://wiki.../pages/123"] (extracted from description)
+├── labels          ["bug", "payments", "high-priority"]  (GitHub PR labels)
+└── products        ["payments", "auth"]      (explicit or inferred from labels)
 ```
+
+**Context extraction** happens in `PrContextExtractor` during pr-service enrichment.
+It scans the PR title, description, and labels using regex patterns:
+- Jira IDs: `\b[A-Z]{2,10}-\d+\b` (e.g. VSF-3670, AUTH-12)
+- Jira URLs: any URL containing `/browse/PROJECT-NNN`
+- Confluence URLs: any URL containing `/wiki/`
+- Product names: explicit `products` field + lower-case labels without special chars
+
+Results are consolidated into a `PrContext` object and forwarded through the pipeline.
 
 #### `GitDiff`
 Represents one changed file. A PR touching 5 files produces 5 `GitDiff` objects.
@@ -128,6 +154,23 @@ GitDiff
                                   └── content: the actual line of code
 ```
 
+#### `PrContext`
+Carries all external context extracted from the PR through the entire pipeline.
+Created once by `PrContextExtractor` in pr-service and never modified downstream.
+
+```
+PrContext
+├── jiraIds         ["VSF-3670", "AUTH-12"]  (merged from payload + regex extraction)
+├── jiraLinks       ["https://jira.../browse/VSF-3670"]
+├── confluenceLinks ["https://wiki.../pages/123"]
+├── labels          ["bug", "payments", "high-priority"]
+└── products        ["payments", "auth"]
+```
+
+`PrContext.asPromptSection()` formats this into a structured text block that is
+appended to AI prompts for BDD generation. Test runners embed it as Javadoc in
+each generated test class.
+
 #### `ImpactEnvelope`
 The output of `impact-service`. Contains everything the strategy layer needs.
 
@@ -135,6 +178,7 @@ The output of `impact-service`. Contains everything the strategy layer needs.
 ImpactEnvelope
 ├── envelopeId            (UUID)
 ├── prId
+├── prContext             PrContext  (Jira, Confluence, labels, products — forwarded from PR)
 ├── impactedComponents    List<ImpactedComponent>
 │     └── componentName, filePath, type (CONTROLLER/SERVICE/...), impactScore, callers, callees
 ├── detectedChangeTypes   List<ChangeType>  (API_CHANGE, BUG_FIX, SECURITY_FIX, ...)
@@ -142,7 +186,8 @@ ImpactEnvelope
 ├── riskLevel             LOW | MEDIUM | HIGH | CRITICAL
 ├── coverageReport        CoverageReport (level=UNKNOWN at this point)
 ├── suggestedTestAreas    List<String>  (component names needing coverage)
-└── changesSummary        Human-readable one-line description
+├── changesSummary        Human-readable one-line description
+└── aiInsight             AIInsight  (null when AI not triggered)
 ```
 
 #### `CoverageReport`
@@ -162,25 +207,30 @@ CoverageReport
 
 ---
 
-## 5. pr-service — Phase 0: Ingestion
+## 5. pr-service — Phase 0: Ingestion + Context Extraction
 
-**Port:** 8080 | **Role:** Receive PR events, validate, enrich, publish to Kafka
+**Port:** 8080 | **Role:** Receive PR events, validate, enrich, extract external context, publish to Kafka
 
 ### What it does
 
 1. Developer (or CI webhook) sends a POST request with PR details
 2. Service validates required fields (title, author, repository name)
 3. Service fills in defaults for optional fields (prId, targetBranch, timestamps)
-4. Service publishes the enriched `PullRequest` as JSON to `FeatureUpdatesQueue`
+4. **`PrContextExtractor` mines the PR's title, description, and labels** for:
+   - Jira ticket keys (regex `\b[A-Z]{2,10}-\d+\b`) from title/description
+   - Full Jira browse URLs (pattern `https?://.../browse/PROJECT-NNN`) from description
+   - Confluence page URLs (pattern `https?://.../wiki/...`) from description
+   - GitHub PR labels (`labels` field) — product-like lower-case labels are also inferred as product names
+   - Product names from the explicit `products` field, merged with label-inferred names
+5. The extracted `PrContext` is attached to the `PullRequest` message
+6. Service publishes the enriched `PullRequest` (including `PrContext`) to `FeatureUpdatesQueue`
 
 ### Design decisions
 
-**Why a separate service for just "receive and forward"?**
-
-This service acts as a **gateway**. It:
-- Protects the rest of the system from invalid input
-- Decouples the external caller (webhook, CI) from the internal implementation
-- Can be scaled independently if PR volume is high
+**Why extract context in pr-service?**
+Context extraction is a pure string-processing step that needs no AI and no external calls.
+Doing it at ingestion means every downstream service automatically benefits without needing
+to re-parse the raw description. The PR description may not be available downstream.
 
 **No custom Kafka configuration needed here.**
 pr-service only produces messages (never consumes). Spring Boot auto-creates a
@@ -191,10 +241,11 @@ simplicity — only services that *consume* Kafka messages need the manual-ack c
 
 | Class | Role |
 |-------|------|
-| `PrServiceApplication` | Spring Boot entry point — starts the application |
-| `PRController` | HTTP layer: 4 endpoints (`/webhook`, `/submit`, `/demo`, `/health`) |
-| `PRService` | Business logic: enrich + validate + publish |
-| `FeatureUpdatesProducer` | Kafka layer: serialise + send to `FeatureUpdatesQueue` |
+| `PrServiceApplication` | Spring Boot entry point |
+| `PRController` | HTTP: 4 endpoints (`/webhook`, `/submit`, `/demo`, `/health`) |
+| `PRService` | Enrich + validate + extract context + publish |
+| `PrContextExtractor` | Regex-based extraction of Jira, Confluence, labels, products |
+| `FeatureUpdatesProducer` | Serialise + send to FeatureUpdatesQueue |
 
 ### Endpoint summary
 
@@ -626,10 +677,20 @@ Feature: Payment processing
   Scenario: Successful payment
     Given the system is running
     And a valid user session exists
+    And the payments service is available
+    And the changes for VSF-3670 are deployed
     When the client calls PaymentController
     Then response status is 200
     And response body contains expected data
 ```
+
+**Context enrichment** — when the PR has external context, the generator:
+- Injects `PrContext.asPromptSection()` into the AI user prompt so the LLM sees Jira
+  tickets, Confluence links, and product names when writing scenarios
+- In template (non-AI) mode, adds `Given the changes for PROJ-NNN are deployed` and
+  `And the <product> service is available` to given-steps
+
+The generated `BddScenario` carries the `PrContext` forward to codegen-service.
 
 For each `TestRequirement`, `BddGenerator` creates up to 3 scenarios:
 
@@ -664,7 +725,11 @@ Each runner generates a Java source file as a string. The file includes:
 2. Common imports found in ≥50% of existing test files
 3. `extends {baseTestClass}` if a base class was detected in the repo
 4. Agent instruction comments (from `.github/agents/*.md`)
-5. `@Test` methods with `GIVEN/WHEN/THEN` comments and assertions from BDD steps
+5. **PR context Javadoc** — when `PrContext` is available, the class-level Javadoc
+   includes Jira ticket keys (`Jira: VSF-3670`), Jira and Confluence URLs, product names,
+   and labels, so developers and reviewers can immediately trace the test back to
+   the originating tickets and documentation
+6. `@Test` methods with `GIVEN/WHEN/THEN` comments and assertions from BDD steps
 
 **BDD step → assertion translation (API runner):**
 
@@ -944,6 +1009,12 @@ curl -X POST http://localhost:8082/api/strategy/approve-bdd \
 
 | Heuristic | Where | Why this approach |
 |-----------|-------|-------------------|
+| Jira ID regex `\b[A-Z]{2,10}-\d+\b` | `PrContextExtractor` | Standard Jira key format; works for any project key. Extracted from title and description so teams don't need to set a separate field |
+| Confluence URL pattern `/wiki/` | `PrContextExtractor` | All Confluence Cloud and Server instances use `/wiki/` in page URLs. Broad enough to catch self-hosted instances |
+| Product inference from labels | `PrContextExtractor` | GitHub labels like "payments" or "auth-service" are commonly used for team routing. Lower-case words without special chars reliably indicate product areas |
+| PrContext forwarded as-is | impact → strategy → codegen | Context extracted once at ingestion; never re-parsed. Immutable propagation prevents drift and keeps each service stateless |
+| PrContext in AI prompt section | `BddGenerator` | Giving the LLM Jira context and product names produces domain-specific scenarios rather than generic ones. Empirically increases BDD quality for product teams that use Jira |
+| PrContext in generated Javadoc | `ApiTestRunner`, `UITestRunner`, `MobileTestRunner` | Embeds traceability directly in the file. Developers reviewing or maintaining the test can see the origin ticket without querying external systems |
 | PascalCase regex for class names | `RepoContextService.extractClassReferences` | Java class names are always PascalCase. Faster than full AST parsing; 95%+ precision for enterprise Java |
 | Inverted index (component → test files) | `RepoContextService.buildCoverageIndex` | O(1) lookup per component at query time vs O(n×m) search at every PR |
 | Integration test detection via filename patterns first, content second | `RepoContextService.isIntegrationOrE2eFile` | Filename conventions are faster. Content scan only for projects that don't follow naming conventions |
@@ -967,9 +1038,10 @@ curl -X POST http://localhost:8082/api/strategy/approve-bdd \
 
 | Class | Package | Role |
 |-------|---------|------|
-| `PullRequest` | model | Input: PR details from developer |
+| `PullRequest` | model | Input: PR details including jiraIds, jiraLinks, confluenceLinks, labels, products |
+| `PrContext` | model | Extracted external context: Jira, Confluence, labels, products — flows through the pipeline |
 | `GitDiff` | model | One changed file with line-level detail |
-| `ImpactEnvelope` | model | Output of impact-service; input of strategy-service |
+| `ImpactEnvelope` | model | Output of impact-service; includes prContext forwarded from source PR |
 | `ImpactEnvelope.ImpactedComponent` | model (nested) | One changed class with type, score, callers |
 | `ImpactEnvelope.ChangeType` | model (enum) | API_CHANGE, BUG_FIX, SECURITY_FIX, ... |
 | `ImpactEnvelope.RiskLevel` | model (enum) | LOW, MEDIUM, HIGH, CRITICAL |
@@ -978,7 +1050,7 @@ curl -X POST http://localhost:8082/api/strategy/approve-bdd \
 | `CoverageReport.CoverageSource` | model (enum) | REPO_SCAN, UNKNOWN |
 | `ImpactEnvelope.AIInsight` | model (nested) | AI refinement record: model, scores, added types, reasoning |
 | `TestStrategy` | model | Decision + requirements from StrategyAgent |
-| `BddScenario` | model | Gherkin scenarios for BDD review PR |
+| `BddScenario` | model | Gherkin scenarios + prContext for codegen-service |
 | `TestScript` | model | Generated test code + metadata |
 | `TestResult` | model | Execution result from StabilizationLoop |
 
@@ -988,7 +1060,8 @@ curl -X POST http://localhost:8082/api/strategy/approve-bdd \
 |-------|---------|------|
 | `PrServiceApplication` | pr | Spring Boot entry point |
 | `PRController` | controller | HTTP: /webhook, /submit, /demo, /health |
-| `PRService` | service | Enrich + validate + publish |
+| `PRService` | service | Enrich + validate + extract context + publish |
+| `PrContextExtractor` | service | Regex mining of Jira IDs, Jira URLs, Confluence URLs, labels, products |
 | `FeatureUpdatesProducer` | kafka | Serialise + send to FeatureUpdatesQueue |
 
 ### impact-service
@@ -1020,8 +1093,8 @@ curl -X POST http://localhost:8082/api/strategy/approve-bdd \
 | `TestScriptsConsumer` | kafka | Consume BddScenario → trigger CodegenService |
 | `TestScriptsProducer` | kafka | Publish BddScenario to TestScriptsQueue |
 | `StrategyAgent` | agent | Decision tree + fallback rules |
-| `BddGenerator` | agent | Template-based Gherkin scenario builder |
-| `CodegenService` | execution | Route BDD scenario to correct runner |
+| `BddGenerator` | agent | Template/AI Gherkin builder; injects PrContext into AI prompts and given-steps |
+| `CodegenService` | execution | Route BDD scenario to correct runner; passes prContext to all runners |
 | `ApiTestRunner` | execution | Generate RestAssured + JUnit 5 test code |
 | `UITestRunner` | execution | Generate Selenium test code |
 | `MobileTestRunner` | execution | Generate Appium test code |

@@ -36,6 +36,7 @@ public class MobileTestRunner {
 
         String pkg       = context.effectivePackage("nz.co.eroad.qaisystem.generated.tests.mobile");
         String className = toClassName(scenario.getTitle());
+        String prCtxBlock = buildPrContextComment(parent);
 
         return """
                 %s
@@ -51,9 +52,9 @@ public class MobileTestRunner {
                 %s
                 /**
                  * Auto-generated Mobile test for PR : %s
-                 * Scenario                         : %s
-                 * Context repo                     : %s
-                 */
+                 * Scenario                          : %s
+                 * Context repo                      : %s
+                %s */
                 public class %sMobileTest%s {
 
                     private AppiumDriver driver;
@@ -94,6 +95,7 @@ public class MobileTestRunner {
                 parent.getPrId(),
                 scenario.getTitle(),
                 context.isContextAvailable() ? context.getRepoModulePath() : "built-in template",
+                prCtxBlock,
                 className,
                 context.extendsClause(),
                 mobilePlatform,
@@ -116,5 +118,18 @@ public class MobileTestRunner {
     private String stepsToComments(java.util.List<String> steps) {
         if (steps == null || steps.isEmpty()) return "";
         return steps.stream().map(s -> "// " + s).collect(Collectors.joining("\n        "));
+    }
+
+    private String buildPrContextComment(BddScenario parent) {
+        var ctx = parent.getPrContext();
+        if (ctx == null || !ctx.hasContext()) return " *";
+        var sb = new StringBuilder(" *\n");
+        if (ctx.hasJira() && ctx.getJiraIds() != null)
+            sb.append(" * Jira       : ").append(String.join(", ", ctx.getJiraIds())).append("\n");
+        if (ctx.hasConfluence())
+            ctx.getConfluenceLinks().forEach(l -> sb.append(" * Confluence : ").append(l).append("\n"));
+        if (ctx.hasProducts())
+            sb.append(" * Products   : ").append(String.join(", ", ctx.getProducts())).append("\n");
+        return sb.toString().stripTrailing();
     }
 }

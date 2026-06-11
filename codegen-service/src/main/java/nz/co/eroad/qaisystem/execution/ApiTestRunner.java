@@ -34,6 +34,7 @@ public class ApiTestRunner {
         String baseUrl    = this.apiBaseUrl;
         String httpMethod = extractHttpMethod(scenario.getWhenSteps());
         String endpoint   = extractEndpointPath(scenario.getWhenSteps());
+        String prCtxBlock = buildPrContextComment(parent);
 
         return """
                 %s
@@ -52,7 +53,7 @@ public class ApiTestRunner {
                  * Scenario                       : %s
                  * Tags                           : %s
                  * Context repo                   : %s
-                 */
+                %s */
                 public class %sApiTest%s {
 
                     @BeforeEach
@@ -86,6 +87,7 @@ public class ApiTestRunner {
                 scenario.getTitle(),
                 scenario.getTags(),
                 context.isContextAvailable() ? context.getRepoModulePath() : "built-in template",
+                prCtxBlock,
                 className,
                 context.extendsClause(),
                 baseUrl,
@@ -145,5 +147,22 @@ public class ApiTestRunner {
             else                                        sb.append("// ").append(step).append("\n        ");
         }
         return sb.toString().trim();
+    }
+
+    private String buildPrContextComment(BddScenario parent) {
+        var ctx = parent.getPrContext();
+        if (ctx == null || !ctx.hasContext()) return " *";
+        var sb = new StringBuilder(" *\n");
+        if (ctx.hasJira() && ctx.getJiraIds() != null)
+            sb.append(" * Jira       : ").append(String.join(", ", ctx.getJiraIds())).append("\n");
+        if (ctx.hasJira() && ctx.getJiraLinks() != null)
+            ctx.getJiraLinks().forEach(l -> sb.append(" * Jira link  : ").append(l).append("\n"));
+        if (ctx.hasConfluence())
+            ctx.getConfluenceLinks().forEach(l -> sb.append(" * Confluence : ").append(l).append("\n"));
+        if (ctx.hasProducts())
+            sb.append(" * Products   : ").append(String.join(", ", ctx.getProducts())).append("\n");
+        if (ctx.hasLabels())
+            sb.append(" * Labels     : ").append(String.join(", ", ctx.getLabels())).append("\n");
+        return sb.toString().stripTrailing();
     }
 }

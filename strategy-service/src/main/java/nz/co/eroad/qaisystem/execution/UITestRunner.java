@@ -25,9 +25,10 @@ public class UITestRunner {
         log.debug("[UITestRunner] Generating UI test for '{}' (context={})",
                 scenario.getTitle(), context.isContextAvailable());
 
-        String pkg     = context.effectivePackage("nz.co.eroad.qaisystem.generated.tests.ui");
+        String pkg       = context.effectivePackage("nz.co.eroad.qaisystem.generated.tests.ui");
         String className = toClassName(scenario.getTitle());
-        String baseUrl = this.uiBaseUrl;
+        String baseUrl   = this.uiBaseUrl;
+        String prCtxBlock = buildPrContextComment(parent);
 
         return """
                 %s
@@ -43,7 +44,7 @@ public class UITestRunner {
                  * Auto-generated UI test for PR : %s
                  * Scenario                      : %s
                  * Context repo                  : %s
-                 */
+                %s */
                 public class %sUiTest%s {
 
                     private WebDriver driver;
@@ -82,6 +83,7 @@ public class UITestRunner {
                 parent.getPrId(),
                 scenario.getTitle(),
                 context.isContextAvailable() ? context.getRepoModulePath() : "built-in template",
+                prCtxBlock,
                 className,
                 context.extendsClause(),
                 scenario.getTitle(),
@@ -101,5 +103,18 @@ public class UITestRunner {
     private String stepsToComments(java.util.List<String> steps) {
         if (steps == null || steps.isEmpty()) return "";
         return steps.stream().map(s -> "// " + s).collect(Collectors.joining("\n        "));
+    }
+
+    private String buildPrContextComment(BddScenario parent) {
+        var ctx = parent.getPrContext();
+        if (ctx == null || !ctx.hasContext()) return " *";
+        var sb = new StringBuilder(" *\n");
+        if (ctx.hasJira() && ctx.getJiraIds() != null)
+            sb.append(" * Jira       : ").append(String.join(", ", ctx.getJiraIds())).append("\n");
+        if (ctx.hasConfluence())
+            ctx.getConfluenceLinks().forEach(l -> sb.append(" * Confluence : ").append(l).append("\n"));
+        if (ctx.hasProducts())
+            sb.append(" * Products   : ").append(String.join(", ", ctx.getProducts())).append("\n");
+        return sb.toString().stripTrailing();
     }
 }

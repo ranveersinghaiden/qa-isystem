@@ -23,6 +23,14 @@ public class BddScenario {
     private String strategyId;
     private BddType bddType;        // NEW or UPDATED
 
+    /**
+     * External context forwarded from the source PR (Jira tickets, Confluence links,
+     * labels, products). Carried here so codegen-service can embed this context in
+     * generated test code without requiring a separate lookup.
+     * {@code null} when no external context was collected.
+     */
+    private PrContext prContext;
+
     public enum BddType {
         NEW, UPDATED
     }

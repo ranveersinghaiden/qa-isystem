@@ -173,7 +173,11 @@ for p in "${INFRA_PORTS[@]}"; do
   if port_busy "${p}"; then
     pid=$(lsof -i ":${p}" -sTCP:LISTEN -t 2>/dev/null | head -1 || true)
     proc=$(ps -p "${pid}" -o comm= 2>/dev/null || echo "unknown")
-    INFRA_BUSY+=(":${p} (PID ${pid} -- ${proc})")
+    # Allow Docker.app backend and vpnkit (macOS Docker Desktop) to own these ports
+    case "${proc}" in
+      *docker*|*Docker*|*vpnkit*|*com.docker*) ;;
+      *) INFRA_BUSY+=(":${p} (PID ${pid} -- ${proc})") ;;
+    esac
   fi
 done
 if [ ${#INFRA_BUSY[@]} -gt 0 ]; then
@@ -208,16 +212,28 @@ if [ "${FRESH}" = true ]; then
   warn "--fresh: removing Docker volumes to clear stale ZooKeeper state..."
   docker compose down -v --remove-orphans 2>/dev/null || true
   success "Volumes purged"
+  INFRA_RUNNING=false
 else
-  docker compose down --remove-orphans 2>/dev/null || true
+  # Check if containers are already up and healthy — skip down/up cycle
+  KAFKA_UP=$(docker inspect --format='{{.State.Health.Status}}' qa-kafka 2>/dev/null || echo "")
+  REDIS_UP=$(docker inspect --format='{{.State.Health.Status}}' qa-redis 2>/dev/null || echo "")
+  if [ "${KAFKA_UP}" = "healthy" ] && [ "${REDIS_UP}" = "healthy" ]; then
+    info "Kafka and Redis already healthy — skipping docker compose up"
+    INFRA_RUNNING=true
+  else
+    docker compose down --remove-orphans 2>/dev/null || true
+    INFRA_RUNNING=false
+  fi
 fi
 
-if [ "${WITH_KAFKA_UI}" = true ]; then
-  info "Starting Kafka, Redis, Kafka-UI (profile: debug)..."
-  docker compose --profile debug up -d
-else
-  info "Starting Kafka and Redis..."
-  docker compose up -d
+if [ "${INFRA_RUNNING}" != "true" ]; then
+  if [ "${WITH_KAFKA_UI}" = true ]; then
+    info "Starting Kafka, Redis, Kafka-UI (profile: debug)..."
+    docker compose --profile debug up -d
+  else
+    info "Starting Kafka and Redis..."
+    docker compose up -d
+  fi
 fi
 
 # Wait for Kafka
@@ -270,7 +286,16 @@ PASSTHROUGH_VARS=(
   COPILOT_MODEL COPILOT_BASE_URL GH_CLI_PATH COPILOT_CLI_TIMEOUT
 )
 
-declare -A PIDS
+# -- Parallel arrays replacing declare -A (bash 3.2-compatible) ---------------
+SVC_PIDS=()     # parallel to SERVICES: PID of each launched service
+SVC_STATUS=()   # parallel to SERVICES: OK | FAILED | TIMEOUT
+SVC_HEALTH=(
+  "http://localhost:8080/api/pr/health"
+  "http://localhost:8081/api/impact/status"
+  "http://localhost:8082/api/strategy/status"
+  "http://localhost:8083/actuator/health"
+  "http://localhost:8084/actuator/health"
+)
 
 for entry in "${SERVICES[@]}"; do
   IFS='|' read -r svc port jar_rel <<< "${entry}"
@@ -290,7 +315,8 @@ for entry in "${SERVICES[@]}"; do
   done
 
   env "${ENV_PAIRS[@]}" java -jar "${jar}" > "${log}" 2>&1 &
-  PIDS["${svc}"]=$!
+  SVC_PIDS+=($!)
+  SVC_STATUS+=("UNKNOWN")
 done
 
 # =============================================================================
@@ -298,21 +324,13 @@ done
 # =============================================================================
 header "Waiting for Services to Become Healthy"
 
-declare -A HEALTH_URL=(
-  [pr-service]="http://localhost:8080/api/pr/health"
-  [impact-service]="http://localhost:8081/api/impact/status"
-  [strategy-service]="http://localhost:8082/api/strategy/status"
-  [codegen-service]="http://localhost:8083/actuator/health"
-  [feedback-service]="http://localhost:8084/actuator/health"
-)
-
 HEALTH_TIMEOUT=60
-declare -A STATUS
 
-for entry in "${SERVICES[@]}"; do
+for i in "${!SERVICES[@]}"; do
+  entry="${SERVICES[${i}]}"
   IFS='|' read -r svc port _ <<< "${entry}"
-  pid="${PIDS[${svc}]}"
-  url="${HEALTH_URL[${svc}]}"
+  pid="${SVC_PIDS[${i}]}"
+  url="${SVC_HEALTH[${i}]}"
   elapsed=0
   info "Polling ${svc} (PID ${pid}) at ${url}..."
 
@@ -320,18 +338,18 @@ for entry in "${SERVICES[@]}"; do
     if ! kill -0 "${pid}" 2>/dev/null; then
       error "${svc} exited unexpectedly. Last 20 lines of log:"
       tail -20 "${LOG_DIR}/${svc}.log" >&2
-      STATUS["${svc}"]="FAILED"
+      SVC_STATUS[${i}]="FAILED"
       break
     fi
     if curl -sf --max-time 3 "${url}" &>/dev/null; then
       success "${svc} responded after ${elapsed}s"
-      STATUS["${svc}"]="OK"
+      SVC_STATUS[${i}]="OK"
       break
     fi
     if [ "${elapsed}" -ge "${HEALTH_TIMEOUT}" ]; then
       warn "${svc} did not respond within ${HEALTH_TIMEOUT}s -- check logs:"
       warn "  tail -f ${LOG_DIR}/${svc}.log"
-      STATUS["${svc}"]="TIMEOUT"
+      SVC_STATUS[${i}]="TIMEOUT"
       break
     fi
     sleep 3; elapsed=$((elapsed + 3)); printf "."
@@ -348,9 +366,10 @@ ALL_OK=true
 printf "\n  %-22s  %-14s  %-6s  %s\n" "Service" "Status" "Port" "Log"
 printf "  %-22s  %-14s  %-6s  %s\n"   "---------------------" "------------" "------" "--------------------------------"
 
-for entry in "${SERVICES[@]}"; do
+for i in "${!SERVICES[@]}"; do
+  entry="${SERVICES[${i}]}"
   IFS='|' read -r svc port _ <<< "${entry}"
-  st="${STATUS[${svc}]:-UNKNOWN}"
+  st="${SVC_STATUS[${i}]:-UNKNOWN}"
   case "${st}" in
     OK)      col="${GREEN}";  icon="OK     " ;;
     TIMEOUT) col="${YELLOW}"; icon="TIMEOUT"; ALL_OK=false ;;

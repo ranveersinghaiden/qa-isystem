@@ -1,6 +1,7 @@
 package nz.co.eroad.qaisystem.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -53,6 +54,14 @@ public class ImpactEnvelope {
     private List<String> existingTestFiles;
     private List<String> suggestedTestAreas;
     private String changesSummary;
+
+    /**
+     * External context extracted from the PR (Jira tickets, Confluence links,
+     * labels, products). Populated by pr-service and forwarded unchanged
+     * through the pipeline to inform BDD generation and test codegen.
+     * {@code null} when no external context was found on the source PR.
+     */
+    private PrContext prContext;
 
     /**
      * AI-generated refinement of the deterministic analysis.

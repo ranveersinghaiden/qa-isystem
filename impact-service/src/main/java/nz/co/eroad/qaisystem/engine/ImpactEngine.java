@@ -6,6 +6,7 @@ import nz.co.eroad.qaisystem.model.GitDiff;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.ChangeType;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.ImpactedComponent;
+import nz.co.eroad.qaisystem.model.PrContext;
 import nz.co.eroad.qaisystem.model.PullRequest;
 import nz.co.eroad.qaisystem.parser.GitDiffParser;
 import nz.co.eroad.qaisystem.service.TestCoverageService;
@@ -101,6 +102,10 @@ public class ImpactEngine {
                                 : c.getImpactScore() >= 0.4 ? "MEDIUM" : "LOW",
                         (a, b) -> a));
 
+        // 7. Build PrContext from the source PR — merges explicit fields with
+        //    any context that was extracted by PrContextExtractor in pr-service.
+        PrContext prContext = buildPrContext(pr);
+
         ImpactEnvelope envelope = ImpactEnvelope.builder()
                 .envelopeId(UUID.randomUUID().toString())
                 .prId(pr.getPrId())
@@ -124,7 +129,8 @@ public class ImpactEngine {
                 .existingTestFiles(existingTestFiles)
                 .suggestedTestAreas(coverage.getUntestedComponents())
                 .changesSummary(buildSummary(pr, diffs, changeTypes, lvl, coverage))
-                .aiInsight(aiInsight)   // null when AI disabled/not triggered
+                .prContext(prContext)
+                .aiInsight(aiInsight)
                 .build();
 
         log.info("[ImpactEngine] Envelope '{}' → risk={} ({}) coverage={} componentsPendingE2E={} aiApplied={}",
@@ -181,6 +187,20 @@ public class ImpactEngine {
                 diffs.stream().mapToInt(GitDiff::getLinesDeleted).sum(),
                 types, level, coverage.getLevel(),
                 coverage.getUntestedComponents());
+    }
+
+    /**
+     * Builds a {@link PrContext} by forwarding context fields that were collected and
+     * populated by {@code PrContextExtractor} in pr-service during ingestion.
+     */
+    private PrContext buildPrContext(PullRequest pr) {
+        return PrContext.builder()
+                .jiraIds(pr.getJiraIds())
+                .jiraLinks(pr.getJiraLinks())
+                .confluenceLinks(pr.getConfluenceLinks())
+                .labels(pr.getLabels())
+                .products(pr.getProducts())
+                .build();
     }
 }
 

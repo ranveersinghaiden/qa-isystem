@@ -278,7 +278,7 @@ curl -X POST http://localhost:8080/api/pr/submit \
 # Approve all pending BDD scenarios → triggers codegen for each
 ./scripts/approve-bdd.sh --yes
 
-# Approve only a specific PR ID
+# Approve only a specific NPR ID
 ./scripts/approve-bdd.sh --pr-id PR-XXXXXXXX --yes
 
 # Manually trigger codegen after BDD PR is generated (local dev gate — raw JSON)

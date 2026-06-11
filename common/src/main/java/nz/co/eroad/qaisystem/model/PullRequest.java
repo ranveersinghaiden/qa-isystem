@@ -57,6 +57,28 @@ public class PullRequest {
     @JsonProperty("jira_ids")
     private List<String> jiraIds;
 
+    /**
+     * Full Jira issue URLs found in the PR description or supplied in the payload.
+     * Extracted by {@code PrContextExtractor} during enrichment in pr-service.
+     */
+    @JsonProperty("jira_links")
+    private List<String> jiraLinks;
+
+    /**
+     * Confluence page URLs found in the PR description or supplied in the payload.
+     * Extracted by {@code PrContextExtractor} during enrichment in pr-service.
+     */
+    @JsonProperty("confluence_links")
+    private List<String> confluenceLinks;
+
+    /**
+     * GitHub PR labels / tags applied to this pull request (e.g. "bug", "feature",
+     * "payments-team"). Accepted as {@code labels} in the JSON payload.
+     */
+    @JsonProperty("labels")
+    @JsonDeserialize(using = CommaSeparatedListDeserializer.class)
+    private List<String> labels;
+
     @JsonProperty("changed_files")
     private List<String> changedFiles;
 

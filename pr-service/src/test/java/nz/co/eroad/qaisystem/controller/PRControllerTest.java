@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import nz.co.eroad.qaisystem.model.PullRequest;
 import nz.co.eroad.qaisystem.service.PRService;
+import nz.co.eroad.qaisystem.service.PrContextExtractor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,7 @@ class PRControllerTest {
     /** Fixed-return PRService that never calls Kafka. */
     static class FixedPRService extends PRService {
         private final PullRequest response;
-        FixedPRService(PullRequest response) { super(null, null); this.response = response; }
+        FixedPRService(PullRequest response) { super(null, null, new PrContextExtractor()); this.response = response; }
         @Override public PullRequest processPullRequest(PullRequest pr) { return response; }
         @Override public PullRequest createSamplePullRequest() { return response; }
     }

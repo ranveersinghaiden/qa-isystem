@@ -34,7 +34,7 @@ class PRServiceTest {
     @BeforeEach
     void setUp() {
         producer  = new CapturingProducer();
-        prService = new PRService(producer, new GitDiffParser());
+        prService = new PRService(producer, new GitDiffParser(), new PrContextExtractor());
         valid     = PullRequest.builder().title("feat: login").author("dev@example.com").repositoryName("svc").build();
     }
 
