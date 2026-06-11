@@ -20,7 +20,7 @@ nz/co/eroad/qaisystem/
 ├── kafka/        FeatureUpdatesConsumer.java · ImpactResultsProducer.java
 ├── engine/       ImpactEngine.java · GitDiffParser.java · DependencyGraph.java
 │                 ChangeTypeDetector.java · RiskScorer.java
-├── service/      TestCoverageService.java
+├── service/      IntegrationTestScopeClassifier.java
 └── controller/   ImpactController.java
 ```
 
@@ -38,7 +38,7 @@ Kafka: FeatureUpdatesQueue (PullRequest)
       Step 3 – ChangeTypeDetector  regex/keyword → List<ChangeType>
       Step 4 – RiskScorer          weighted score 0.0–1.0 → RiskLevel
       Step 4b– AIImpactEvaluator   [opt-in] refines score if in gray zone (max ±0.15)
-      Step 5 – TestCoverageService component types → CoverageReport (level=UNKNOWN)
+      Step 5 – IntegrationTestScopeClassifier  component types → CoverageReport (level=UNKNOWN)
     ▼ ImpactResultsProducer
 Kafka: ImpactResultsQueue  →  strategy-service
 ```
@@ -85,9 +85,10 @@ score = 0.25×churn + 0.30×changeTypeSeverity + 0.25×componentCriticality + 0.
 | ≥0.4 | MEDIUM |
 | <0.4 | LOW |
 
-### TestCoverageService (Phase 1)
-Identifies **which components need integration tests** — does NOT check the test repo.
-Sets `level=UNKNOWN` in the `CoverageReport`. Real level (GOOD/PARTIAL/NONE) is set by
+### IntegrationTestScopeClassifier (Phase 1)
+Classifies **which components need integration tests** by `ComponentType` — does NOT check
+the test repo and does NOT measure existing coverage.
+Sets `level=UNKNOWN` in the `CoverageReport`. Real coverage level (GOOD/PARTIAL/NONE) is set by
 `E2ECoverageAnalyzer` in strategy-service after scanning the cloned test repo.
 
 ---
@@ -178,4 +179,4 @@ aiqa.ai:
 |-------|-------|--------|
 | `GitDiffParserTest` | 7 | diff parsing, file type detection |
 | `RiskScorerTest` | 11 | thresholds, weights, normalisation |
-| `TestCoverageServiceTest` | 9 | coverage ratio, component filtering |
+| `IntegrationTestScopeClassifierTest` | 9 | component type classification, test type resolution |

@@ -44,6 +44,30 @@ class PRServiceTest {
         assertThat(producer.published).hasSize(1);
     }
 
+    @Test @DisplayName("prId is deterministic — same payload always gets the same prId")
+    void deterministicPrId() {
+        PullRequest pr1 = PullRequest.builder().title("feat: login").author("dev@example.com")
+                .repositoryName("svc").sourceBranch("feature/login").build();
+        PullRequest pr2 = PullRequest.builder().title("feat: login").author("other@example.com")
+                .repositoryName("svc").sourceBranch("feature/login").build();
+
+        String id1 = PRService.deterministicPrId(pr1);
+        String id2 = PRService.deterministicPrId(pr2);
+
+        assertThat(id1).startsWith("PR-").hasSize(11); // PR- + 8 hex chars
+        assertThat(id1).isEqualTo(id2); // author is not part of the hash key
+    }
+
+    @Test @DisplayName("prId changes when branch or repo or title differs")
+    void differentBranchGivesDifferentId() {
+        PullRequest pr1 = PullRequest.builder().title("feat: login").author("dev@example.com")
+                .repositoryName("svc").sourceBranch("feature/login").build();
+        PullRequest pr2 = PullRequest.builder().title("feat: login").author("dev@example.com")
+                .repositoryName("svc").sourceBranch("feature/logout").build();
+
+        assertThat(PRService.deterministicPrId(pr1)).isNotEqualTo(PRService.deterministicPrId(pr2));
+    }
+
     @Test @DisplayName("preserves existing prId")
     void preservesPrId() {
         valid.setPrId("PR-X");

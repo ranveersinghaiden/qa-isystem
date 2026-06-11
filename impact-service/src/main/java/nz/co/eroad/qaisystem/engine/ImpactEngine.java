@@ -9,7 +9,7 @@ import nz.co.eroad.qaisystem.model.ImpactEnvelope.ImpactedComponent;
 import nz.co.eroad.qaisystem.model.PrContext;
 import nz.co.eroad.qaisystem.model.PullRequest;
 import nz.co.eroad.qaisystem.parser.GitDiffParser;
-import nz.co.eroad.qaisystem.service.TestCoverageService;
+import nz.co.eroad.qaisystem.service.IntegrationTestScopeClassifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,7 +36,7 @@ public class ImpactEngine {
     private final DependencyGraph     dependencyGraph;
     private final ChangeTypeDetector  changeTypeDetector;
     private final RiskScorer          riskScorer;
-    private final TestCoverageService testCoverageService;
+    private final IntegrationTestScopeClassifier integrationTestScopeClassifier;
     private final AIImpactEvaluator   aiImpactEvaluator;
 
     public ImpactEnvelope analyze(PullRequest pr) {
@@ -84,7 +84,7 @@ public class ImpactEngine {
         // 5. Coverage assessment: identify which components need integration/E2E tests.
         //    Level is UNKNOWN here — real coverage (GOOD/PARTIAL/NONE) is determined
         //    downstream in strategy-service by E2ECoverageAnalyzer against the test repo.
-        CoverageReport coverage = testCoverageService.assess(components, diffs);
+        CoverageReport coverage = integrationTestScopeClassifier.assess(components, diffs);
 
         // 6. Metrics
         int totalAdded   = diffs.stream().mapToInt(GitDiff::getLinesAdded).sum();

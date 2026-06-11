@@ -9,6 +9,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -106,7 +109,7 @@ public class PRService {
     private PullRequest enrich(PullRequest pr) {
         PullRequest base = PullRequest.builder()
                 .prId(pr.getPrId() != null ? pr.getPrId()
-                        : "PR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                        : deterministicPrId(pr))
                 .title(pr.getTitle()).description(pr.getDescription()).author(pr.getAuthor())
                 .sourceBranch(pr.getSourceBranch())
                 .targetBranch(pr.getTargetBranch() != null ? pr.getTargetBranch() : "main")
@@ -128,8 +131,41 @@ public class PRService {
         return base;
     }
 
-    private void validate(PullRequest pr) {
-        List<String> errors = new ArrayList<>();
+    /**
+     * Generates a deterministic PR ID from the combination of repository name,
+     * source branch, and PR title. The same PR submitted multiple times always
+     * gets the same ID, which lets downstream services detect re-submissions
+     * and avoid generating duplicate BDD scenarios.
+     *
+     * <p>Falls back to a random UUID suffix only when all three key fields are blank.
+     */
+    static String deterministicPrId(PullRequest pr) {
+        String repo   = pr.getRepositoryName() != null ? pr.getRepositoryName().trim() : "";
+        String branch = pr.getSourceBranch()   != null ? pr.getSourceBranch().trim()   : "";
+        String title  = pr.getTitle()           != null ? pr.getTitle().trim()          : "";
+        String key    = repo + "|" + branch + "|" + title;
+
+        if (key.equals("||")) {
+            // Nothing meaningful to hash — fall back to random
+            return "PR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        }
+
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(key.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : digest) {
+                hex.append(String.format("%02X", b));
+            }
+            return "PR-" + hex.substring(0, 8);
+        } catch (NoSuchAlgorithmException e) {
+            // SHA-256 is always available in Java; this branch is unreachable in practice
+            log.warn("[PRService] SHA-256 unavailable, falling back to random prId: {}", e.getMessage());
+            return "PR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        }
+    }
+
+    private void validate(PullRequest pr) {        List<String> errors = new ArrayList<>();
         if (pr.getTitle() == null || pr.getTitle().isBlank())
             errors.add("PR title is required");
         if (pr.getAuthor() == null || pr.getAuthor().isBlank())

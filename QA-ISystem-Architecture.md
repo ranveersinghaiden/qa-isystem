@@ -268,7 +268,7 @@ simplicity — only services that *consume* Kafka messages need the manual-ack c
 
 ```
 PullRequest  →  [GitDiffParser]  →  [DependencyGraph]  →  [ChangeTypeDetector]
-             →  [RiskScorer]     →  [TestCoverageService]  →  ImpactEnvelope
+             →  [RiskScorer]     →  [IntegrationTestScopeClassifier]  →  ImpactEnvelope
 ```
 
 ### Step 1: GitDiffParser — Reading the raw diff
@@ -457,7 +457,7 @@ is caught and returns the deterministic result unchanged. The AI **never breaks 
 **The result is recorded in `ImpactEnvelope.aiInsight`** so strategy-service and human
 reviewers can see exactly what the AI changed and why.
 
-### Step 5: TestCoverageService — Which components need integration tests?
+### Step 5: IntegrationTestScopeClassifier — Which components need integration tests?
 
 This is Phase 1 of a **two-phase coverage assessment**.
 
@@ -808,7 +808,7 @@ They are separate services and should not be coupled.
 
 ### Phase 1 in impact-service
 
-`TestCoverageService.assess(components, diffs)` runs inside `ImpactEngine` and produces a
+`IntegrationTestScopeClassifier.assess(components, diffs)` runs inside `ImpactEngine` and produces a
 `CoverageReport` with `level=UNKNOWN`. It identifies *which types of components need
 integration tests* (by their `ComponentType`) but cannot say whether those tests exist:
 
@@ -1079,7 +1079,7 @@ curl -X POST http://localhost:8082/api/strategy/approve-bdd \
 | `DependencyGraph` | engine | Import graph + component typing |
 | `ChangeTypeDetector` | engine | Regex-based change classification |
 | `RiskScorer` | engine | Weighted score → RiskLevel |
-| `TestCoverageService` | service | Phase 1 coverage: identify components by type → UNKNOWN |
+| `IntegrationTestScopeClassifier` | service | Phase 1 coverage: identify components by type → UNKNOWN |
 | `ImpactController` | controller | REST: /analyze (sync), /status |
 
 ### strategy-service

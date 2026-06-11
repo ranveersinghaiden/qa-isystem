@@ -1,7 +1,10 @@
 package nz.co.eroad.qaisystem.kafka;
 
 import nz.co.eroad.qaisystem.agent.StrategyAgent;
+import nz.co.eroad.qaisystem.github.PrTracker;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope;
+import nz.co.eroad.qaisystem.model.PrRecord;
+import nz.co.eroad.qaisystem.model.PrType;
 import nz.co.eroad.qaisystem.service.RepoContextService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +36,7 @@ public class ImpactResultsConsumer {
     private final ObjectMapper        objectMapper;
     private final StrategyAgent       strategyAgent;
     private final RepoContextService  repoContextService;
+    private final PrTracker           prTracker;
 
     /** Pull latest test repo before every coverage analysis (default: true). */
     @Value("${aiqa.strategy.refresh-on-analysis:true}")
@@ -50,6 +54,20 @@ public class ImpactResultsConsumer {
             ImpactEnvelope envelope = objectMapper.readValue(record.value(), ImpactEnvelope.class);
             log.info("[ImpactResultsConsumer] Strategy decision for PR '{}' risk={}",
                     envelope.getPrId(), envelope.getRiskLevel());
+
+            // Deduplication guard: skip if a BDD PR for this prId is already pending review.
+            // This prevents duplicate BDD generation when the same payload is resubmitted
+            // (same repo + sourceBranch + title = same deterministic prId).
+            boolean alreadyPending = prTracker.findAll().stream()
+                    .filter(r -> r.getType() == PrType.BDD)
+                    .anyMatch(r -> r.getBddScenario() != null
+                            && envelope.getPrId().equals(r.getBddScenario().getPrId()));
+            if (alreadyPending) {
+                log.warn("[ImpactResultsConsumer] PR '{}' already has a pending BDD review — " +
+                         "skipping duplicate pipeline run.", envelope.getPrId());
+                ack.acknowledge();
+                return;
+            }
 
             if (refreshOnAnalysis) {
                 log.info("[ImpactResultsConsumer] Refreshing repo context before analysis " +

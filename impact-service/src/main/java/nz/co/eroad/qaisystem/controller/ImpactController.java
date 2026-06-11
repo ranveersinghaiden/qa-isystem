@@ -9,7 +9,7 @@ import nz.co.eroad.qaisystem.model.*;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.ChangeType;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope.ImpactedComponent;
 import nz.co.eroad.qaisystem.parser.GitDiffParser;
-import nz.co.eroad.qaisystem.service.TestCoverageService;
+import nz.co.eroad.qaisystem.service.IntegrationTestScopeClassifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +28,7 @@ public class ImpactController {
     private final ChangeTypeDetector  changeTypeDetector;
     private final DependencyGraph     dependencyGraph;
     private final RiskScorer          riskScorer;
-    private final TestCoverageService testCoverageService;
+    private final IntegrationTestScopeClassifier integrationTestScopeClassifier;
     private final AIImpactEvaluator   aiImpactEvaluator;
     private final AIImpactProperties  aiProps;
 
@@ -52,7 +52,7 @@ public class ImpactController {
         List<ChangeType> types              = changeTypeDetector.detect(diffs);
         List<ImpactedComponent> comps       = dependencyGraph.buildAndAnalyse(diffs);
         double riskScore                    = riskScorer.score(diffs, types, comps);
-        CoverageReport coverage             = testCoverageService.assess(comps, diffs);
+        CoverageReport coverage             = integrationTestScopeClassifier.assess(comps, diffs);
 
         // AI last-resort refinement (may be empty if disabled/not in gray zone)
         // Uses a minimal PullRequest facade since controller doesn't have the full PR

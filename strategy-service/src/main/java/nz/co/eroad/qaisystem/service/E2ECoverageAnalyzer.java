@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * coverage index built by {@link RepoContextService}.
  *
  * <p>This is the service that produces a <em>real</em> coverage assessment
- * ({@code GOOD / PARTIAL / NONE}). The upstream {@code TestCoverageService} in
+ * ({@code GOOD / PARTIAL / NONE}). The upstream {@code IntegrationTestScopeClassifier} in
  * impact-service only sets {@code level = UNKNOWN} because it has no test repo access.
  *
  * <p><b>Coverage logic:</b>
@@ -44,7 +44,7 @@ public class E2ECoverageAnalyzer {
 
     private final RepoContextService repoContextService;
 
-    /** Component types that require integration/E2E tests — must match TestCoverageService. */
+    /** Component types that require integration/E2E tests — must match IntegrationTestScopeClassifier. */
     private static final Set<ComponentType> REQUIRES_INTEGRATION_TEST = Set.of(
             ComponentType.CONTROLLER,
             ComponentType.SERVICE,

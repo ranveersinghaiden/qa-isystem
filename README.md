@@ -36,7 +36,7 @@ Git / Webhook
 │  impact-service  :8081   NO AI                │
 │  GitDiffParser → DependencyGraph              │
 │  ChangeTypeDetector → RiskScorer              │
-│  TestCoverageService → ImpactEnvelope         │
+│  IntegrationTestScopeClassifier → ImpactEnvelope         │
 └──────┬────────────────────────────────────────┘
        │ ImpactResultsQueue (Kafka)
        ▼
@@ -548,7 +548,7 @@ BUILD SUCCESS
 | pr-service | `ProductsFieldDeserializerTest` | 7 | `products` JSON array + comma-string, whitespace trim, null/empty |
 | impact-service | `GitDiffParserTest` | 7 | diff parsing, file types |
 | impact-service | `RiskScorerTest` | 11 | thresholds, weights, normalisation |
-| impact-service | `TestCoverageServiceTest` | 9 | coverage ratio, levels |
+| impact-service | `IntegrationTestScopeClassifierTest` | 9 | coverage ratio, levels |
 | strategy-service | `RepoContextTest` | 9 | helper methods, agent instructions |
 | strategy-service | `ApiTestRunnerTest` | 7 | code generation, repo context |
 | strategy-service | `StrategyAgentTest` | 10 | SKIP/CREATE logic, fallback rules |
