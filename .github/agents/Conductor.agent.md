@@ -40,8 +40,9 @@ Orchestrate feature delivery. Break tasks down, delegate to specialists, run Sec
 | Zero Mockito | No `@Mock`, `@MockBean`, `@Spy`, `@InjectMocks` — use real inner-class test doubles |
 | Kafka topics | Bind via `${kafka.topics.xxx}` — never hardcode |
 | No secrets in code | All credentials → `${ENV_VAR_NAME:}` placeholders only — never hardcode tokens, passwords, or URLs with credentials |
-| No secrets in scripts | Shell scripts must read from env vars; fail with error if unset |
+| **No secrets in scripts** | Shell scripts **must** read credentials from env vars only; guard pattern required — fail with `[ERROR]` and `exit 1` if unset; no literal token assignments (`TOKEN="ghp_..."`) ever; no inline credential expansions before commands |
 | No secrets in state files | `.agents/state/` JSON files must never contain tokens, passwords, or repo URLs with credentials |
+| No credentials in git remote URLs | `.git/config` remotes must use `https://github.com/...` — never embed a PAT in the URL |
 | Check `common/` first | Never duplicate a class that already exists in the `common` module |
 | `@ConditionalOnProperty` | Guard every optional bean (AI, Redis, GitHub) with a condition |
 | `@Slf4j` + `[ClassName]` prefix | Every log statement |

@@ -189,6 +189,42 @@ class StrategyAgentTest {
 | Hardcode topic names, port numbers, or credentials | Configuration belongs in YAML |
 | `@SneakyThrows` in service/business classes | Hides errors |
 | Blocking `Thread.sleep` in tests | Flaky; use `Awaitility` |
+| **Hardcode any token, PAT, password, or secret in a shell script** | Will be caught by GitHub secret scanning and block the push — use `${ENV_VAR}` and fail loudly if unset |
+| Embed credentials in git remote URLs (e.g. `https://token@github.com/...`) | Stored in `.git/config`, leaked in `git clone` output and CI logs |
+
+---
+
+## Script Safety Rules (Shell / Bash)
+
+Any `.sh` file you write or modify **must** follow these rules or it will be rejected by Security:
+
+1. **No literal tokens, PATs, passwords, or API keys** — ever. Not even in comments.
+2. **Read credentials from env vars only:**
+   ```bash
+   # ✅ CORRECT
+   TOKEN="${TARGET_REPO_TOKEN:?TARGET_REPO_TOKEN env var must be set}"
+   nohup java -jar app.jar > logs/app.log 2>&1 &
+
+   # ❌ WRONG — will be blocked by GitHub secret scanning
+   TARGET_REPO_TOKEN="ghp_abc123..." nohup java -jar app.jar > logs/app.log 2>&1 &
+   ```
+3. **Guard pattern — fail loudly if a required env var is missing:**
+   ```bash
+   for var in TARGET_REPO_URL TARGET_REPO_TOKEN TARGET_REPO_USERNAME; do
+     if [ -z "${!var:-}" ]; then
+       echo "[ERROR] Required env var '$var' is not set. Export it before running this script."
+       exit 1
+     fi
+   done
+   ```
+4. **Pass env vars by reference**, not by value, when launching child processes:
+   ```bash
+   # ✅ Pass by reference (value stays in the env, not in the process arg list)
+   TARGET_REPO_TOKEN="${TARGET_REPO_TOKEN}" nohup java -jar app.jar > logs/app.log 2>&1 &
+
+   # ❌ Never expand the token into a -D flag (visible in `ps` output and CI logs)
+   java -DTARGET_REPO_TOKEN="${TARGET_REPO_TOKEN}" -jar app.jar
+   ```
 
 ---
 

@@ -24,15 +24,28 @@ Report findings with severity, file, line, and concrete fix. **Actively scan for
 | Check | Pass condition |
 |-------|--------------|
 | No credentials in source code (`.java`, `.yaml`, `.yml`, `.properties`) | All tokens/passwords as `${ENV_VAR:}` placeholders |
-| No credentials in shell scripts (`.sh`) | Scripts must read from env vars and fail with `[ERROR]` if unset |
+| No credentials in shell scripts (`.sh`) | Scripts **must** read from env vars; fail with `[ERROR]` and `exit 1` if unset — no exceptions |
 | No credentials in state/JSON files (`.agents/state/*.json`, `*.json`) | No tokens, API keys, passwords, or URLs containing credentials |
-| No credentials in documentation (`.md`, `.html`, `.pdf`) | No real tokens — use `<your-token>` placeholders |
+| No credentials in documentation (`.md`, `.html`, `.pdf`) | No real tokens — use `<your-token>` or `ghp_your_token_here` placeholders only |
 | No credentials in logs | `log.info/warn/error` never includes token, key, password, or embedded-token URL |
 | Tokens not in process arguments | `ProcessBuilder` args must not contain tokens — use `GIT_ASKPASS` or env vars instead |
+| No credentials in git remote URLs | `.git/config` must not have `https://token@github.com/...` — use `https://github.com/...` and authenticate via credential helper or SSH |
 | `.env` in `.gitignore` | Must be present |
 | `docker-compose*.yml` has no hardcoded secrets | Only `${VAR}` references |
 
 **If any hardcoded secret is found:** rate as CRITICAL and instruct Coder to replace it with an env-var reference immediately. Do not proceed until fixed.
+
+#### ⚠️ Shell Script Specific Rules
+When reviewing any `.sh` file, explicitly check:
+1. No `VAR="ghp_..."`, `TOKEN="sk-..."`, `PASSWORD="..."`, or similar literal assignments.
+2. No inline credential assignment before a command: `TOKEN="secret" java -jar ...` → **CRITICAL**.
+3. Guard pattern present for every required env var:
+   ```bash
+   for var in VAR1 VAR2; do
+     [ -z "${!var:-}" ] && echo "[ERROR] $var not set" && exit 1
+   done
+   ```
+4. Env vars passed by reference to child processes: `TOKEN="${TOKEN}" nohup java -jar ...` — the var name must not be expanded to its value in a `-D` JVM flag or script argument.
 
 ### 2 · API Authentication
 | Endpoint pattern | Required protection |
