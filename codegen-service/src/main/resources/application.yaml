@@ -55,16 +55,16 @@ aiqa:
     provider: ${AI_PROVIDER:copilot-cli}           # copilot-cli (default) | copilot | openai
     copilot-cli:
       gh-cli-path: ${GH_CLI_PATH:gh}
-      model:       ${COPILOT_CLI_MODEL:gpt-4o}
+      model:       ${COPILOT_CLI_MODEL:claude-sonnet-4.6}
       timeout-seconds: ${COPILOT_CLI_TIMEOUT:120}
     openai:
       api-key:  ${OPENAI_API_KEY:}
       base-url: ${OPENAI_BASE_URL:https://api.openai.com}
-      model:    ${OPENAI_MODEL:gpt-4o}
+      model:    ${OPENAI_MODEL:claude-sonnet-4.6}
     copilot:
       token:    ${GITHUB_COPILOT_TOKEN:}
       base-url: ${COPILOT_BASE_URL:https://api.githubcopilot.com}
-      model:    ${COPILOT_MODEL:gpt-4o}
+      model:    ${COPILOT_MODEL:claude-sonnet-4.6}
 
 logging:
   level:
