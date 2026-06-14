@@ -54,6 +54,7 @@ public class PrContextExtractor {
                 .confluenceLinks(confluenceLinks.isEmpty() ? null : confluenceLinks)
                 .labels(labels.isEmpty()             ? null : labels)
                 .products(products.isEmpty()         ? null : products)
+                .summary(pr.getContextSummary())
                 .build();
 
         if (ctx.hasContext()) {

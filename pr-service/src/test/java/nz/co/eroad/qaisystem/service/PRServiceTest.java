@@ -3,6 +3,7 @@ package nz.co.eroad.qaisystem.service;
 import nz.co.eroad.qaisystem.kafka.FeatureUpdatesProducer;
 import nz.co.eroad.qaisystem.model.PullRequest;
 import nz.co.eroad.qaisystem.parser.GitDiffParser;
+import nz.co.eroad.qaisystem.service.ContextCompressionService;
 import org.junit.jupiter.api.*;
 import org.springframework.kafka.support.SendResult;
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ class PRServiceTest {
     @BeforeEach
     void setUp() {
         producer  = new CapturingProducer();
-        prService = new PRService(producer, new GitDiffParser(), new PrContextExtractor());
+        prService = new PRService(producer, new GitDiffParser(), new PrContextExtractor(), new ContextCompressionService(null));
         valid     = PullRequest.builder().title("feat: login").author("dev@example.com").repositoryName("svc").build();
     }
 

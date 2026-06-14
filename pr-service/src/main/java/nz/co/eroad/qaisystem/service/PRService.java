@@ -37,9 +37,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PRService {
 
-    private final FeatureUpdatesProducer featureUpdatesProducer;
-    private final GitDiffParser          gitDiffParser;
-    private final PrContextExtractor     prContextExtractor;
+    private final FeatureUpdatesProducer      featureUpdatesProducer;
+    private final GitDiffParser               gitDiffParser;
+    private final PrContextExtractor          prContextExtractor;
+    private final ContextCompressionService   contextCompressionService;
 
     public PullRequest processPullRequest(PullRequest pr) {
         log.info("[PRService] Received PR from '{}': '{}'", pr.getAuthor(), pr.getTitle());
@@ -103,6 +104,7 @@ public class PRService {
                 .confluenceLinks(pr.getConfluenceLinks())
                 .labels(pr.getLabels()).changedFiles(pr.getChangedFiles())
                 .products(pr.getProducts())
+                .contextSummary(pr.getContextSummary())
                 .build();
     }
 
@@ -128,7 +130,8 @@ public class PRService {
         // Extract and attach all external context (Jira, Confluence, labels, products)
         PrContext ctx = prContextExtractor.extract(base);
         log.debug("[PRService] Extracted context hasContext={} for PR '{}'", ctx.hasContext(), base.getPrId());
-        return base;
+        PullRequest compressed = contextCompressionService.compress(base);
+        return compressed;
     }
 
     /**

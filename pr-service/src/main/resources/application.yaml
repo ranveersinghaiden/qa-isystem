@@ -24,6 +24,17 @@ kafka:
   topics:
     feature-updates: FeatureUpdatesQueue
 
+aiqa:
+  ai:
+    compression:
+      # Set to true to enable AI-powered context compression via GitHub Copilot CLI.
+      # Prerequisites: gh CLI installed and authenticated (gh auth login).
+      # When false (default) PRs are published as-is — no AI calls in pr-service.
+      enabled: ${AIQA_COMPRESSION_ENABLED:false}
+      gh-cli-path: ${GH_CLI_PATH:gh}
+      model: ${COPILOT_CLI_MODEL:gpt-5}
+      timeout-seconds: ${COPILOT_CLI_TIMEOUT:60}
+
 # ── GitHub / AI integration — intentionally disabled ──────────────────────────
 # pr-service is a pure ingestion service: it receives webhook events and
 # publishes them to Kafka. It has no business interacting with GitHub or any

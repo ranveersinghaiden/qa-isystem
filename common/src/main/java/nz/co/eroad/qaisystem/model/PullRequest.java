@@ -100,6 +100,7 @@ public class PullRequest {
     @JsonProperty("context_summary")
     private String contextSummary;
 
+
     public enum PrStatus {
         OPEN, CLOSED, MERGED, DRAFT
     }
