@@ -15,59 +15,77 @@ Traditionally, a human QA engineer looks at the changed code, figures out which 
 
 **QA-ISystem automates this entire workflow:**
 
-1. A PR is submitted → the system receives it and extracts external context (Jira tickets, Confluence docs, labels, products)
+1. A PR is submitted → the system receives it, extracts external context (Jira tickets, Confluence docs, labels, products) and AI-compresses it
 2. The system analyses the code change (which files changed, what kind of change, how risky it is)
 3. It checks whether the changed components already have integration or end-to-end tests
 4. It makes a decision: skip / update existing tests / create new tests
 5. It generates BDD (Gherkin) scenarios for human review, enriched with Jira/Confluence context
-6. After human approval, it generates executable test code embedding the PR context
+6. After human approval, a dedicated code-generation service produces executable test code
 7. It runs the test, self-heals minor failures, and opens a final PR
+8. If a generated PR is **rejected**, the feedback loop re-generates improved content using the reviewer's comments and updates the product knowledge base
 
 ---
 
 ## 2. System Overview
 
-The system is split into **microservices** and one **shared library** (`common`). Each service runs independently and communicates via **Apache Kafka** (a message queue). External context (Jira, Confluence, labels, products) is extracted at ingestion and carried unchanged through the full pipeline.
+The system comprises **five microservices** and one **shared library** (`common`). Each service runs independently and communicates via **Apache Kafka** (a message queue). External context is extracted and AI-compressed at ingestion and carried unchanged through the full pipeline.
 
 ```
   Developer opens PR
         │
         ▼
-┌──────────────────────────────────┐       Kafka: FeatureUpdatesQueue
-│   pr-service  (port 8080)        │ ──────────────────────────────────►
-│   • Webhook ingestion            │
-│   • Context extraction           │
-│     (Jira IDs, Confluence links, │
-│      labels, products → PrContext│
-└──────────────────────────────────┘
-
-                          ┌──────────────────────────────────┐
-                          │   impact-service  (port 8081)     │
-                          │   • Parse diff → graph → risk     │
-                          │   • Forward PrContext in envelope │
-                          └──────────────────────────────────┘
-                                         │
-                       Kafka: ImpactResultsQueue (envelope + PrContext)
-                                         │
-                                         ▼
-                          ┌──────────────────────────────────┐
-                          │   strategy-service  (port 8082)   │
-                          │   • Scan test repo → real coverage│
-                          │   • BDD generation with PrContext │
-                          │     injected into AI prompt       │
-                          │   • Code generation + PrContext   │
-                          │     embedded in test class        │
-                          └──────────────────────────────────┘
-                                         │
-                       Kafka: TestScriptsQueue (BddScenario + PrContext)
-                                         │
-                                         ▼
-                          ┌──────────────────────────────────┐
-                          │   codegen-service  (port 8083)    │
-                          │   • Generates test code           │
-                          │   • PrContext in test Javadoc     │
-                          │   • Stabilisation loop            │
-                          └──────────────────────────────────┘
+┌───────────────────────────────────────┐     Kafka: FeatureUpdatesQueue
+│  pr-service  (port 8080)              │ ──────────────────────────────────►
+│  • Webhook ingestion                  │
+│  • Context extraction                 │
+│    (Jira IDs, Confluence links,       │
+│     labels, products → PrContext)     │
+│  • AI context compression             │
+│    (ContextCompressionService via     │
+│     Copilot CLI → contextSummary)     │
+└───────────────────────────────────────┘
+                        │
+          Kafka: FeatureUpdatesQueue
+                        │
+                        ▼
+┌───────────────────────────────────────┐
+│  impact-service  (port 8081)          │
+│  • GitDiffParser → DependencyGraph    │
+│  • ChangeTypeDetector → RiskScorer   │
+│  • IntegrationTestScopeClassifier     │
+│  • Optional AI gray-zone refinement   │
+│  • Produces ImpactEnvelope + PrContext│
+└───────────────────────────────────────┘
+                        │
+          Kafka: ImpactResultsQueue
+                        │
+                        ▼
+┌───────────────────────────────────────┐
+│  strategy-service  (port 8082)        │
+│  • AiCallGate (rules — skip 40-60%)  │
+│  • E2ECoverageAnalyzer (repo scan)    │
+│  • StrategyAgent (SKIP/UPDATE/CREATE) │
+│  • BddGenerator + PromptResponseCache │
+│  • GitHub PR creation (qa/bdd/*)      │
+│  • AiCostMonitor                      │
+│  • GitHub webhook listener:           │
+│    merge → TestScriptsQueue           │
+│    reject → FeedbackQueue             │
+└───────────────────────────────────────┘
+         │                      │
+TestScriptsQueue          FeedbackQueue
+         │                      │
+         ▼                      ▼
+┌─────────────────┐   ┌───────────────────────────────────┐
+│ codegen-service │   │  feedback-service  (port 8084)    │
+│ (port 8083)     │   │  • Fetches GitHub review comments │
+│ • API/UI/Mobile │   │  • Classifies: KNOWLEDGE_GAP /    │
+│   test runners  │   │    STYLE_ONLY                     │
+│ • Stabilization │   │  • Updates productExpert/*.md     │
+│   loop (max 3×) │   │  • Re-generates with feedback     │
+│ • Final test PR │   │  • Creates revised PR             │
+│   (qa/tests/*)  │   └───────────────────────────────────┘
+└─────────────────┘
 ```
 
 ---
@@ -84,26 +102,35 @@ The system is split into **microservices** and one **shared library** (`common`)
 | Impact-service calls strategy-service directly | Same coupling: one slow step blocks everything |
 | **Kafka between each step** | Each service processes at its own pace. A slow strategy-service does not block a fast impact-service. Each service can have multiple consumers in parallel. Messages are durable — if strategy-service crashes, it picks up where it left off |
 
+### Kafka topics
+
+| Topic | Producer | Consumer | Payload |
+|-------|----------|----------|---------|
+| `FeatureUpdatesQueue` | pr-service | impact-service | `PullRequest` — with `contextSummary`, `products`, diff |
+| `ImpactResultsQueue` | impact-service | strategy-service | `ImpactEnvelope` — carries `PrContext` + `prTitle` |
+| `TestScriptsQueue` | strategy-service | codegen-service | `BddScenario` — carries `PrContext` + `prTitle` |
+| `TestResultsQueue` | codegen-service | *(future consumers)* | `TestResult` |
+| `FeedbackQueue` | strategy-service | feedback-service | `FeedbackEvent` — wraps `BddScenario` or `TestScript` |
+
+> **`prTitle` propagation:** `PullRequest.title` → `ImpactEnvelope.prTitle` → `BddScenario.prTitle` → `TestScript.prTitle`.
+> All QA-generated GitHub PR titles (initial + revised) derive from this field.
+
 ### Key Kafka concepts used here
 
 | Term | Meaning in this system |
 |------|----------------------|
-| **Topic** | A named queue. `FeatureUpdatesQueue`, `ImpactResultsQueue`, `TestScriptsQueue` |
+| **Topic** | A named queue. `FeatureUpdatesQueue`, `ImpactResultsQueue`, `TestScriptsQueue`, `FeedbackQueue` |
 | **Producer** | A service that puts messages in a topic |
 | **Consumer** | A service that reads messages from a topic |
-| **Consumer group** | Multiple instances of the same service that share the work (e.g. `impact-service-group` with 3 threads) |
+| **Consumer group** | Multiple instances of the same service that share the work |
 | **Partition key** | Messages with the same key (e.g. `prId`) go to the same partition and are processed in order |
-| **Manual ack** | The consumer explicitly tells Kafka "I have processed this message" (`AckMode.MANUAL_IMMEDIATE`). If the service crashes before acking, Kafka re-delivers the message |
+| **Manual ack** | The consumer explicitly tells Kafka "I finished processing this message." If the service crashes before acking, Kafka re-delivers |
 
 ---
 
 ## 4. The `common` Module
 
-The `common` module is a shared Java library (JAR) that is compiled once and used as a dependency by all three services. It contains all the **data models** — plain Java objects that carry information between services.
-
-### Why share models?
-
-If each service had its own definition of `PullRequest`, they might disagree on field names or types. A shared `common` module means they all speak the same language.
+The `common` module is a shared Java library (JAR) compiled once and used by all five services. It contains all **data models**, shared **AI client interfaces**, **Kafka/Redis configuration**, and **shared services**.
 
 ### Key models
 
@@ -126,7 +153,8 @@ PullRequest
 ├── jiraLinks       ["https://jira.../VSF-3670"] (extracted from description)
 ├── confluenceLinks ["https://wiki.../pages/123"] (extracted from description)
 ├── labels          ["bug", "payments", "high-priority"]  (GitHub PR labels)
-└── products        ["payments", "auth"]      (explicit or inferred from labels)
+├── products        ["payments", "auth"]      (explicit or inferred from labels)
+└── contextSummary  "Adds JWT auth to payment flow…" (AI-compressed, set by ContextCompressionService)
 ```
 
 **Context extraction** happens in `PrContextExtractor` during pr-service enrichment.
@@ -136,7 +164,10 @@ It scans the PR title, description, and labels using regex patterns:
 - Confluence URLs: any URL containing `/wiki/`
 - Product names: explicit `products` field + lower-case labels without special chars
 
-Results are consolidated into a `PrContext` object and forwarded through the pipeline.
+**Context compression** happens immediately after extraction. `ContextCompressionService`
+calls GitHub Copilot (via `gh` CLI) to distil the title + description + labels into a
+focused plain-text summary stored in `contextSummary`. This is carried through Kafka so
+all downstream AI calls receive lean, token-efficient context instead of verbose boilerplate.
 
 #### `GitDiff`
 Represents one changed file. A PR touching 5 files produces 5 `GitDiff` objects.
@@ -164,12 +195,14 @@ PrContext
 ├── jiraLinks       ["https://jira.../browse/VSF-3670"]
 ├── confluenceLinks ["https://wiki.../pages/123"]
 ├── labels          ["bug", "payments", "high-priority"]
-└── products        ["payments", "auth"]
+├── products        ["payments", "auth"]
+└── summary         "Adds JWT auth to payment flow; risk areas: token refresh…" (from contextSummary)
 ```
 
-`PrContext.asPromptSection()` formats this into a structured text block that is
-appended to AI prompts for BDD generation. Test runners embed it as Javadoc in
-each generated test class.
+`PrContext.asPromptSection()` formats this into a structured text block. When `summary` is
+set, it is prepended as a `=== COMPRESSED CONTEXT SUMMARY ===` block before the structured
+Jira/Confluence/label detail. All downstream AI prompts (BDD generation, code generation,
+feedback re-generation) receive this section automatically.
 
 #### `ImpactEnvelope`
 The output of `impact-service`. Contains everything the strategy layer needs.
@@ -178,7 +211,8 @@ The output of `impact-service`. Contains everything the strategy layer needs.
 ImpactEnvelope
 ├── envelopeId            (UUID)
 ├── prId
-├── prContext             PrContext  (Jira, Confluence, labels, products — forwarded from PR)
+├── prTitle               (copied from PullRequest.title — used for GitHub PR naming)
+├── prContext             PrContext  (Jira, Confluence, labels, products, summary)
 ├── impactedComponents    List<ImpactedComponent>
 │     └── componentName, filePath, type (CONTROLLER/SERVICE/...), impactScore, callers, callees
 ├── detectedChangeTypes   List<ChangeType>  (API_CHANGE, BUG_FIX, SECURITY_FIX, ...)
@@ -205,37 +239,87 @@ CoverageReport
 └── requiresNewTests  boolean
 ```
 
+#### `BddScenario`
+The output of `BddGenerator`. Carries the full scenario content plus context for codegen-service.
+
+```
+BddScenario
+├── scenarioId    (UUID)
+├── prId
+├── prTitle       (copied from ImpactEnvelope — used for GitHub PR title)
+├── prContext     PrContext  (forwarded unchanged from ImpactEnvelope)
+├── testType      API | UI | MOBILE
+├── featureTitle
+├── scenarios     List<String>  (Gherkin text blocks)
+└── tags          ["@api", "@pr-XXXX", "@auto-generated"]
+```
+
+#### `FeedbackEvent`
+Published to `FeedbackQueue` when a BDD or test PR is rejected on GitHub.
+
+```
+FeedbackEvent
+├── eventId       (UUID)
+├── prId
+├── feedbackType  BDD_REJECTED | TEST_REJECTED
+├── prUrl         URL of the rejected GitHub PR
+├── bddScenario   BddScenario  (present when feedbackType=BDD_REJECTED)
+└── testScript    TestScript   (present when feedbackType=TEST_REJECTED)
+```
+
+### Shared services in `common`
+
+| Class | Role |
+|-------|------|
+| `AiClient` (interface) | Abstraction over the LLM API; three implementations |
+| `CopilotCliClient` | Calls Copilot API via `gh api` subprocess — default, no token env var needed |
+| `CopilotClient` | Calls Copilot REST API with `GITHUB_COPILOT_TOKEN` |
+| `OpenAiClient` | Calls any OpenAI-compatible endpoint |
+| `AiClientConfig` | Creates the active `AiClient` bean; gated on `aiqa.github.enabled=true` |
+| `AiProviderProperties` | `@ConfigurationProperties(prefix="aiqa.ai")` |
+| `GitHubService` | GitHub API calls: diff fetch, PR creation, webhook signature verification |
+| `RepoContextService` | Clone + index test repo; build coverage index; extract conventions |
+| `RedisPrTracker` | Redis-backed PR state (`@ConditionalOnProperty`) |
+| `InMemoryPrTracker` | Fallback PR state tracker when Redis is unavailable |
+| `GitDiffParser` | Parse raw unified diff string → `List<GitDiff>` |
+| `KafkaConfig` | `ConcurrentKafkaListenerContainerFactory` with `MANUAL_IMMEDIATE` ack |
+
 ---
 
-## 5. pr-service — Phase 0: Ingestion + Context Extraction
+## 5. pr-service — Phase 0: Ingestion, Context Extraction & Compression
 
-**Port:** 8080 | **Role:** Receive PR events, validate, enrich, extract external context, publish to Kafka
+**Port:** 8080 | **Role:** Receive PR events, validate, enrich, extract external context, AI-compress the context, publish to Kafka
 
 ### What it does
 
 1. Developer (or CI webhook) sends a POST request with PR details
 2. Service validates required fields (title, author, repository name)
 3. Service fills in defaults for optional fields (prId, targetBranch, timestamps)
-4. **`PrContextExtractor` mines the PR's title, description, and labels** for:
-   - Jira ticket keys (regex `\b[A-Z]{2,10}-\d+\b`) from title/description
-   - Full Jira browse URLs (pattern `https?://.../browse/PROJECT-NNN`) from description
-   - Confluence page URLs (pattern `https?://.../wiki/...`) from description
-   - GitHub PR labels (`labels` field) — product-like lower-case labels are also inferred as product names
-   - Product names from the explicit `products` field, merged with label-inferred names
-5. The extracted `PrContext` is attached to the `PullRequest` message
-6. Service publishes the enriched `PullRequest` (including `PrContext`) to `FeatureUpdatesQueue`
+4. **`PrContextExtractor`** mines the PR's title, description, and labels for Jira IDs, Jira URLs, Confluence URLs, labels, and product names
+5. **`ContextCompressionService`** AI-compresses the textual context (when enabled):
+   - Calls GitHub Copilot via the `gh` CLI subprocess (no extra token required)
+   - Strips PR template boilerplate, markdown checklists, screenshots, redundant phrasing
+   - Stores the result in `PullRequest.contextSummary` (max ~250 words)
+   - Original `description` is preserved — compression is additive
+   - Raw diff and structured fields (`jiraIds`, `labels`, etc.) are **never compressed**
+   - Best-effort: on failure or when disabled, the PR is passed through unchanged
+6. The enriched `PullRequest` (with `contextSummary` set) is published to `FeatureUpdatesQueue`
 
-### Design decisions
+### Context compression configuration
 
-**Why extract context in pr-service?**
-Context extraction is a pure string-processing step that needs no AI and no external calls.
-Doing it at ingestion means every downstream service automatically benefits without needing
-to re-parse the raw description. The PR description may not be available downstream.
+```yaml
+aiqa:
+  ai:
+    compression:
+      enabled: ${AIQA_COMPRESSION_ENABLED:false}   # set true to enable
+      gh-cli-path: ${GH_CLI_PATH:gh}
+      model: ${COPILOT_CLI_MODEL:gpt-5}
+      timeout-seconds: ${COPILOT_CLI_TIMEOUT:60}
+```
 
-**No custom Kafka configuration needed here.**
-pr-service only produces messages (never consumes). Spring Boot auto-creates a
-`KafkaTemplate` from the YAML config, with no custom beans required. This is intentional
-simplicity — only services that *consume* Kafka messages need the manual-ack container setup.
+> **Why isolated from shared `AiClientConfig`:** The shared config requires `aiqa.github.enabled=true`,
+> which must NOT be set in pr-service (it would trigger GitHub/AI beans requiring credentials at startup).
+> The compression service creates its own `CopilotCliClient` instance directly.
 
 ### Classes
 
@@ -243,11 +327,14 @@ simplicity — only services that *consume* Kafka messages need the manual-ack c
 |-------|------|
 | `PrServiceApplication` | Spring Boot entry point |
 | `PRController` | HTTP: 4 endpoints (`/webhook`, `/submit`, `/demo`, `/health`) |
-| `PRService` | Enrich + validate + extract context + publish |
+| `PRService` | Enrich → extract context → compress → validate → publish |
 | `PrContextExtractor` | Regex-based extraction of Jira, Confluence, labels, products |
+| `ContextCompressionService` | AI compression via Copilot CLI; stores result in `contextSummary` |
+| `CompressionConfig` | Creates `ContextCompressionService` bean with its own `CopilotCliClient` |
+| `CompressionProperties` | `@ConfigurationProperties(prefix = "aiqa.ai.compression")` |
 | `FeatureUpdatesProducer` | Serialise + send to FeatureUpdatesQueue |
 
-### Endpoint summary
+### Endpoints
 
 | Endpoint | Use case | Notes |
 |----------|----------|-------|
@@ -262,7 +349,7 @@ simplicity — only services that *consume* Kafka messages need the manual-ack c
 
 **Port:** 8081 | **Role:** Parse the diff, classify the change, score risk, identify coverage gaps
 
-> **No AI here.** Every step is a deterministic algorithm. The same diff always produces the same output.
+> **No AI here by default.** Every step is a deterministic algorithm. The same diff always produces the same output. Optional AI gray-zone refinement is available but off by default.
 
 ### The 5-step pipeline
 
@@ -297,14 +384,8 @@ plus metadata like `linesAdded`, `linesDeleted`, and whether it is a test file.
 ### Step 2: DependencyGraph — Who depends on what?
 
 For every changed file, `DependencyGraph` extracts Java `import` statements from the
-changed lines and builds a map of:
-
-```
-ClassName → [classesItImports]
-```
-
-It then identifies **callers** — other changed classes that import this one. A class
-with many callers has a wider impact ("blast radius") and gets a higher impact score.
+changed lines and builds a map of callers and callees. A class with many callers has a
+wider impact ("blast radius") and gets a higher impact score.
 
 **ComponentType detection** (from file path keywords):
 
@@ -327,10 +408,7 @@ impactScore  = min(1.0, base + callerBonus)
 
 ### Step 3: ChangeTypeDetector — What kind of change is this?
 
-Uses regex patterns on file paths and diff content to classify the change.
-Multiple types can be detected per PR.
-
-**File path patterns:**
+Uses regex patterns on file paths and diff content to classify the change. Multiple types can be detected per PR.
 
 | File path matches | ChangeType |
 |-------------------|-----------|
@@ -338,27 +416,17 @@ Multiple types can be detected per PR.
 | `pom.xml`, `build.gradle`, `package.json` | `DEPENDENCY_UPDATE` |
 | `migration`, `flyway`, `liquibase`, `.sql` | `DATABASE_CHANGE` |
 
-**Content keyword patterns (applied to changed lines only):**
-
-| Keywords found | ChangeType |
+| Keywords found in changed lines | ChangeType |
 |----------------|-----------|
 | `TODO`, `FIXME`, `bug`, `fix`, `patch` | `BUG_FIX` |
 | `@Deprecated`, `rename`, `refactor` | `REFACTORING` |
 | `security`, `auth`, `token`, `password`, `secret` | `SECURITY_FIX` |
 | `performance`, `cache`, `async`, `parallel` | `PERFORMANCE_IMPROVEMENT` |
 | `@RestController`, `@GetMapping`, `@PostMapping`, etc. | `API_CHANGE` |
-| `migration`, `ALTER TABLE`, `CREATE TABLE`, `flyway` | `DATABASE_CHANGE` |
 
-**Special rules:**
-- New file that is not a test → `NEW_FEATURE`
-- Deleted file → `REFACTORING`
-- More than 50 lines deleted → `BREAKING_CHANGE`
-- Nothing detected → default `NEW_FEATURE`
+Special rules: new non-test file → `NEW_FEATURE`; deleted file → `REFACTORING`; >50 lines deleted → `BREAKING_CHANGE`.
 
 ### Step 4: RiskScorer — How risky is this change?
-
-Produces a normalised score from **0.0** (safe) to **1.0** (maximum risk), using four
-weighted factors:
 
 ```
 riskScore = (0.25 × churnScore)
@@ -366,15 +434,6 @@ riskScore = (0.25 × churnScore)
           + (0.25 × componentScore)
           + (0.20 × coverageScore)
 ```
-
-**Factor 1: Churn score (25%)**
-```
-churnScore = min(1.0, (linesAdded + linesDeleted) / 300)
-```
-More lines changed = more things that could go wrong. 300 lines saturates the score.
-
-**Factor 2: Change type severity (30%)**
-Average severity across detected change types:
 
 | ChangeType | Severity |
 |-----------|---------|
@@ -387,245 +446,90 @@ Average severity across detected change types:
 | PERFORMANCE_IMPROVEMENT | 0.4 |
 | CONFIGURATION_CHANGE / REFACTORING | 0.3 |
 
-**Factor 3: Component criticality (25%)**
-Average per component type, plus a bonus for wide blast radius:
-
-| ComponentType | Weight |
-|--------------|--------|
-| CONTROLLER | 0.8 |
-| REPOSITORY | 0.7 |
-| SERVICE | 0.6 |
-| CONFIG | 0.5 |
-| MODEL | 0.4 |
-| TEST | 0.1 |
-| default | 0.3 |
-
-Caller bonus: `min(0.2, avgCallers × 0.05)` — a class called by many others is riskier to change.
-
-**Factor 4: Coverage uncertainty (20%)**
-```
-integrationTestable = count of CONTROLLER + SERVICE + REPOSITORY components
-nonTestComponents   = all components except TEST and UTILITY
-coverageScore       = min(0.9, integrationTestable / nonTestComponents × 0.9)
-```
-The more integration-testable components changed, the higher the coverage uncertainty.
-Capped at 0.9 — never declares maximum risk without a real repo scan.
-
-**Risk levels:**
-
-| Score | Level |
-|-------|-------|
-| ≥ 0.9 | CRITICAL |
-| ≥ 0.7 | HIGH |
-| ≥ 0.4 | MEDIUM |
-| < 0.4 | LOW |
+**Risk levels:** CRITICAL (≥0.9) · HIGH (≥0.7) · MEDIUM (≥0.4) · LOW (<0.4)
 
 ### Step 4b: AIImpactEvaluator — AI Last Resort (optional)
 
-After the deterministic risk scorer runs, the pipeline checks whether the score falls in a
-configurable **gray zone** — the range where the rule-based system has the least signal.
+Applied only in the gray zone [0.30, 0.75] where the deterministic system has the least signal.
+The LLM returns `adjustedRiskScore` (clamped ±0.15), `additionalChangeTypes`, and `reasoning`.
+Every failure mode is caught and returns the deterministic result unchanged.
 
-```
-Risk score:  0.0 ──── 0.30 ──────────── 0.75 ──── 1.0
-               Confident LOW  Gray zone   Confident HIGH
-               (skip AI)   AI refines   (skip AI)
-```
+### Step 5: IntegrationTestScopeClassifier
 
-**Why the gray zone matters:**
-The boundaries are where the deterministic system is **most likely to be wrong**.
-- A score of `0.31` might really be `0.15` (false alarm from a regex match)
-- A score of `0.73` might really be `0.85` (the diff touches a critical payment path but the regex missed it)
+Phase 1 of the two-phase coverage assessment — identifies which component types need integration
+tests but cannot say whether those tests exist. Sets `CoverageReport.level=UNKNOWN` in the `ImpactEnvelope`.
 
-Below `0.30` and above `0.75`, the deterministic signal is strong enough to trust without
-AI involvement.
-
-**What the AI does:**
-The `AIImpactEvaluator` sends a structured prompt to an OpenAI-compatible API
-(`gpt-4o-mini` by default). The prompt contains:
-- PR title, author, repository, and file count/line delta
-- Deterministic findings (change types, risk level, impacted components)
-- The actual diff content (truncated to 3,000 characters)
-
-The LLM returns JSON with:
-- `adjustedRiskScore` — clamped to ±0.15 from the deterministic score to prevent overrides
-- `additionalChangeTypes` — types the regex missed (e.g. `SECURITY_FIX` when JWT code changes)
-- `reasoning` — 1–2 factual sentences explaining the refinement
-
-**Fail-safe:** Every failure mode (network timeout, wrong JSON, HTTP error, LLM hallucination)
-is caught and returns the deterministic result unchanged. The AI **never breaks the pipeline**.
-
-**The result is recorded in `ImpactEnvelope.aiInsight`** so strategy-service and human
-reviewers can see exactly what the AI changed and why.
-
-### Step 5: IntegrationTestScopeClassifier — Which components need integration tests?
-
-This is Phase 1 of a **two-phase coverage assessment**.
-
-**What it does:** Looks at each impacted component and asks: "Is this the kind of component that should have an integration or end-to-end test?" It does NOT check whether a test already exists.
-
-**Why not check for existing tests here?**
-impact-service has no access to the test repository. Cloning a repo at every PR event would make the service slow and stateful. The test repo check is done in strategy-service (Phase 2).
-
-**Which component types need integration tests?**
-
-| ComponentType | Needs integration test? | Reason |
-|--------------|------------------------|--------|
-| CONTROLLER | ✅ Yes → API/E2E tests | Exposes HTTP endpoints used by real clients |
-| SERVICE | ✅ Yes → INTEGRATION tests | Contains business logic with side effects |
-| REPOSITORY | ✅ Yes → INTEGRATION tests (real DB) | SQL queries must be tested against a real database |
-| CONFIG | ✅ Yes → SMOKE tests | Misconfiguration can bring down the whole service |
-| MODEL | ❌ No | Data structures — covered by unit tests in the PR |
-| UTILITY | ❌ No | Pure functions — covered by unit tests |
-
-**Required test type determination (`resolveRequiredTestTypes`):**
-
-| Condition | Test type added |
-|-----------|----------------|
-| Any CONTROLLER in changed components | `API` |
-| Any SERVICE or REPOSITORY in changed components | `INTEGRATION` |
-| Diff contains DB keywords (flyway, ALTER TABLE, etc.) | `INTEGRATION` |
-| Diff contains security keywords (auth, oauth, jwt, token) | `E2E` |
-| Nothing matched | `API` (safe default) |
-
-**Output:** `CoverageReport` with `level=UNKNOWN`, `source=UNKNOWN`,
-`untestedComponents=[…]`, `requiredTestTypes=[…]`.
+| ComponentType | Needs integration test? |
+|--------------|------------------------|
+| CONTROLLER | ✅ Yes → API/E2E tests |
+| SERVICE | ✅ Yes → INTEGRATION tests |
+| REPOSITORY | ✅ Yes → INTEGRATION tests |
+| CONFIG | ✅ Yes → SMOKE tests |
+| MODEL | ❌ No |
+| UTILITY | ❌ No |
 
 ---
 
-## 7. strategy-service — Phases 2–6: Strategy, Generation, Execution
+## 7. strategy-service — Phases 2–4: Strategy, BDD Generation, GitHub PR
 
-**Port:** 8082 | **Role:** Real coverage check → decision → BDD generation → code generation → stabilisation
+**Port:** 8082 | **Role:** Real coverage check → decision → BDD generation → GitHub PR → approval gate → trigger codegen or feedback
 
-This is the most complex service. It owns the only intelligent decision-making in the system
-(though it is rule-based, not AI/LLM).
+### 7.1 AI Cost Gating — Three Layers Before Any API Call
 
-### 7.1 RepoContextService — Cloning and Indexing the Test Repository
+Every PR that arrives is passed through three layers before making a network request to an LLM:
 
-`RepoContextService` runs on startup and keeps a local clone of the target test repository fresh.
-It has two roles:
-1. **Context provider** — extracts coding conventions for the test code generators
-2. **Coverage index builder** — scans which components already have integration/E2E tests
-
-#### Git operations (without credential prompts)
-
-Every git command is run via `ProcessBuilder` with three layers of credential protection:
-
-```java
-git -c credential.helper=  {command}
-// environment variables:
-GIT_TERMINAL_PROMPT=0    // no terminal prompt
-GIT_ASKPASS=echo         // any askpass program returns empty
+```
+ImpactEnvelope
+      │
+      ▼
+① AiCallGate  (zero-cost rule engine, runs first)
+      ├─ SKIP         → docs-only, test-only PRs, trivial <10-line diffs, version bumps
+      ├─ RULE_HANDLED → low-risk + existing tests, config-only changes → template, no AI
+      └─ NEEDS_AI ──────────────────────────────────────────────────────────┐
+                                                                            ▼
+② PromptResponseCache  (Redis, 24h TTL, keyed on changeType+componentType+risk+repo)
+      ├─ HIT  → return cached gherkin, no AI call
+      └─ MISS ──────────────────────────────────────────────────────────────┐
+                                                                            ▼
+③ AiClient.complete()  (copilot-cli / copilot / openai)
+   → store response in cache for future identical patterns
 ```
 
-For token-based authentication, the token is embedded in the HTTPS URL:
-```
-https://github.com/org/repo
-→ https://{username}:{token}@github.com/org/repo
-```
+| Layer | Estimated saving |
+|-------|-----------------|
+| `AiCallGate` | 40–60% of calls eliminated |
+| `PromptResponseCache` | 20–30% additional |
+| **Combined** | **60–75% fewer AI calls** |
 
-#### Coverage index — the inverted index
+Metrics are exposed at `GET /api/qa/cost/report` via `AiCostMonitor` (Micrometer).
 
-After cloning, `buildCoverageIndex(modulePath)` scans all integration/E2E test files and
-builds an **inverted index**.
+### 7.2 RepoContextService — Cloning and Indexing the Test Repository
 
-**What is an inverted index?**
-A normal index maps documents → words (like a table of contents).
-An inverted index maps words → documents (like a book's index at the back).
+`RepoContextService` runs on startup and keeps a local clone of the target test repository fresh:
+- **Context provider** — extracts coding conventions for the test code generators
+- **Coverage index builder** — scans which components already have integration/E2E tests
 
-Here, the "words" are component names and the "documents" are test files:
+**Inverted index** maps component names → test files covering them:
 ```
 coverageIndex:
   "PaymentController" → ["PaymentControllerIT.java", "CheckoutE2ETest.java"]
   "OrderService"      → ["OrderServiceIntTest.java"]
-  "UserRepository"    → ["UserRepositoryIT.java"]
 ```
+This makes coverage lookup **O(1)** per component at query time.
 
-This structure makes the coverage check **O(1)** — instead of scanning every test file
-for every component, a single map lookup tells you instantly which tests cover a component.
-
-**Why not just search for the class name across all test files at query time?**
-With 500 test files and 50 changed components, that would be 25,000 string searches
-on every single PR. Building once at startup and looking up at query time is dramatically faster.
-
-#### Integration/E2E test identification heuristics
-
-`isIntegrationOrE2eFile(Path file)` must distinguish integration tests from unit tests.
-This matters because unit tests (Mockito + no Spring context) do NOT validate database
-queries, HTTP contracts, or multi-layer flows.
-
-**Detection criteria (any one match makes it integration/E2E):**
+**Integration/E2E test identification heuristics:**
 
 | Signal | What it means |
 |--------|--------------|
-| `.feature` extension | Gherkin file — always an acceptance/E2E test |
-| Filename ends in `IT` or `IntegrationTest` or `IntTest` | Naming convention widely used in Java projects |
-| Filename ends in `E2ETest` or `AcceptanceTest` | Explicit end-to-end naming |
-| Content has `@SpringBootTest` | Boots the full application context — not a unit test |
-| Content has `@IntegrationTest` | Explicit annotation |
-| Content has `RestAssured` | HTTP-level testing library — always integration or E2E |
-| Content has `MockMvc` | Spring MVC test — exercises HTTP layer |
-| Content has `WebTestClient` | Reactive HTTP test — exercises HTTP layer |
-| Content has `TestRestTemplate` | Spring Boot integration HTTP client |
+| `.feature` extension | Gherkin file — always acceptance/E2E |
+| Filename ends in `IT`, `IntegrationTest`, `IntTest` | Java naming convention |
+| Filename ends in `E2ETest`, `AcceptanceTest` | Explicit E2E naming |
+| Content has `@SpringBootTest` | Full application context — not a unit test |
+| Content has `RestAssured`, `MockMvc`, `WebTestClient` | HTTP-level testing |
 
-#### PascalCase extraction — why use class names?
+### 7.3 E2ECoverageAnalyzer — Phase 2 Coverage Assessment
 
-`extractClassReferences(Path file)` uses the regex `\b([A-Z][a-zA-Z0-9]{2,})\b` to
-find all PascalCase words in a test file. In Java, all class names are PascalCase.
-By matching this pattern, the indexer finds every class the test references without
-needing to parse the full Java syntax tree.
-
-**Why PascalCase specifically?**
-- Variables in Java are `camelCase` — they start lowercase
-- Constants are `ALL_CAPS_WITH_UNDERSCORES` — the regex won't match
-- Class names are `PascalCase` — they start with an uppercase letter
-
-So `\b([A-Z][a-zA-Z0-9]{2,})\b` captures *exactly* the class names (plus annotations
-without `@`, which is fine because annotations are filtered or used as-is).
-
-**The `EXCLUDED_NAMES` filter (~80 entries) removes:**
-- Core Java classes: `String`, `List`, `Map`, `Optional`, etc.
-- JUnit/TestNG annotations: `Test`, `BeforeEach`, `AfterEach`, etc.
-- Spring annotations: `Autowired`, `SpringBootTest`, `MockBean`, etc.
-- BDD framework words: `Given`, `When`, `Then`, `Feature`, `Scenario`, etc.
-- HTTP/testing libraries: `RestAssured`, `MockMvc`, `HttpStatus`, `MediaType`, etc.
-
-What remains after exclusion: application-specific class names like `PaymentController`,
-`OrderService`, `UserRepository` — exactly what we want.
-
-**Why hard-code the exclusion list rather than using AST parsing?**
-Full AST parsing (with a library like JavaParser) would be 50–100× slower and add a heavy
-dependency. The exclusion list is fast, deterministic, and covers 95% of cases. The 5% of
-edge cases (a class named `Given` in the application) are acceptable false positives that
-do not cause incorrect coverage decisions — they just slightly reduce the precision of the index.
-
-### 7.2 E2ECoverageAnalyzer — Phase 2 Coverage Assessment
-
-`E2ECoverageAnalyzer` receives the `ImpactEnvelope` (which carries the `UNKNOWN`-level
-`CoverageReport` from impact-service) and replaces it with a **real** assessment.
-
-```
-analyze(envelope):
-  index = repoContextService.getCoverageIndex()
-
-  testableComponents = envelope.impactedComponents
-    .filter(CONTROLLER | SERVICE | REPOSITORY | CONFIG)
-
-  if testableComponents.isEmpty() → GOOD (nothing needs integration tests)
-
-  if index.isEmpty() → UNKNOWN (no repo configured, propagate from impact-service)
-
-  for each component in testableComponents:
-    tests = index.get(componentName)
-    if tests not empty → covered
-    else               → uncovered
-
-  level:
-    all covered   → GOOD
-    ≥ half covered → PARTIAL
-    none covered   → NONE
-```
-
-**Coverage level definitions:**
+Receives the `ImpactEnvelope` with `level=UNKNOWN` and replaces it with a real assessment:
 
 | Level | Meaning | StrategyAgent response |
 |-------|---------|----------------------|
@@ -634,85 +538,84 @@ analyze(envelope):
 | `NONE` | No integration tests found for any component | Force CREATE_TESTS |
 | `UNKNOWN` | No test repo configured | Conservative — follow other rules |
 
-### 7.3 StrategyAgent — The Decision Maker
+### 7.4 StrategyAgent — The Decision Maker
 
-`StrategyAgent.decide(envelope)` is called once per PR. It first calls `E2ECoverageAnalyzer`
-to get the real coverage level, then applies a prioritised decision tree.
+Decision tree (first match wins):
 
-**Decision tree (evaluated top to bottom, first match wins):**
+| Priority | Condition | Decision |
+|----------|-----------|----------|
+| 1 | `coverage.level == NONE` AND `untestedComponents` not empty | `CREATE_TESTS` |
+| 2 | All changes are config/dependency AND risk is LOW | `SKIP` |
+| 3 | PR only changes test files | `SKIP` |
+| 4 | Risk is HIGH or CRITICAL | `CREATE_TESTS` |
+| 5 | `NEW_FEATURE` detected | `CREATE_TESTS` |
+| 6 | `coverage.level == PARTIAL` | `UPDATE_TESTS` |
+| 7 | PR includes test file changes | `UPDATE_TESTS` |
+| 8 | Default | `CREATE_TESTS` |
 
-| Priority | Condition | Decision | Why |
-|----------|-----------|----------|-----|
-| 1 | `coverage.level == NONE` AND `untestedComponents` not empty | `CREATE_TESTS` | Repo confirmed: zero tests exist |
-| 2 | All changes are config/dependency AND risk is LOW | `SKIP` | Infra changes don't need new tests |
-| 3 | PR only changes test files | `SKIP` | Developer already handled it |
-| 4 | Risk is HIGH or CRITICAL | `CREATE_TESTS` | Too risky to skip test generation |
-| 5 | `NEW_FEATURE` detected | `CREATE_TESTS` | New features need new tests |
-| 6 | `coverage.level == PARTIAL` | `UPDATE_TESTS` | Extend existing tests |
-| 7 | PR includes test file changes | `UPDATE_TESTS` | PR touched tests, extend them |
-| 8 | Default | `CREATE_TESTS` | Safe default |
+**Fallback rules:** `confidenceScore < 0.4` → `fullRegressionRequired=true`; CRITICAL/HIGH risk → expanded scope.
 
-**Fallback rules (applied after the base decision):**
+### 7.5 BddGenerator — Creating Human-Readable Test Scenarios
 
-| Rule | Trigger | Effect |
-|------|---------|--------|
-| Full regression | `confidenceScore < 0.4` | Sets `fullRegressionRequired=true` |
-| Expanded scope | `risk == HIGH or CRITICAL` | Adds transitive dependencies to test areas |
+Produces BDD scenarios in Gherkin syntax. When the PR has external context,
+`PrContext.asPromptSection()` (compressed summary first, then structured fields) is injected
+into the AI prompt so the LLM sees Jira tickets, Confluence links, and product names when
+writing scenarios.
 
-**Confidence score formula:**
+The generated `BddScenario` carries the full `PrContext` forward to codegen-service.
+
+Tags added automatically: `@api`/`@ui`/`@mobile`, `@pr-{prId}`, `@auto-generated`, `@smoke` (HIGH/CRITICAL).
+
+### 7.6 GitHub PR Workflow
+
+After BDD generation, `TestPrService` creates a GitHub PR (`qa/bdd/*`).
+The strategy-service GitHub webhook listens for PR events on the target repo:
+
 ```
-base       = min(1.0, filesChanged / 10.0)
-confidence = min(1.0, (base + overallRiskScore) / 2.0)
-```
-
-### 7.4 BddGenerator — Creating Human-Readable Test Scenarios
-
-`BddGenerator` takes the `TestStrategy` and produces **BDD (Behaviour-Driven Development)
-scenarios** in Gherkin syntax.
-
-**What is Gherkin?**
-Gherkin is a plain-English format for describing test scenarios:
-```
-Feature: Payment processing
-  Scenario: Successful payment
-    Given the system is running
-    And a valid user session exists
-    And the payments service is available
-    And the changes for VSF-3670 are deployed
-    When the client calls PaymentController
-    Then response status is 200
-    And response body contains expected data
+BDD PR created  →  Human reviews
+      ├─ MERGED   → publishes BddScenario to TestScriptsQueue → codegen-service generates test code
+      └─ CLOSED   → publishes FeedbackEvent to FeedbackQueue  → feedback-service re-generates
 ```
 
-**Context enrichment** — when the PR has external context, the generator:
-- Injects `PrContext.asPromptSection()` into the AI user prompt so the LLM sees Jira
-  tickets, Confluence links, and product names when writing scenarios
-- In template (non-AI) mode, adds `Given the changes for PROJ-NNN are deployed` and
-  `And the <product> service is available` to given-steps
+Local development bypass (no ngrok required):
+```bash
+curl -X POST http://localhost:8082/api/strategy/approve-bdd \
+  -H "Content-Type: application/json" \
+  -d '{...BddScenario JSON...}'
+```
 
-The generated `BddScenario` carries the `PrContext` forward to codegen-service.
+### 7.7 Endpoints
 
-For each `TestRequirement`, `BddGenerator` creates up to 3 scenarios:
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/strategy/status` | Status + pending BDD review count |
+| `GET /api/strategy/pending-bdd` | List all tracked BDD scenarios waiting for approval |
+| `POST /api/strategy/approve-bdd` | Manually trigger codegen from BDD JSON |
+| `POST /api/strategy/github-webhook` | GitHub `pull_request` webhook (BDD/test PR merge/reject) |
+| `POST /api/strategy/refresh-context` | Re-pull target test repo, refresh coverage cache |
+| `GET /api/qa/cost/report` | AI call gating / cache / cost metrics |
 
-| Scenario | Type | When generated |
-|---------|------|----------------|
-| Successful operation (happy path) | `Scenario` | Always |
-| Error handling (negative case) | `Scenario` | Always |
-| Boundary testing | `Scenario Outline` | Only when `API_CHANGE` detected |
+---
 
-Tags added automatically:
-- `@api` / `@ui` / `@mobile` (test type)
-- `@pr-{prId}` (traceability)
-- `@auto-generated` (marks it as machine-generated)
-- `@smoke` (if HIGH or CRITICAL risk)
+## 8. codegen-service — Phase 5: Test Code Generation
 
-The BDD PR is a **human review gate** — `TestPrService.createBddPr()` logs the full
-Gherkin to the console as a PR payload. Code generation only starts after a human calls
-`POST /api/strategy/approve-bdd`.
+**Port:** 8083 | **Role:** Receive approved BDD scenarios, generate executable test code, stabilise, open test PR
 
-### 7.5 CodegenService — Test Code Generation
+codegen-service is a dedicated service for test code generation and stabilisation. It consumes
+`TestScriptsQueue` (published by strategy-service after BDD PR merge) and handles the full
+code generation + execution + healing cycle independently.
 
-`CodegenService` routes each BDD scenario to the appropriate test runner:
+> **AI model:** Claude Sonnet 4.6 (default via `${COPILOT_CLI_MODEL:claude-sonnet-4.6}`)
+
+### What it does
+
+1. Consumes `BddScenario` from `TestScriptsQueue`
+2. Routes to the appropriate test runner based on `testType`
+3. Generates Java source code as a string
+4. Runs a `StabilizationLoop` (up to 3 attempts)
+5. Creates a final GitHub PR (`qa/tests/*`) — even on failure (`⚠️ [NEEDS REVIEW]`)
+
+### Test runners
 
 | `testType` | Runner | Framework | Libraries |
 |-----------|--------|-----------|----------|
@@ -720,16 +623,31 @@ Gherkin to the console as a PR payload. Code generation only starts after a huma
 | `UI` | `UITestRunner` | Selenium + ChromeDriver | `selenium-java` |
 | `MOBILE` | `MobileTestRunner` | Appium + AndroidDriver | `java-client` (Appium) |
 
-Each runner generates a Java source file as a string. The file includes:
+Each runner generates a Java source file that includes:
 1. Repo-specific package name (from `RepoContext`)
 2. Common imports found in ≥50% of existing test files
 3. `extends {baseTestClass}` if a base class was detected in the repo
 4. Agent instruction comments (from `.github/agents/*.md`)
-5. **PR context Javadoc** — when `PrContext` is available, the class-level Javadoc
-   includes Jira ticket keys (`Jira: VSF-3670`), Jira and Confluence URLs, product names,
-   and labels, so developers and reviewers can immediately trace the test back to
-   the originating tickets and documentation
+5. **PR context Javadoc** — Jira ticket keys, Jira/Confluence URLs, product names, and labels embedded in the class-level Javadoc for full traceability
 6. `@Test` methods with `GIVEN/WHEN/THEN` comments and assertions from BDD steps
+
+### StabilizationLoop — Run, Fail, Fix
+
+```
+for attempt = 1 to maxRetries (default 3):
+  result = testExecutionEngine.execute(script, attempt)
+  if PASSED:
+    mark script as PASSED, create final PR, return
+  if attempt < maxRetries:
+    apply progressive fix
+    wait retryDelayMs (default 2000ms)
+mark script as ABANDONED, create ⚠️ PR for human review
+```
+
+**Three progressive fixes:**
+- **Attempt 1** — Timeout and connection fixes (RestAssured config + `@Timeout`)
+- **Attempt 2** — Retry wrapper + null guards around assertions
+- **Attempt 3** — Abandon original, generate minimal smoke test (health check only)
 
 **BDD step → assertion translation (API runner):**
 
@@ -740,319 +658,344 @@ Each runner generates a Java source file as a string. The file includes:
 | `"2000ms"` | `response.time().isLessThan(2000L)` |
 | anything else | `// {step}` (placeholder comment for human fill-in) |
 
-### 7.6 StabilizationLoop — Run, Fail, Fix
+### GitHub PR title format
 
-The generated test code is not perfect. It may fail because of timing issues, wrong base URLs,
-or missing null checks. `StabilizationLoop` automates the repair cycle.
-
-**The loop:**
-```
-for attempt = 1 to maxRetries (default 3):
-  result = testExecutionEngine.execute(script, attempt)
-  if PASSED:
-    mark script as PASSED
-    create final PR
-    return
-  if attempt < maxRetries:
-    apply fix for this attempt
-    wait retryDelayMs (default 2000ms)
-
-mark script as ABANDONED
-create final PR (for human review)
-```
-
-**Three progressive fixes:**
-
-**Attempt 1 — Timeout and connection fixes**
-Applied when error contains `"Connection refused"`, `"503"`, or `"timeout"`.
-- Adds `RestAssured.config` with `http.connection.timeout=5000ms` and `socket.timeout=10000ms`
-- Adds `@Timeout(value=30, unit=SECONDS)` to the `@Test` annotation
-- Injects missing `TimeUnit` and `Timeout` imports
-
-**Attempt 2 — Retry wrapper and null guards**
-Builds on attempt 1, then:
-- If error contains `"AssertionError"`: wraps the `// THEN` block in a 3-iteration retry loop with `Thread.sleep(1000)`
-- Always adds `assertThat(response).isNotNull()` before the status code assertion
-
-**Attempt 3 — Minimal smoke test**
-Abandons the original test entirely and generates a fresh, minimal class:
-```java
-// AUTO-STABILIZED: Simplified smoke test (original failed 2 attempts)
-// Original error: {errorMessage}
-public class {OriginalClass}_Stabilized {
-    @Test
-    void smokeTest() {
-        Response response = given().when().get("/api/v1/health").then().extract().response();
-        assertThat(response.statusCode()).isBetween(100, 599);
-    }
-}
-```
-
-**The loop always creates a final PR** — even on `ABANDONED`, a `⚠️ [NEEDS REVIEW]` PR
-is raised so a human can see and fix the partial code.
+| Status | Branch | Title |
+|--------|--------|-------|
+| Passed | `qa/tests/*` | `✅ [AI-QA] {prTitle}` |
+| Abandoned | `qa/tests/*` | `⚠️ [NEEDS REVIEW] [AI-QA] {prTitle}` |
+| Revised (after feedback) | `qa/tests/*-rev-*` | `[AI-QA] Revised Tests: {prTitle}` |
 
 ---
 
-## 8. The Two-Phase Coverage Assessment — In Depth
+## 9. feedback-service — AI Feedback Loop
 
-This is the central architectural pattern of the system, worth understanding thoroughly.
+**Port:** 8084 | **Role:** Process rejected QA PRs, update product knowledge base, re-generate with feedback
+
+When a QA-generated BDD or test PR is **closed/rejected** on GitHub, the system automatically
+learns from the reviewer's comments and re-generates improved content.
+
+### What it does
+
+1. Consumes `FeedbackEvent` from `FeedbackQueue`
+2. Fetches all review comments from the rejected GitHub PR via `GitHubService`
+3. Classifies the rejection reason via AI:
+   - `KNOWLEDGE_GAP` — the system lacked domain knowledge (e.g. missing business rules, edge cases)
+   - `STYLE_ONLY` — formatting or naming issues only
+4. If `KNOWLEDGE_GAP`:
+   - Appends new knowledge to `productExpert/{product}/PRODUCT.md` in the target repo
+   - Opens a separate knowledge-update PR for human review
+5. Re-generates the rejected content with feedback as additional context in the AI prompt
+6. Creates a revised PR (`-rev-*` suffix in the branch name)
+
+The entire feedback cycle runs on a **virtual thread** so the GitHub webhook HTTP response
+is returned immediately without blocking.
+
+### PR lifecycle
+
+| Event | Branch | Title format |
+|-------|--------|--------------|
+| BDD initial | `qa/bdd/*` | `[AI-QA] {prTitle}` |
+| BDD revised (after rejection) | `qa/bdd/*-rev-*` | `[AI-QA] Revised: {prTitle}` |
+| Test initial | `qa/tests/*` | `✅ [AI-QA] {prTitle}` |
+| Test revised (after rejection) | `qa/tests/*-rev-*` | `[AI-QA] Revised Tests: {prTitle}` |
+
+### Target repo knowledge structure
+
+```
+{test-repo}/
+  productExpert/
+    payments/
+      PRODUCT.md    ← domain flows, business rules, edge cases (updated by feedback-service)
+      PATTERNS.md   ← assertion patterns, test structure
+  .aiqa/
+    context.md      ← team-wide QA conventions
+  .github/
+    agents/
+      api-conventions.md   ← agent instruction files (read by RepoContextService)
+```
+
+---
+
+## 10. AI Provider Configuration
+
+All services that use AI share the same provider configuration, loaded via `AiProviderProperties`
+when `aiqa.github.enabled=true` is set.
+
+| `aiqa.ai.provider` | Client | Auth | Cost model |
+|--------------------|--------|------|-----------|
+| `copilot-cli` **(default)** | `CopilotCliClient` — `gh api` subprocess | `gh auth login` (no env var) | Flat Copilot seat licence |
+| `copilot` | `CopilotClient` — REST | `GITHUB_COPILOT_TOKEN` | Flat Copilot seat licence |
+| `openai` | `OpenAiClient` — REST | `OPENAI_API_KEY` | Per-token billing |
+| *(none configured)* | — | — | Enhanced template fallback |
+
+### Per-service model defaults
+
+| Service | Default model | Why |
+|---------|--------------|-----|
+| strategy-service (BDD generator) | `gpt-5` | Best scenario quality for human review |
+| codegen-service (test generator) | `claude-sonnet-4.6` | Strong code generation capabilities |
+| feedback-service | `gpt-5` | Reasoning over review comments |
+| impact-service (gray-zone AI) | `gpt-4o` | Lightweight — called rarely, only in gray zone |
+| pr-service (compression) | `gpt-5` | Compression uses its own isolated config |
+
+### Full config reference
+
+```yaml
+aiqa:
+  ai:
+    provider: ${AI_PROVIDER:copilot-cli}       # copilot-cli | copilot | openai
+    copilot-cli:
+      gh-cli-path: ${GH_CLI_PATH:gh}
+      model:       ${COPILOT_CLI_MODEL:gpt-5}
+      timeout-seconds: ${COPILOT_CLI_TIMEOUT:120}
+    copilot:
+      token:    ${GITHUB_COPILOT_TOKEN:}
+      base-url: ${COPILOT_BASE_URL:https://api.githubcopilot.com}
+      model:    ${COPILOT_MODEL:gpt-5}
+    openai:
+      api-key:  ${OPENAI_API_KEY:}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      model:    ${OPENAI_MODEL:gpt-5}
+```
+
+---
+
+## 11. The Two-Phase Coverage Assessment — In Depth
 
 ### The problem it solves
 
 The question *"does `PaymentController` have integration test coverage?"* requires:
-1. Knowing what `PaymentController` is (from the PR diff)
-2. Scanning the test repository to find tests that cover it
+1. Knowing what `PaymentController` is (from the PR diff in impact-service)
+2. Scanning the test repository to find tests that cover it (in strategy-service)
 
-The PR diff is in `impact-service`. The test repository clone is in `strategy-service`.
 They are separate services and should not be coupled.
 
 ### Phase 1 in impact-service
 
-`IntegrationTestScopeClassifier.assess(components, diffs)` runs inside `ImpactEngine` and produces a
-`CoverageReport` with `level=UNKNOWN`. It identifies *which types of components need
-integration tests* (by their `ComponentType`) but cannot say whether those tests exist:
+`IntegrationTestScopeClassifier` produces a `CoverageReport` with `level=UNKNOWN`:
 
 ```
 Input:  [PaymentController (CONTROLLER), JwtToken (MODEL), PaymentService (SERVICE)]
-
 Filter: CONTROLLER → needs integration test
-        MODEL      → does NOT need integration test (unit test only)
+        MODEL      → does NOT need integration test
         SERVICE    → needs integration test
-
-Output: CoverageReport(
-          level=UNKNOWN,
-          untestedComponents=["PaymentController", "PaymentService"],
-          requiredTestTypes=["API", "INTEGRATION", "E2E"]
-        )
+Output: CoverageReport(level=UNKNOWN, untestedComponents=["PaymentController", "PaymentService"])
 ```
-
-This is published in the `ImpactEnvelope` to `ImpactResultsQueue`.
 
 ### Phase 2 in strategy-service
 
-`E2ECoverageAnalyzer.analyze(envelope)` runs inside `StrategyAgent.decide()` and replaces
-the UNKNOWN report with a real assessment using the inverted coverage index:
+`E2ECoverageAnalyzer.analyze(envelope)` replaces UNKNOWN with a real assessment:
 
 ```
-coverageIndex contains:
-  "PaymentService" → ["PaymentServiceIT.java"]
-  (no entry for "PaymentController")
+coverageIndex: "PaymentService"    → ["PaymentServiceIT.java"]
+               "PaymentController" → (no entry)
 
-untestedComponents from Phase 1: ["PaymentController", "PaymentService"]
+→ PaymentController: UNCOVERED
+→ PaymentService:    COVERED
 
-For "PaymentController": coverageIndex.get("PaymentController") = empty → UNCOVERED
-For "PaymentService":    coverageIndex.get("PaymentService")    = [...] → COVERED
-
-covered   = ["PaymentService"]    (1 component)
-uncovered = ["PaymentController"] (1 component)
-
-covered >= uncovered → PARTIAL
-
-Output: CoverageReport(
-          source=REPO_SCAN,
-          level=PARTIAL,
-          coverageRatio=0.5,
-          testedComponents=["PaymentService"],
-          untestedComponents=["PaymentController"],
-          existingTestFiles=["PaymentServiceIT.java"]
-        )
+covered (1) >= uncovered (1) → PARTIAL
 ```
 
-`StrategyAgent` then uses this real coverage level:
-- `PARTIAL` → `UPDATE_TESTS` (PaymentService tests exist; create coverage for PaymentController)
+`StrategyAgent` uses this: `PARTIAL` → `UPDATE_TESTS`.
 
 ---
 
-## 9. Kafka Manual Acknowledgement — Why It Matters
+## 12. Kafka Manual Acknowledgement — Why It Matters
 
-impact-service and strategy-service consume Kafka messages with `AckMode.MANUAL_IMMEDIATE`.
-
-**What this means:** After processing a message, the consumer explicitly calls `ack.acknowledge()`
-to tell Kafka "I have finished processing this message, advance my offset."
+impact-service, strategy-service, codegen-service, and feedback-service all consume Kafka messages
+with `AckMode.MANUAL_IMMEDIATE`.
 
 **Why not use auto-commit?**
-With auto-commit, Kafka automatically advances the offset after a configurable interval.
-If the service crashes *after* the offset was advanced but *before* processing completed,
-the message is lost — no retry.
+With auto-commit, if the service crashes *after* the offset was advanced but *before* processing
+completed, the message is lost. With manual ack, Kafka re-delivers the message on restart.
 
-With manual ack, if the service crashes before calling `ack.acknowledge()`, Kafka
-re-delivers the message on restart.
-
-**The consequence that required custom `KafkaConfig.java`:**
-Spring Boot auto-configuration does **not** create a `kafkaListenerContainerFactory` bean
-when manual acknowledgement is configured. Without this bean, `@KafkaListener` cannot
-start — resulting in the error:
-
-```
-A component required a bean named 'kafkaListenerContainerFactory' that could not be found.
-```
-
-Solution: explicit `KafkaConfig.java` in both impact-service and strategy-service:
+This requires explicit `KafkaConfig.java` in each consuming service:
 
 ```java
 @Bean
 public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
-    ConcurrentKafkaListenerContainerFactory<String, String> factory =
-        new ConcurrentKafkaListenerContainerFactory<>();
-    factory.setConsumerFactory(consumerFactory());
     factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
     factory.setConcurrency(3);  // 3 parallel consumer threads
     return factory;
 }
 ```
 
-Why `concurrency=3`? Three parallel threads allow the service to process up to 3 PR envelopes
-simultaneously. With a single thread, slow PRs (large diffs, many components) would delay
-all subsequent PRs in the queue.
-
 ---
 
-## 10. Multi-Module Maven Build
-
-The project uses Apache Maven with a **parent POM** at the root and four child modules.
+## 13. Multi-Module Maven Build
 
 ```
 QA-ISystem/                 ← parent pom.xml (groupId: nz.co.eroad, version: 0.0.1-SNAPSHOT)
-├── common/                 ← shared models JAR
-├── pr-service/             ← depends on common
-├── impact-service/         ← depends on common
-└── strategy-service/       ← depends on common
+├── common/                 ← shared models, AI clients, Kafka/Redis config JAR
+├── pr-service/             ← depends on common  (port 8080)
+├── impact-service/         ← depends on common  (port 8081)
+├── strategy-service/       ← depends on common  (port 8082)
+├── codegen-service/        ← depends on common  (port 8083)
+└── feedback-service/       ← depends on common  (port 8084)
 ```
 
-**Critical build order:** `common` must be compiled and installed to the local Maven cache
-(`~/.m2/repository`) BEFORE the dependent services compile. The parent POM's `<modules>`
-section defines this order.
-
-**Build command:**
+**Build command (all modules, dependency order):**
 ```bash
-cd QA-ISystem
-mvn clean install -pl common && mvn clean package -pl pr-service,impact-service,strategy-service -am
+./mvnw clean package -DskipTests
+# or with tests:
+./mvnw clean install
 ```
 
-Or simpler (builds all modules in dependency order):
-```bash
-mvn clean install
-```
-
-**Package namespace:** `nz.co.eroad.qaisystem` — all classes in all modules use this as
-their root package. This aligns with the company's domain-based package naming convention.
+**Package namespace:** `nz.co.eroad.qaisystem` — all classes in all modules use this as their root package.
 
 ---
 
-## 11. Docker Compose Setup
+## 14. Docker Compose Setup
 
 ```yaml
 services:
-  qa-zookeeper:   # Kafka's metadata coordinator (required by Kafka)
-  qa-kafka:       # The message broker (Kafka)
-  pr-service:     # port 8080
-  impact-service: # port 8081
-  strategy-service: # port 8082
+  qa-zookeeper:        # Kafka's metadata coordinator (required by Kafka)
+  qa-redis:            # Redis — PromptResponseCache + RedisPrTracker
+  qa-kafka:            # The message broker
 ```
 
-All three services depend on `qa-kafka`. Kafka depends on `qa-zookeeper`.
-Environment variables at the Docker Compose level configure Kafka bootstrap addresses
-so each service can connect to the message broker inside the Docker network.
+The five Java services run as separate JVM processes outside Docker during local development.
+Start infrastructure first, then run services via the JARs.
+
+> **Stale ZooKeeper fix:** If Kafka crashes with `NodeExistsException`, run:
+> ```bash
+> docker compose down -v && docker compose up -d
+> ```
+> This clears stale ZooKeeper ephemeral node state from a previous run.
 
 ---
 
-## 12. Testing the System Locally
+## 15. Testing the System Locally
 
-### Quick path (no repo configured)
+### Quick start
 
 ```bash
-# 1. Start Kafka
-docker-compose up -d qa-zookeeper qa-kafka
+# 1. Start infrastructure
+docker compose up -d
+docker compose ps   # wait for qa-kafka, qa-redis to show healthy
 
-# 2. Start all services (in separate terminals)
-cd impact-service && mvn spring-boot:run
-cd pr-service && mvn spring-boot:run
-cd strategy-service && mvn spring-boot:run
+# 2. Build all JARs
+./mvnw clean package -DskipTests
 
-# 3. Send a demo PR
+# 3. Start services (separate terminals or use start-local.sh)
+java -jar pr-service/target/pr-service-0.0.1-SNAPSHOT.jar
+java -jar impact-service/target/impact-service-0.0.1-SNAPSHOT.jar
+java -jar strategy-service/target/strategy-service-0.0.1-SNAPSHOT.jar
+java -jar codegen-service/target/codegen-service-0.0.1-SNAPSHOT.jar
+java -jar feedback-service/target/feedback-service-0.0.1-SNAPSHOT.jar
+
+# 4. Trigger the pipeline
 curl -X POST http://localhost:8080/api/pr/demo
 
-# 4. Watch logs in each service terminal
-```
-
-### With a real test repo
-
-```bash
-# Set environment variables before starting strategy-service
-export TARGET_REPO_TOKEN=ghp_your_token_here
-export TARGET_REPO_USERNAME=your_github_username
-
-# Edit strategy-service/src/main/resources/application.yaml:
-# aiqa:
-#   target-repo:
-#     url: "https://github.com/your-org/your-test-repo"
-#     branch: main
-#     modules:
-#       api: tests/api
-#       ui: tests/ui
-#       mobile: tests/mobile
-```
-
-### Approving BDD scenarios (triggering code generation)
-
-After the strategy-service processes a PR, it logs BDD scenarios to the console.
-Copy the JSON from the log and call:
-```bash
-curl -X POST http://localhost:8082/api/strategy/approve-bdd \
+# 5. Submit the sample PR payload
+curl -X POST http://localhost:8080/api/pr/submit \
   -H "Content-Type: application/json" \
-  -d '{...BDD JSON from log...}'
+  -d @pr-webhook-sample.json
+
+# 6. Approve pending BDD scenarios → triggers codegen-service
+./scripts/approve-bdd.sh --list
+./scripts/approve-bdd.sh --yes
 ```
+
+### Automated script
+
+```bash
+./scripts/start-local.sh                          # full start: infra + build + all 5 services + health checks
+./scripts/start-local.sh --fresh                  # clean start (clears stale ZooKeeper state)
+./scripts/start-local.sh --stop                   # stop all services
+./scripts/start-local.sh --skip-build             # use existing JARs
+./scripts/start-local.sh --with-kafka-ui          # include Kafka UI at http://localhost:8090
+```
+
+### GitHub PR creation (optional)
+
+```bash
+export TARGET_REPO_URL=https://github.com/your-org/your-test-repo
+export TARGET_REPO_TOKEN=ghp_...
+export TARGET_REPO_USERNAME=your_username
+export GITHUB_WEBHOOK_SECRET=...
+```
+
+### Running tests
+
+```bash
+./mvnw test                                        # all modules
+./mvnw test -pl pr-service -am                    # pr-service only
+./mvnw test -pl strategy-service,codegen-service -am
+```
+
+Current test counts (106 total, 0 failures, zero Mockito):
+
+| Module | Tests |
+|--------|-------|
+| pr-service | 37 (PRService, ContextCompression, PRController, PRControllerAdvice, ProductsDeserializer) |
+| impact-service | 36 (GitDiffParser, RiskScorer, IntegrationTestScopeClassifier, TestCoverage) |
+| strategy-service | 26 (StrategyAgent, ApiTestRunner, RepoContext) |
+| codegen-service | 7 (ApiTestRunner) |
 
 ---
 
-## 13. Summary of Heuristics and Why They Were Chosen
+## 16. Summary of Heuristics and Why They Were Chosen
 
 | Heuristic | Where | Why this approach |
 |-----------|-------|-------------------|
-| Jira ID regex `\b[A-Z]{2,10}-\d+\b` | `PrContextExtractor` | Standard Jira key format; works for any project key. Extracted from title and description so teams don't need to set a separate field |
-| Confluence URL pattern `/wiki/` | `PrContextExtractor` | All Confluence Cloud and Server instances use `/wiki/` in page URLs. Broad enough to catch self-hosted instances |
-| Product inference from labels | `PrContextExtractor` | GitHub labels like "payments" or "auth-service" are commonly used for team routing. Lower-case words without special chars reliably indicate product areas |
-| PrContext forwarded as-is | impact → strategy → codegen | Context extracted once at ingestion; never re-parsed. Immutable propagation prevents drift and keeps each service stateless |
-| PrContext in AI prompt section | `BddGenerator` | Giving the LLM Jira context and product names produces domain-specific scenarios rather than generic ones. Empirically increases BDD quality for product teams that use Jira |
-| PrContext in generated Javadoc | `ApiTestRunner`, `UITestRunner`, `MobileTestRunner` | Embeds traceability directly in the file. Developers reviewing or maintaining the test can see the origin ticket without querying external systems |
-| PascalCase regex for class names | `RepoContextService.extractClassReferences` | Java class names are always PascalCase. Faster than full AST parsing; 95%+ precision for enterprise Java |
-| Inverted index (component → test files) | `RepoContextService.buildCoverageIndex` | O(1) lookup per component at query time vs O(n×m) search at every PR |
-| Integration test detection via filename patterns first, content second | `RepoContextService.isIntegrationOrE2eFile` | Filename conventions are faster. Content scan only for projects that don't follow naming conventions |
-| ComponentType from file path keywords | `DependencyGraph.detectComponentType` | Java project structure is highly conventional (controllers go in `controller/`, etc.). Works for 90%+ of enterprise Spring Boot projects |
-| Change type detection via regex on changed lines only | `ChangeTypeDetector` | Only changed lines are semantically relevant. Scanning unchanged context lines would produce false positives |
-| Risk score capped at 0.9 for coverage factor | `RiskScorer.calculateCoverageScore` | Declaring maximum risk without confirmed test absence is overconfident. Repo scan (Phase 2) provides the real signal |
-| Coverage level PARTIAL when covered ≥ uncovered | `E2ECoverageAnalyzer` | Asymmetric threshold is intentional: if more than half is covered, updating is cheaper than creating from scratch |
-| Stabilisation: attempt 3 simplifies to smoke test | `StabilizationLoop` | Generated code may be too brittle for the test environment. A smoke test that just checks reachability is better than abandoning silently with no PR |
-| 60/80/95% pass probability simulation | `TestExecutionEngine` | Represents realistic first-run flakiness. Real implementation would compile and execute the Java code via JUnit Platform Launcher |
-| `acks=all` on Kafka producer | All producers | Ensures the Kafka leader AND all replicas have received the message before acknowledging. Prevents message loss on broker failure |
-| AI gray-zone threshold [0.30, 0.75] | `AIImpactEvaluator` | Below 0.30 the deterministic system is confidently LOW. Above 0.75 it's confidently HIGH. In between, structural heuristics have the least signal and semantic AI adds the most value |
-| Max AI score adjustment ±0.15 | `AIImpactEvaluator` | Prevents the LLM from completely overriding well-reasoned deterministic scoring. The LLM refines; it does not override |
-| Low temperature (0.1) for AI prompt | `AIImpactEvaluator` | LLMs are stochastic. Temperature near zero makes output consistent and predictable — critical for a pipeline that must behave reliably |
-| `response_format: json_object` | `AIImpactEvaluator` | Forces the LLM to return parseable JSON, eliminating markdown wrapping and prose that would break the parser |
+| Jira ID regex `\b[A-Z]{2,10}-\d+\b` | `PrContextExtractor` | Standard Jira key format; works for any project key |
+| Confluence URL pattern `/wiki/` | `PrContextExtractor` | All Confluence Cloud/Server instances use `/wiki/` in page URLs |
+| Product inference from labels | `PrContextExtractor` | GitHub labels like "payments" reliably indicate product areas |
+| AI compression at ingestion | `ContextCompressionService` | Compressing once at the boundary means all downstream AI prompts receive lean, token-efficient context |
+| PrContext forwarded as-is | impact → strategy → codegen → feedback | Immutable propagation prevents drift; keeps each service stateless |
+| Compressed `summary` prepended in AI prompt | `PrContext.asPromptSection()` | LLM receives focused context first, then structured detail |
+| PrContext in generated Javadoc | `ApiTestRunner`, `UITestRunner`, `MobileTestRunner` | Embeds traceability directly in the file |
+| PascalCase regex for class names | `RepoContextService.extractClassReferences` | Java class names are always PascalCase. Faster than full AST parsing |
+| Inverted index (component → test files) | `RepoContextService.buildCoverageIndex` | O(1) lookup per component at query time |
+| AiCallGate rules before any LLM call | `strategy-service` | Eliminates 40–60% of AI calls with zero cost |
+| PromptResponseCache (Redis, 24h TTL) | `strategy-service` | Identical change patterns produce identical BDD scenarios |
+| Coverage level PARTIAL when covered ≥ uncovered | `E2ECoverageAnalyzer` | If more than half is covered, updating is cheaper than creating from scratch |
+| Stabilisation: attempt 3 simplifies to smoke test | `StabilizationLoop` | A smoke test that checks reachability is better than abandoning silently with no PR |
+| Feedback classification: KNOWLEDGE_GAP vs STYLE_ONLY | `feedback-service` | Knowledge gaps update the product expert file; style issues update the prompt only |
+| AI score adjustment capped ±0.15 | `AIImpactEvaluator` | Prevents the LLM from completely overriding well-reasoned deterministic scoring |
+| Low temperature (0.1–0.2) for AI prompts | All AI callers | Near-zero temperature makes output consistent — critical for a pipeline that must behave reliably |
+| Virtual threads for feedback processing | `feedback-service` | Long-running cycle; virtual threads let the HTTP response return immediately |
 
 ---
 
-## 14. Class Reference Table
+## 17. Class Reference Table
 
 ### common module
 
 | Class | Package | Role |
 |-------|---------|------|
-| `PullRequest` | model | Input: PR details including jiraIds, jiraLinks, confluenceLinks, labels, products |
-| `PrContext` | model | Extracted external context: Jira, Confluence, labels, products — flows through the pipeline |
+| `PullRequest` | model | Input: PR details including jiraIds, jiraLinks, confluenceLinks, labels, products, contextSummary |
+| `PrContext` | model | Extracted external context: Jira, Confluence, labels, products, summary — flows through pipeline |
 | `GitDiff` | model | One changed file with line-level detail |
-| `ImpactEnvelope` | model | Output of impact-service; includes prContext forwarded from source PR |
+| `DiffHunk` | model | One changed region within a file |
+| `DiffLine` | model | One line: ADDED, REMOVED, or CONTEXT |
+| `ImpactEnvelope` | model | Output of impact-service; includes prContext + prTitle |
 | `ImpactEnvelope.ImpactedComponent` | model (nested) | One changed class with type, score, callers |
-| `ImpactEnvelope.ChangeType` | model (enum) | API_CHANGE, BUG_FIX, SECURITY_FIX, ... |
+| `ImpactEnvelope.ChangeType` | model (enum) | API_CHANGE, BUG_FIX, SECURITY_FIX, NEW_FEATURE, … |
 | `ImpactEnvelope.RiskLevel` | model (enum) | LOW, MEDIUM, HIGH, CRITICAL |
+| `ImpactEnvelope.AIInsight` | model (nested) | AI refinement record: model, scores, added types, reasoning |
 | `CoverageReport` | model | Two-phase coverage assessment |
 | `CoverageReport.CoverageLevel` | model (enum) | GOOD, PARTIAL, NONE, UNKNOWN |
 | `CoverageReport.CoverageSource` | model (enum) | REPO_SCAN, UNKNOWN |
-| `ImpactEnvelope.AIInsight` | model (nested) | AI refinement record: model, scores, added types, reasoning |
 | `TestStrategy` | model | Decision + requirements from StrategyAgent |
-| `BddScenario` | model | Gherkin scenarios + prContext for codegen-service |
+| `BddScenario` | model | Gherkin scenarios + prContext + prTitle for codegen-service |
 | `TestScript` | model | Generated test code + metadata |
 | `TestResult` | model | Execution result from StabilizationLoop |
+| `FeedbackEvent` | model | Rejected PR details; wraps BddScenario or TestScript for feedback-service |
+| `AiClient` | agent (interface) | Abstraction over LLM API |
+| `CopilotCliClient` | agent | `gh api` subprocess — default, no token env var |
+| `CopilotClient` | agent | Copilot REST API with `GITHUB_COPILOT_TOKEN` |
+| `OpenAiClient` | agent | Any OpenAI-compatible endpoint |
+| `AiClientConfig` | config | Creates active `AiClient` bean; gated on `aiqa.github.enabled=true` |
+| `AiProviderProperties` | config | `@ConfigurationProperties(prefix="aiqa.ai")` |
+| `GitHubService` | service | GitHub API: diff fetch, PR creation, webhook signature verification |
+| `RepoContextService` | service | Clone + index test repo; build coverage index; extract conventions |
+| `RedisPrTracker` | service | Redis-backed PR state tracker (`@ConditionalOnProperty`) |
+| `InMemoryPrTracker` | service | Fallback PR state tracker when Redis is unavailable |
+| `GitDiffParser` | parser | Raw unified diff string → `List<GitDiff>` |
+| `KafkaConfig` | config | `ConcurrentKafkaListenerContainerFactory` with `MANUAL_IMMEDIATE` ack |
 
 ### pr-service
 
@@ -1060,22 +1003,25 @@ curl -X POST http://localhost:8082/api/strategy/approve-bdd \
 |-------|---------|------|
 | `PrServiceApplication` | pr | Spring Boot entry point |
 | `PRController` | controller | HTTP: /webhook, /submit, /demo, /health |
-| `PRService` | service | Enrich + validate + extract context + publish |
+| `PRService` | service | Enrich → extract context → compress → validate → publish |
 | `PrContextExtractor` | service | Regex mining of Jira IDs, Jira URLs, Confluence URLs, labels, products |
+| `ContextCompressionService` | service | AI compression via Copilot CLI; sets `contextSummary`; pass-through on failure |
+| `CompressionConfig` | config | Creates `ContextCompressionService` with its own `CopilotCliClient` |
+| `CompressionProperties` | config | `@ConfigurationProperties(prefix="aiqa.ai.compression")` |
 | `FeatureUpdatesProducer` | kafka | Serialise + send to FeatureUpdatesQueue |
+| `CommaSeparatedListDeserializer` | model | Jackson: `products` accepts JSON array or comma-separated string |
 
 ### impact-service
 
 | Class | Package | Role |
 |-------|---------|------|
 | `ImpactServiceApplication` | impact | Spring Boot entry point |
-| `KafkaConfig` | config | Explicit consumer/producer/factory beans |
+| `KafkaConfig` | config | Explicit consumer/producer/factory beans with MANUAL_IMMEDIATE ack |
 | `AIImpactProperties` | config | Typed binding for `aiqa.ai` YAML block |
-| `AIImpactEvaluator` | ai | LLM last-resort refinement (gray-zone only, fail-safe) |
+| `AIImpactEvaluator` | ai | LLM last-resort gray-zone refinement (fail-safe) |
 | `FeatureUpdatesConsumer` | kafka | Consume PullRequest → trigger ImpactEngine |
 | `ImpactResultsProducer` | kafka | Publish ImpactEnvelope to ImpactResultsQueue |
 | `ImpactEngine` | engine | Orchestrate 5-step pipeline + optional AI step |
-| `GitDiffParser` | engine | Raw unified diff → List<GitDiff> |
 | `DependencyGraph` | engine | Import graph + component typing |
 | `ChangeTypeDetector` | engine | Regex-based change classification |
 | `RiskScorer` | engine | Weighted score → RiskLevel |
@@ -1088,21 +1034,45 @@ curl -X POST http://localhost:8082/api/strategy/approve-bdd \
 |-------|---------|------|
 | `StrategyServiceApplication` | strategy | Spring Boot entry point |
 | `KafkaConfig` | config | Explicit consumer/producer/factory beans |
-| `TargetRepoProperties` | config | Typed binding for aiqa.target-repo YAML |
+| `TargetRepoProperties` | config | Typed binding for `aiqa.target-repo` YAML |
 | `ImpactResultsConsumer` | kafka | Consume ImpactEnvelope → trigger StrategyAgent |
-| `TestScriptsConsumer` | kafka | Consume BddScenario → trigger CodegenService |
 | `TestScriptsProducer` | kafka | Publish BddScenario to TestScriptsQueue |
+| `FeedbackProducer` | kafka | Publish FeedbackEvent to FeedbackQueue |
+| `AiCallGate` | agent | Rule-based gate: SKIP / RULE_HANDLED / NEEDS_AI |
 | `StrategyAgent` | agent | Decision tree + fallback rules |
-| `BddGenerator` | agent | Template/AI Gherkin builder; injects PrContext into AI prompts and given-steps |
-| `CodegenService` | execution | Route BDD scenario to correct runner; passes prContext to all runners |
-| `ApiTestRunner` | execution | Generate RestAssured + JUnit 5 test code |
-| `UITestRunner` | execution | Generate Selenium test code |
-| `MobileTestRunner` | execution | Generate Appium test code |
-| `TestExecutionEngine` | execution | Simulate (or run) the generated test |
+| `BddGenerator` | agent | Template/AI Gherkin builder; injects PrContext.asPromptSection() into AI prompt |
+| `PromptResponseCache` | service | Redis cache (24h TTL) for AI prompt responses |
+| `AiCostMonitor` | monitor | Micrometer metrics: gate skips, cache hits, AI call count |
+| `E2ECoverageAnalyzer` | service | Phase 2 coverage: scan repo index → GOOD/PARTIAL/NONE |
+| `TestPrService` | service | GitHub PR creation for BDD scenarios |
+| `StrategyController` | controller | REST: /status, /pending-bdd, /approve-bdd, /github-webhook, /refresh-context, /cost/report |
+
+### codegen-service
+
+| Class | Package | Role |
+|-------|---------|------|
+| `CodegenServiceApplication` | codegen | Spring Boot entry point |
+| `KafkaConfig` | config | Explicit consumer/factory beans with MANUAL_IMMEDIATE ack |
+| `TestScriptsConsumer` | kafka | Consume BddScenario → trigger CodegenService |
+| `TestResultsProducer` | kafka | Publish TestResult to TestResultsQueue |
+| `CodegenService` | service | Route BddScenario to correct runner; orchestrate stabilisation |
+| `ApiTestRunner` | execution | Generate RestAssured + JUnit 5 test code; embeds PrContext in Javadoc |
+| `UITestRunner` | execution | Generate Selenium test code; embeds PrContext in Javadoc |
+| `MobileTestRunner` | execution | Generate Appium test code; embeds PrContext in Javadoc |
+| `TestExecutionEngine` | execution | Execute the generated test (compile + run) |
 | `StabilizationLoop` | execution | Bounded run → fail → fix cycle (max 3 retries) |
 | `RepoContext` | execution | Value object: conventions extracted from test repo |
-| `E2ECoverageAnalyzer` | service | Phase 2 coverage: scan repo index → GOOD/PARTIAL/NONE |
-| `RepoContextService` | service | Clone test repo + build coverage index + extract conventions |
-| `TestPrService` | service | Simulate GitHub PR creation (real API call in production) |
-| `StrategyController` | controller | REST: /status, /pending-bdd, /approve-bdd, /refresh-context |
+| `TestPrService` | service | GitHub PR creation for generated test code |
+
+### feedback-service
+
+| Class | Package | Role |
+|-------|---------|------|
+| `FeedbackServiceApplication` | feedback | Spring Boot entry point |
+| `KafkaConfig` | config | Explicit consumer/factory beans with MANUAL_IMMEDIATE ack |
+| `FeedbackConsumer` | kafka | Consume FeedbackEvent → trigger PrFeedbackService |
+| `PrFeedbackService` | service | Orchestrate full feedback loop: fetch comments → classify → update knowledge → re-generate |
+| `FeedbackClassifier` | service | AI classification: KNOWLEDGE_GAP vs STYLE_ONLY |
+| `ProductExpertUpdater` | service | Append new knowledge to `productExpert/{product}/PRODUCT.md` in target repo |
+| `FeedbackController` | controller | REST: /status |
 
