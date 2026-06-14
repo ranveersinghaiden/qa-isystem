@@ -49,9 +49,18 @@ public class PrContext {
     /** Product/domain area names (from explicit products field or inferred from labels). */
     private List<String> products;
 
+    /**
+     * AI-generated compressed context summary (from {@code PullRequest.contextSummary}).
+     * Set by {@code PrContextExtractor} in pr-service; carried unchanged through the pipeline.
+     * When present, {@link #asPromptSection()} prepends it so all downstream AI prompts
+     * receive a concise, boilerplate-free context summary before the structured detail.
+     */
+    private String summary;
+
     /** True when at least one piece of external context was collected. */
     public boolean hasContext() {
-        return hasJira() || hasConfluence() || hasLabels() || hasProducts();
+        return hasJira() || hasConfluence() || hasLabels() || hasProducts()
+                || (summary != null && !summary.isBlank());
     }
 
     public boolean hasJira() {
@@ -73,24 +82,33 @@ public class PrContext {
 
     /**
      * Formats a concise text summary for inclusion in AI prompts and test comments.
+     * When a compressed {@link #summary} is set it is prepended as a focused context block.
      * Returns an empty string when no external context is available.
      */
     public String asPromptSection() {
         if (!hasContext()) return "";
-        var sb = new StringBuilder("=== PR EXTERNAL CONTEXT ===\n");
-        if (hasJira()) {
-            if (jiraIds != null && !jiraIds.isEmpty())
-                sb.append("Jira tickets  : ").append(String.join(", ", jiraIds)).append("\n");
-            if (jiraLinks != null && !jiraLinks.isEmpty())
-                sb.append("Jira links    : ").append(String.join(" | ", jiraLinks)).append("\n");
+        var sb = new StringBuilder();
+        if (summary != null && !summary.isBlank()) {
+            sb.append("=== COMPRESSED CONTEXT SUMMARY ===\n")
+              .append(summary).append("\n")
+              .append("===================================\n");
         }
-        if (hasConfluence())
-            sb.append("Confluence    : ").append(String.join(" | ", confluenceLinks)).append("\n");
-        if (hasLabels())
-            sb.append("PR labels     : ").append(String.join(", ", labels)).append("\n");
-        if (hasProducts())
-            sb.append("Products      : ").append(String.join(", ", products)).append("\n");
-        sb.append("===========================\n");
+        if (hasJira() || hasConfluence() || hasLabels() || hasProducts()) {
+            sb.append("=== PR EXTERNAL CONTEXT ===\n");
+            if (hasJira()) {
+                if (jiraIds != null && !jiraIds.isEmpty())
+                    sb.append("Jira tickets  : ").append(String.join(", ", jiraIds)).append("\n");
+                if (jiraLinks != null && !jiraLinks.isEmpty())
+                    sb.append("Jira links    : ").append(String.join(" | ", jiraLinks)).append("\n");
+            }
+            if (hasConfluence())
+                sb.append("Confluence    : ").append(String.join(" | ", confluenceLinks)).append("\n");
+            if (hasLabels())
+                sb.append("PR labels     : ").append(String.join(", ", labels)).append("\n");
+            if (hasProducts())
+                sb.append("Products      : ").append(String.join(", ", products)).append("\n");
+            sb.append("===========================\n");
+        }
         return sb.toString();
     }
 }

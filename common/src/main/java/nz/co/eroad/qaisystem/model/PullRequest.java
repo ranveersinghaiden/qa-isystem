@@ -91,6 +91,15 @@ public class PullRequest {
     @JsonDeserialize(using = CommaSeparatedListDeserializer.class)
     private List<String> products;
 
+    /**
+     * AI-generated compressed context summary produced by {@code ContextCompressionService}
+     * in pr-service. Populated when {@code aiqa.ai.compression.enabled=true}.
+     * Serialised as {@code context_summary} in Kafka messages and carried through the
+     * full pipeline so all downstream AI prompts receive lean, token-efficient context.
+     */
+    @JsonProperty("context_summary")
+    private String contextSummary;
+
     public enum PrStatus {
         OPEN, CLOSED, MERGED, DRAFT
     }
