@@ -162,16 +162,16 @@ github:
     provider: ${AI_PROVIDER:copilot-cli}           # copilot-cli (default) | copilot | openai
     copilot-cli:
       gh-cli-path: ${GH_CLI_PATH:gh}              # path to gh executable (must be on PATH)
-      model:       ${COPILOT_CLI_MODEL:gpt-5}     # model passed in the JSON body
+      model:       ${COPILOT_CLI_MODEL:claude-sonnet-4.6}     # model passed in the JSON body
       timeout-seconds: ${COPILOT_CLI_TIMEOUT:120}
     openai:
       api-key:  ${OPENAI_API_KEY:}                # sk-... or GitHub token for GitHub Models
       base-url: ${OPENAI_BASE_URL:https://api.openai.com}
-      model:    ${OPENAI_MODEL:gpt-5}
+      model:    ${OPENAI_MODEL:claude-sonnet-4.6}
     copilot:
       token:    ${GITHUB_COPILOT_TOKEN:}          # GitHub token with Copilot access
       base-url: ${COPILOT_BASE_URL:https://api.githubcopilot.com}
-      model:    ${COPILOT_MODEL:gpt-5}
+      model:    ${COPILOT_MODEL:claude-sonnet-4.6}
 
 server:
   port: 8082
