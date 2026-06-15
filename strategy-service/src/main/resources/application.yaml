@@ -134,51 +134,27 @@ github:
   webhook:
     # Fail-secure: reject webhook requests when no secret configured.
     # Set GITHUB_WEBHOOK_REQUIRE_SECRET=true in production.
-    require-secret: ${GITHUB_WEBHOOK_REQUIRE_SECRET:false}
+    require-secret: ${GITHUB_WEBHOOK_REQUIRE_SECRET:true}
 
 # ── AI Generation ──────────────────────────────────────────────────────────────
 #
-# Select a provider with aiqa.ai.provider:
-#
-#   provider: copilot-cli  (default)
-#     Uses the GitHub Copilot API via the gh CLI subprocess.
-#     Prerequisites: brew install gh && gh auth login
-#     No token env var needed — gh CLI manages credentials automatically.
-#
-#   provider: openai
-#     Supports any OpenAI-compatible endpoint:
-#       1. OpenAI          — set OPENAI_API_KEY
-#       2. Azure OpenAI    — set OPENAI_API_KEY + OPENAI_BASE_URL (your Azure endpoint)
-#       3. Local Ollama    — set OPENAI_BASE_URL=http://localhost:11434 (no key needed)
-#       4. GitHub Models   — set OPENAI_BASE_URL=https://models.inference.ai.azure.com
-#                             + OPENAI_API_KEY to a GitHub token
-#
-#   provider: copilot
-#     Uses the GitHub Copilot API (https://api.githubcopilot.com).
-#     Set GITHUB_COPILOT_TOKEN to a GitHub token with Copilot access.
-#     In GitHub Actions, secrets.GITHUB_TOKEN works if the repo has Copilot enabled.
+# The only supported AI provider is the locally installed GitHub Copilot CLI.
+# Prerequisites: brew install gh && gh auth login
+# No token env var needed — gh CLI manages credentials automatically via OS keychain.
 #
   ai:
-    provider: ${AI_PROVIDER:copilot-cli}           # copilot-cli (default) | copilot | openai
+    provider: copilot-cli
     copilot-cli:
       gh-cli-path: ${GH_CLI_PATH:gh}              # path to gh executable (must be on PATH)
-      model:       ${COPILOT_CLI_MODEL:claude-sonnet-4.6}     # model passed in the JSON body
+      model:       ${COPILOT_CLI_MODEL:claude-sonnet-4-5}     # model passed in the JSON body
       timeout-seconds: ${COPILOT_CLI_TIMEOUT:120}
-    openai:
-      api-key:  ${OPENAI_API_KEY:}                # sk-... or GitHub token for GitHub Models
-      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
-      model:    ${OPENAI_MODEL:claude-sonnet-4.6}
-    copilot:
-      token:    ${GITHUB_COPILOT_TOKEN:}          # GitHub token with Copilot access
-      base-url: ${COPILOT_BASE_URL:https://api.githubcopilot.com}
-      model:    ${COPILOT_MODEL:claude-sonnet-4.6}
 
 server:
   port: 8082
 
 logging:
   level:
-    nz.co.eroad.qaisystem: DEBUG
+    nz.co.eroad.qaisystem: INFO
     org.springframework.kafka: INFO
     org.apache.kafka: WARN
 

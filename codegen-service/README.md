@@ -19,7 +19,7 @@ Consumer group: `codegen-service-group`
 |-------|----------------|
 | `CodegenServiceApplication` | Spring Boot entry point — scans `nz.co.eroad.qaisystem` |
 | `TestScriptsConsumer` | Kafka consumer — routes to `CodegenService` |
-| `CodegenService` | Routes BDD scenarios to correct test runner based on type |
+| `CodegenService` | Routes BDD scenarios to correct test runner based on type. Throws `IllegalStateException` when `RepoContext.contextAvailable` is `false` — no template fallback. |
 | `ApiTestRunner` | Generates RestAssured + JUnit 5 test code |
 | `UITestRunner` | Generates Selenium test code |
 | `MobileTestRunner` | Generates Appium test code |
@@ -29,7 +29,11 @@ Consumer group: `codegen-service-group`
 
 ## Shared from `common`
 
-`GitHubService`, `AiClient`, `OpenAiClient`, `PrTracker`, `RepoContextService`, `RepoContext`, `TargetRepoProperties`, `ProductExpertContext`, all models.
+`GitHubService`, `AiClient`, `CopilotCliClient`, `PrTracker`, `RepoContextService`, `RepoContext`, `TargetRepoProperties`, `ProductExpertContext`, all models.
+
+## AI Provider
+
+Copilot CLI only (`CopilotCliClient` via `gh api` subprocess). Run `gh auth login` once — no token env var required. `aiqa.ai.provider` is hardcoded to `copilot-cli`.
 
 ## Configuration
 

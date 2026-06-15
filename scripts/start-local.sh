@@ -15,11 +15,9 @@
 #   TARGET_REPO_TOKEN     GitHub PAT with repo scope
 #   TARGET_REPO_USERNAME  GitHub username for the PAT
 #   GITHUB_WEBHOOK_SECRET HMAC secret for GitHub webhooks
-#   AI_PROVIDER           copilot-cli (default) | copilot | openai
-#   GITHUB_COPILOT_TOKEN  Required when AI_PROVIDER=copilot
-#   OPENAI_API_KEY        Required when AI_PROVIDER=openai
-#   OPENAI_BASE_URL       Optional OpenAI-compatible endpoint override
-#   OPENAI_MODEL          Optional model name (default gpt-4o)
+#   The only supported AI provider is the locally installed GitHub Copilot CLI.
+#   Prerequisites: brew install gh && gh auth login
+#   No token env var needed — gh CLI manages credentials via OS keychain.
 # =============================================================================
 set -euo pipefail
 
@@ -118,11 +116,9 @@ docker info &>/dev/null 2>&1            || die "Docker daemon not running. Start
 docker compose version &>/dev/null 2>&1 || die "docker compose not available. Upgrade to Docker Desktop 4.x+."
 success "Docker + Compose v2 ok"
 
-# gh CLI check (used by default copilot-cli provider)
-ACTIVE_PROVIDER="${AI_PROVIDER:-copilot-cli}"
-if [ "${ACTIVE_PROVIDER}" = "copilot-cli" ]; then
-  if ! command -v gh &>/dev/null; then
-    warn "gh CLI not found -- AI generation will fall back to templates."
+# gh CLI check — Copilot CLI is the only supported AI provider
+if ! command -v gh &>/dev/null; then
+    warn "gh CLI not found — BDD generation and test code generation will FAIL."
     warn "  Fix:  brew install gh && gh auth login"
   else
     GH_VER=$(gh --version 2>/dev/null | head -1 | awk '{print $3}')
@@ -130,10 +126,9 @@ if [ "${ACTIVE_PROVIDER}" = "copilot-cli" ]; then
     if gh auth status &>/dev/null 2>&1; then
       success "gh authenticated ok"
     else
-      warn "gh CLI installed but NOT authenticated -- AI will fall back to templates."
+      warn "gh CLI installed but NOT authenticated — AI generation will FAIL."
       warn "  Fix:  gh auth login"
     fi
-  fi
 fi
 
 # Port checks
@@ -280,10 +275,12 @@ header "Starting Spring Boot Services"
 mkdir -p "${LOG_DIR}"
 
 PASSTHROUGH_VARS=(
-  TARGET_REPO_URL TARGET_REPO_TOKEN TARGET_REPO_USERNAME GITHUB_WEBHOOK_SECRET
-  AI_PROVIDER GITHUB_COPILOT_TOKEN
-  OPENAI_API_KEY OPENAI_BASE_URL OPENAI_MODEL
-  COPILOT_MODEL COPILOT_BASE_URL GH_CLI_PATH COPILOT_CLI_TIMEOUT
+  TARGET_REPO_URL TARGET_REPO_TOKEN TARGET_REPO_USERNAME
+  GH_CLI_PATH COPILOT_CLI_TIMEOUT COPILOT_CLI_MODEL
+  REDIS_HOST REDIS_PORT KAFKA_HOST
+  GITHUB_WEBHOOK_SECRET GITHUB_WEBHOOK_REQUIRE_SECRET
+  AIQA_ADMIN_KEY
+  API_BASE_URL UI_BASE_URL MOBILE_APP_PATH MOBILE_DEVICE_NAME MOBILE_PLATFORM APPIUM_URL
 )
 
 # -- Parallel arrays replacing declare -A (bash 3.2-compatible) ---------------

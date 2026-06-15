@@ -49,22 +49,14 @@ aiqa:
       api: tests/api
       ui:  tests/ui
       mobile: tests/mobile
-  # ── AI Generation — provider: copilot-cli (default) | copilot | openai ──────
-  # See strategy-service/src/main/resources/application.yaml for full docs.
+  # ── AI Generation — only Copilot CLI is supported ───────────────────────────
+  # Prerequisites: brew install gh && gh auth login
   ai:
-    provider: ${AI_PROVIDER:copilot-cli}           # copilot-cli (default) | copilot | openai
+    provider: copilot-cli
     copilot-cli:
       gh-cli-path: ${GH_CLI_PATH:gh}
-      model:       ${COPILOT_CLI_MODEL:claude-sonnet-4.6}
+      model:       ${COPILOT_CLI_MODEL:claude-sonnet-4-5}
       timeout-seconds: ${COPILOT_CLI_TIMEOUT:120}
-    openai:
-      api-key:  ${OPENAI_API_KEY:}
-      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
-      model:    ${OPENAI_MODEL:claude-sonnet-4.6}
-    copilot:
-      token:    ${GITHUB_COPILOT_TOKEN:}
-      base-url: ${COPILOT_BASE_URL:https://api.githubcopilot.com}
-      model:    ${COPILOT_MODEL:claude-sonnet-4.6}
 
 logging:
   level:

@@ -35,24 +35,13 @@
 #   # Set to "true" in production. Set to "false" only for local dev without ngrok.
 #   GITHUB_WEBHOOK_REQUIRE_SECRET=true
 #
-#   # ── AI provider (shared by strategy / codegen / feedback / impact) ──────────
-#   # Set AI_PROVIDER to "openai" (default) or "copilot", then add the
-#   # corresponding credential:
-#   AI_PROVIDER=openai
-#
-#   # When AI_PROVIDER=openai:
-#   OPENAI_API_KEY=sk-proj-...              # or GitHub token for GitHub Models
-#   # OPENAI_BASE_URL=https://api.openai.com  # override for Azure/Ollama/GitHub Models
-#   # OPENAI_MODEL=gpt-4o
-#
-#   # When AI_PROVIDER=copilot:
-#   # GITHUB_COPILOT_TOKEN=ghp_...          # GitHub token with Copilot access
-#   # COPILOT_BASE_URL=https://api.githubcopilot.com
-#   # COPILOT_MODEL=gpt-4o
+#   # ── AI provider ───────────────────────────────────────────────────────────
+#   # Only Copilot CLI is supported. Ensure 'gh auth login' has been run on the host.
+#   # GH_CLI_PATH is optional — defaults to 'gh' on PATH.
+#   # GH_CLI_PATH=/usr/local/bin/gh
 #
 #   # impact-service: AI evaluator (optional — disabled by default)
 #   AIQA_AI_ENABLED=false                   # set to "true" to activate
-#   # uses AI_PROVIDER / OPENAI_API_KEY or GITHUB_COPILOT_TOKEN above
 #
 #   # Kafka advertised listener — must be the server's IP or DNS name
 #   KAFKA_HOST=your-server-ip
@@ -92,14 +81,9 @@ services:
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SERVER_PORT: 8081
-      # AI last-resort evaluator — set AIQA_AI_ENABLED=true and configure
-      # the AI_PROVIDER + matching credential to activate
+      # AI last-resort evaluator — set AIQA_AI_ENABLED=true to activate
       AIQA_AI_ENABLED: ${AIQA_AI_ENABLED:-false}
-      AI_PROVIDER: ${AI_PROVIDER:-copilot}
-      # OpenAI provider credential (used when AI_PROVIDER=openai)
       AIQA_AI_API_KEY: ${AIQA_AI_API_KEY:-}
-      # Copilot provider credential (used when AI_PROVIDER=copilot)
-      GITHUB_COPILOT_TOKEN: ${GITHUB_COPILOT_TOKEN:-}
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8081/api/impact/status"]
       interval: 30s
@@ -127,14 +111,9 @@ services:
       GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
       GITHUB_WEBHOOK_REQUIRE_SECRET: ${GITHUB_WEBHOOK_REQUIRE_SECRET:-true}
       AIQA_ADMIN_KEY: ${AIQA_ADMIN_KEY:-}
-      # AI provider — shared by strategy / codegen / feedback services
-      AI_PROVIDER: ${AI_PROVIDER:-copilot}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com}
-      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
-      GITHUB_COPILOT_TOKEN: ${GITHUB_COPILOT_TOKEN:-}
-      COPILOT_BASE_URL: ${COPILOT_BASE_URL:-https://api.githubcopilot.com}
-      COPILOT_MODEL: ${COPILOT_MODEL:-gpt-4o}
+      # AI provider — Copilot CLI only; gh auth must be configured on the host
+      GH_CLI_PATH: ${GH_CLI_PATH:-gh}
+      COPILOT_CLI_MODEL: ${COPILOT_CLI_MODEL:-claude-sonnet-4-5}
     volumes:
       # Persist the cloned test repo between container restarts to avoid re-cloning every time
       - qa-repo-cache:/tmp/qa-context-repo
@@ -164,13 +143,8 @@ services:
       TARGET_REPO_URL: ${TARGET_REPO_URL:-}
       TARGET_REPO_TOKEN: ${TARGET_REPO_TOKEN:-}
       TARGET_REPO_USERNAME: ${TARGET_REPO_USERNAME:-}
-      AI_PROVIDER: ${AI_PROVIDER:-copilot}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com}
-      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
-      GITHUB_COPILOT_TOKEN: ${GITHUB_COPILOT_TOKEN:-}
-      COPILOT_BASE_URL: ${COPILOT_BASE_URL:-https://api.githubcopilot.com}
-      COPILOT_MODEL: ${COPILOT_MODEL:-gpt-4o}
+      GH_CLI_PATH: ${GH_CLI_PATH:-gh}
+      COPILOT_CLI_MODEL: ${COPILOT_CLI_MODEL:-claude-sonnet-4-5}
     volumes:
       - qa-codegen-repo-cache:/tmp/qa-context-repo-codegen
     healthcheck:
@@ -200,13 +174,8 @@ services:
       TARGET_REPO_TOKEN: ${TARGET_REPO_TOKEN:-}
       TARGET_REPO_USERNAME: ${TARGET_REPO_USERNAME:-}
       GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
-      AI_PROVIDER: ${AI_PROVIDER:-copilot}
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com}
-      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
-      GITHUB_COPILOT_TOKEN: ${GITHUB_COPILOT_TOKEN:-}
-      COPILOT_BASE_URL: ${COPILOT_BASE_URL:-https://api.githubcopilot.com}
-      COPILOT_MODEL: ${COPILOT_MODEL:-gpt-4o}
+      GH_CLI_PATH: ${GH_CLI_PATH:-gh}
+      COPILOT_CLI_MODEL: ${COPILOT_CLI_MODEL:-claude-sonnet-4-5}
     volumes:
       - qa-feedback-repo-cache:/tmp/qa-context-repo-feedback
     healthcheck:

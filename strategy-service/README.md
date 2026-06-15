@@ -5,12 +5,8 @@
 executable test code, runs a bounded stabilisation loop, raises GitHub review PRs, and handles
 rejection feedback for both BDD and test code PRs.
 
-> Set `AI_PROVIDER` to select the AI backend:
-> - `copilot-cli` (default) — uses `gh api`; run `gh auth login` once, no token needed
-> - `copilot` + `GITHUB_COPILOT_TOKEN` — Copilot REST API
-> - `openai` + `OPENAI_API_KEY` — any OpenAI-compatible endpoint (Azure, Ollama, GitHub Models)
->
-> Without a credential, enhanced template mode is used for all generation.
+> **AI provider:** Copilot CLI only — uses `gh api`; run `gh auth login` once, no token needed.
+> `BddGenerator.generate()` throws `IllegalStateException` when Copilot CLI is unavailable or returns empty.
 
 ---
 
@@ -90,7 +86,7 @@ TEST REJECTED → PrFeedbackService.handleTestRejection() [virtual thread]
 | Class | Responsibility |
 |-------|----------------|
 | `StrategyAgent` | Decides SKIP/UPDATE_TESTS/CREATE_TESTS using E2E coverage + risk rules (see [decision logic](#strategy-decision-logic)). Builds `TestStrategy` with test types, scenario hints, confidence score, priority (P0–P3). |
-| `BddGenerator` | **AI mode:** builds rich system prompt from productExpert context, `.aiqa/context.md`, `.github/agents/*.md`, sample tests → calls `AiClient.complete()`. **Template mode:** generates up to 3 scenarios (happy path, error, boundary). Adds `@api/@ui/@mobile`, `@pr-{prId}`, `@auto-generated`, `@smoke` (HIGH/CRITICAL risk). |
+| `BddGenerator` | Builds system prompt: static safety preamble + **conductor agent** instructions (`.github/agents/*.md` file containing "conductor") as primary role directive, then productExpert context, `.aiqa/context.md`, sample tests → calls `AiClient.complete()`. Throws `IllegalStateException` on empty/unavailable response — no template fallback. Adds `@api/@ui/@mobile`, `@pr-{prId}`, `@auto-generated`, `@smoke` (HIGH/CRITICAL risk). |
 | `PrFeedbackService` | Handles BDD + TEST rejections. Fetches GitHub review comments → AI classifies (`KNOWLEDGE_GAP`/`STYLE_ONLY`) → if gap: updates `productExpert/` + creates knowledge-update PR → re-generates with feedback → creates revised PR. Runs on virtual thread. |
 
 ### Execution Layer
@@ -223,7 +219,9 @@ loads productExpert context, builds coverage index). Refreshable: `POST /api/str
 | `token` | PAT embedded in HTTPS URL: `https://{user}:{token}@github.com/...` |
 | `ssh` | SSH agent (`~/.ssh/id_rsa` or `id_ed25519`) |
 
-**Fallback:** if remote clone/pull fails, tries `fallback-local-path`. If both fail → uses built-in templates (`contextAvailable=false`).
+**Fallback:** if remote clone/pull fails, tries `fallback-local-path`. If both fail → `contextAvailable=false`; `BddGenerator` and `CodegenService.generateScript()` throw `IllegalStateException`.
+
+**Security:** `runGit()` sanitises all git output before logging or propagating exceptions (strips `https://token@` patterns). The `refresh()` API response never exposes raw git error detail externally.
 
 **Context scanning** per module:
 - `basePackage` — first `package` statement found
@@ -232,7 +230,7 @@ loads productExpert context, builds coverage index). Refreshable: `POST /api/str
 - `testNamingConvention` — `Test*` prefix or `*Test` suffix (by majority)
 - `sampleTests` — up to 3 files (skipping files >6000 chars)
 - `productExpertSections` — all `.md` files under `productExpert/{product}/`
-- `agentInstructions` — `.github/agents/*.md` files (by type: `api-*`, `ui-*`, etc.)
+- `agentInstructions` — `.github/agents/*.md` files; the file whose content contains "conductor" (case-insensitive) is the conductor agent (`RepoContext.hasConductorAgent()` / `getConductorAgentContent()`), used as primary role directive in `BddGenerator` and sorted first in generated test file headers
 
 ---
 
@@ -328,18 +326,10 @@ kafka.topics:
 
 aiqa:
   ai:
-    provider: ${AI_PROVIDER:copilot-cli}       # copilot-cli | copilot | openai
+    provider: copilot-cli                      # only supported provider
     copilot-cli:
       gh-cli-path: ${GH_CLI_PATH:gh}
       model:       ${COPILOT_CLI_MODEL:gpt-4o}
-    copilot:
-      token:    ${GITHUB_COPILOT_TOKEN:}
-      base-url: ${COPILOT_BASE_URL:https://api.githubcopilot.com}
-      model:    ${COPILOT_MODEL:gpt-4o}
-    openai:
-      api-key:  ${OPENAI_API_KEY:}
-      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
-      model:    ${OPENAI_MODEL:gpt-4o}
   stabilization:
     max-retries:    3
     retry-delay-ms: 2000
@@ -366,10 +356,7 @@ aiqa:
 | `TARGET_REPO_URL` | For PR creation | HTTPS URL of the test repo |
 | `TARGET_REPO_TOKEN` | For PR creation | GitHub PAT with `repo` scope (SSO-authorise for org repos) |
 | `TARGET_REPO_USERNAME` | For PR creation | GitHub username |
-| `GITHUB_WEBHOOK_SECRET` | Recommended | HMAC-SHA256 secret — must match GitHub webhook settings |
-| `AI_PROVIDER` | No | `copilot-cli` (default) · `copilot` · `openai` |
-| `OPENAI_API_KEY` | When `openai` | API key (blank = template mode) |
-| `GITHUB_COPILOT_TOKEN` | When `copilot` | GitHub token with Copilot access |
+| `GITHUB_WEBHOOK_SECRET` | Recommended | HMAC-SHA256 secret — must match GitHub webhook settings; signature verification enforced by default |
 
 ### Product Expert Files in Test Repo
 
@@ -384,7 +371,7 @@ aiqa:
     api-*.md  ui-*.md  *.md ← agent instructions per type
 ```
 
-None required — the service works with built-in templates when absent.
+None required — when absent `BddGenerator` proceeds without the conductor role directive or product context, relying on the base safety preamble only.
 
 ---
 

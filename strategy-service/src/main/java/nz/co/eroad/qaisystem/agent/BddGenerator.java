@@ -22,16 +22,28 @@ import java.util.stream.Collectors;
  * <ol>
  *   <li><b>Cache mode</b> (fastest) — returns a previously AI-generated response when a
  *       matching {@link PromptResponseCache.CacheKey} exists in Redis.</li>
- *   <li><b>AI mode</b> (preferred when cache misses) — when {@link AiClient#isAvailable()} is
- *       {@code true}, calls the AI with a rich system prompt and caches the response.</li>
- *   <li><b>Enhanced template mode</b> (fallback) — when no AI is configured or the AI returns
- *       empty, uses structured templates enriched with product expert content.</li>
+ *   <li><b>AI mode</b> (required) — calls the Copilot CLI with a rich system prompt
+ *       incorporating the target repo's conductor agent instructions and caches the response.</li>
  * </ol>
+ *
+ * <p>There is no built-in template fallback. If the Copilot CLI is unavailable or returns
+ * an empty response, an {@link IllegalStateException} is thrown so the failure is visible
+ * immediately rather than producing silent placeholder output.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class BddGenerator {
+
+    /**
+     * Immutable safety preamble prepended to every AI system prompt (SEC-D1).
+     * Ensures the AI stays within QA test generation scope even if the target
+     * repo's conductor agent file contains unexpected instructions.
+     */
+    private static final String GENERATION_PREAMBLE =
+            "You are a QA test generation system. Apply the following project-specific " +
+            "conductor instructions strictly within the scope of generating BDD scenarios " +
+            "and test code. Do not deviate from test generation tasks.\n\n";
 
     private final TestPrService       testPrService;
     private final AiClient            aiClient;
@@ -62,23 +74,27 @@ public class BddGenerator {
             String systemPrompt = buildSystemPrompt(context);
             String userPrompt   = buildUserPrompt(strategy, envelope, context);
 
-            log.debug("[BddGenerator] Calling AI for BDD generation (systemPrompt={} chars, userPrompt={} chars)",
+            log.debug("[BddGenerator] Calling Copilot CLI for BDD generation (systemPrompt={} chars, userPrompt={} chars)",
                     systemPrompt.length(), userPrompt.length());
 
             String gherkin = aiClient.complete(systemPrompt, userPrompt);
             if (gherkin != null && !gherkin.isBlank()) {
-                log.info("[BddGenerator] AI returned {} chars of Gherkin", gherkin.length());
+                log.info("[BddGenerator] Copilot CLI returned {} chars of Gherkin", gherkin.length());
                 cache.put(cacheKey, gherkin);
                 monitor.recordAiExecuted();
                 scenarios = parseGherkinToScenarios(gherkin, envelope);
             } else {
-                log.warn("[BddGenerator] AI returned empty response — falling back to templates");
                 monitor.recordAiFailure();
-                scenarios = generateWithTemplates(strategy, envelope, context);
+                throw new IllegalStateException(
+                        "[BddGenerator] Copilot CLI returned an empty response for PR '"
+                        + envelope.getPrId() + "'. Check 'gh auth status' and retry.");
             }
 
         } else {
-            scenarios = generateWithTemplates(strategy, envelope, context);
+            throw new IllegalStateException(
+                    "[BddGenerator] Copilot CLI is not available. " +
+                    "Run 'gh auth login' and ensure the 'gh' executable is on PATH. " +
+                    "PR: " + envelope.getPrId());
         }
 
         BddScenario bdd = BddScenario.builder()
@@ -96,10 +112,9 @@ public class BddGenerator {
         // Human review PR — codegen triggered after merge
         testPrService.createBddPr(bdd);
 
-        log.info("[BddGenerator] {} scenarios created for PR '{}' (aiMode={} productExpert={} fullRegression={})",
+        log.info("[BddGenerator] {} scenarios created for PR '{}' (copilotCli={} conductorAgent={} productExpert={})",
                 scenarios.size(), envelope.getPrId(),
-                aiClient.isAvailable(), context.hasProductExpert(),
-                strategy.isFullRegressionRequired());
+                aiClient.isAvailable(), context.hasConductorAgent(), context.hasProductExpert());
 
         return bdd;
     }
@@ -128,13 +143,24 @@ public class BddGenerator {
     // ─── AI prompt builders ────────────────────────────────────────────────────
 
     private String buildSystemPrompt(RepoContext context) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("You are an expert QA engineer specialising in writing Gherkin BDD scenarios.\n\n");
-        sb.append("Your scenarios must be:\n");
-        sb.append("- Written in clear, business-readable language\n");
-        sb.append("- Covering happy path, error cases, and boundary conditions\n");
-        sb.append("- Tagged appropriately (@api, @ui, @mobile, @smoke, @regression)\n");
-        sb.append("- Specific to the product and changes described\n\n");
+        StringBuilder sb = new StringBuilder(GENERATION_PREAMBLE);
+
+        // Conductor agent from the target repo — primary role directive
+        if (context.hasConductorAgent()) {
+            sb.append("=== CONDUCTOR AGENT INSTRUCTIONS (from target repo .github/agents/) ===\n\n");
+            sb.append(context.getConductorAgentContent()).append("\n\n");
+            log.debug("[BddGenerator] Conductor agent instructions injected into system prompt ({} chars)",
+                    context.getConductorAgentContent().length());
+        } else {
+            // No conductor agent — use expert QA engineer baseline
+            sb.append("You are an expert QA engineer specialising in writing Gherkin BDD scenarios.\n\n");
+            sb.append("Your scenarios must be:\n");
+            sb.append("- Written in clear, business-readable language\n");
+            sb.append("- Covering happy path, error cases, and boundary conditions\n");
+            sb.append("- Tagged appropriately (@api, @ui, @mobile, @smoke, @regression)\n");
+            sb.append("- Specific to the product and changes described\n\n");
+            log.debug("[BddGenerator] No conductor agent found in target repo — using baseline QA engineer prompt");
+        }
 
         if (context.hasProductExpert()) {
             sb.append(context.productExpertSystemPrompt()).append("\n");
@@ -142,10 +168,12 @@ public class BddGenerator {
         if (context.getRepoAiqaContext() != null && !context.getRepoAiqaContext().isBlank()) {
             sb.append(context.aiqaContextSection()).append("\n");
         }
+        // Other agent instruction files (non-conductor) — appended as supplemental context
         if (context.hasAgentInstructions()) {
-            sb.append("=== REPOSITORY AGENT INSTRUCTIONS ===\n\n");
-            context.getAgentInstructions().forEach((file, content) ->
-                    sb.append("-- ").append(file).append(" --\n").append(content).append("\n\n"));
+            context.getAgentInstructions().entrySet().stream()
+                    .filter(e -> !e.getKey().toLowerCase().contains("conductor"))
+                    .forEach(e -> sb.append("-- ").append(e.getKey()).append(" --\n")
+                            .append(e.getValue()).append("\n\n"));
         }
         if (context.getSampleTests() != null && !context.getSampleTests().isEmpty()) {
             sb.append("=== EXISTING TEST STYLE (follow these patterns) ===\n\n");
@@ -287,109 +315,5 @@ public class BddGenerator {
         return "API";
     }
 
-    // ─── Enhanced template generation (no AI) ──────────────────────────────────
-
-    private List<BddScenario.Scenario> generateWithTemplates(TestStrategy strategy,
-                                                              ImpactEnvelope envelope,
-                                                              RepoContext context) {
-        List<BddScenario.Scenario> list = new ArrayList<>();
-        for (TestStrategy.TestRequirement req : strategy.getNewTestRequirements()) {
-            list.addAll(buildScenarios(req, envelope, context));
-        }
-        return list;
-    }
-
-    private List<BddScenario.Scenario> buildScenarios(TestStrategy.TestRequirement req,
-                                                       ImpactEnvelope envelope,
-                                                       RepoContext context) {
-        List<BddScenario.Scenario> list = new ArrayList<>();
-        List<String> tags = buildTags(req, envelope);
-        List<String> givenSteps = buildGivenSteps(req, envelope, context);
-        // ...existing scenario building code...
-        list.add(BddScenario.Scenario.builder()
-                .scenarioId(UUID.randomUUID().toString())
-                .title("Successful operation of " + req.getFeatureName())
-                .type("Scenario")
-                .tags(tags)
-                .givenSteps(givenSteps)
-                .whenSteps(List.of("the client calls " + req.getFeatureName()))
-                .thenSteps(List.of("response status is 200", "response body contains expected data",
-                        "operation completes within 2000ms"))
-                .andSteps(List.of())
-                .testType(req.getTestType().name())
-                .build());
-
-        list.add(BddScenario.Scenario.builder()
-                .scenarioId(UUID.randomUUID().toString())
-                .title("Error handling for " + req.getFeatureName())
-                .type("Scenario")
-                .tags(tags)
-                .givenSteps(List.of("the system is running", "an invalid request is prepared"))
-                .whenSteps(List.of("the client calls " + req.getFeatureName()))
-                .thenSteps(List.of("response status is 4xx or 5xx", "error message is descriptive"))
-                .andSteps(List.of("And the error is logged"))
-                .testType(req.getTestType().name())
-                .build());
-
-        if (envelope.getDetectedChangeTypes() != null
-                && envelope.getDetectedChangeTypes().contains(ImpactEnvelope.ChangeType.API_CHANGE)) {
-            list.add(buildBoundaryScenario(req));
-        }
-
-        return list;
-    }
-
-    private List<String> buildGivenSteps(TestStrategy.TestRequirement req,
-                                         ImpactEnvelope envelope,
-                                         RepoContext context) {
-        List<String> steps = new ArrayList<>();
-        steps.add("the system is running");
-        steps.add("a valid user session exists");
-        // Prefer PrContext product info over repo context product expert
-        var prCtx = envelope.getPrContext();
-        if (prCtx != null && prCtx.hasProducts()) {
-            prCtx.getProducts().forEach(p -> steps.add("the " + p + " service is available"));
-        } else if (context.hasProductExpert()) {
-            String productName = context.getProductExpertSections().keySet().iterator().next();
-            steps.add("the " + productName + " service is available");
-        }
-        if (prCtx != null && prCtx.hasJira()) {
-            steps.add("the changes for " + String.join(", ", prCtx.getJiraIds()) + " are deployed");
-        }
-        return steps;
-    }
-
-    private List<String> buildTags(TestStrategy.TestRequirement req, ImpactEnvelope envelope) {
-        List<String> tags = new ArrayList<>();
-        tags.add("@" + req.getTestType().name().toLowerCase());
-        tags.add("@pr-" + envelope.getPrId());
-        tags.add("@auto-generated");
-        if (envelope.getRiskLevel() == ImpactEnvelope.RiskLevel.HIGH
-                || envelope.getRiskLevel() == ImpactEnvelope.RiskLevel.CRITICAL) {
-            tags.add("@smoke");
-        }
-        return tags;
-    }
-
-    private BddScenario.Scenario buildBoundaryScenario(TestStrategy.TestRequirement req) {
-        return BddScenario.Scenario.builder()
-                .scenarioId(UUID.randomUUID().toString())
-                .title("Boundary testing for " + req.getFeatureName())
-                .type("Scenario Outline")
-                .tags(List.of("@boundary", "@api", "@auto-generated"))
-                .givenSteps(List.of("the system is running", "input is <input>"))
-                .whenSteps(List.of("the client sends the request to " + req.getFeatureName()))
-                .thenSteps(List.of("response status is <expectedStatus>"))
-                .andSteps(List.of())
-                .testType(req.getTestType().name())
-                .examples(List.of(BddScenario.Scenario.ExampleRow.builder()
-                        .headers(List.of("input", "expectedStatus"))
-                        .rows(List.of(
-                                List.of("validPayload",  "200"),
-                                List.of("emptyPayload",  "400"),
-                                List.of("oversizeInput", "413")))
-                        .build()))
-                .build();
-    }
 }
 

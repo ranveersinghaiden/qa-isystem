@@ -11,16 +11,19 @@ import java.util.Map;
 /**
  * Extracted context from the target test monorepo for a specific test type.
  * Passed to each runner so generated code matches the conventions of the
- * existing test suite rather than using generic built-in templates.
+ * existing test suite.
  *
  * <p><b>Priority order for context sources:</b>
  * <ol>
- *   <li>{@code agentInstructions} — content from {@code .github/agents/*.md} files.
- *       These are explicit, human-authored convention docs and take highest precedence.</li>
+ *   <li>{@code agentInstructions} — content from {@code .github/agents/*.md} files in the
+ *       target repo. The <b>conductor agent</b> file (filename containing "conductor",
+ *       case-insensitive) is identified separately and used as the primary AI role directive.</li>
  *   <li>Heuristically scanned conventions (package, base class, common imports, samples)
  *       derived from scanning actual test source files.</li>
- *   <li>Built-in templates — used when {@code contextAvailable == false}.</li>
  * </ol>
+ *
+ * <p>When {@code contextAvailable == false} callers must throw — there is no built-in
+ * template fallback.
  */
 @Data
 @Builder
@@ -115,6 +118,28 @@ public class RepoContext {
         return contextAvailable && agentInstructions != null && !agentInstructions.isEmpty();
     }
 
+    /**
+     * Returns the content of the conductor agent file (the {@code .github/agents/} entry
+     * whose filename contains "conductor", case-insensitive), or {@code null} when none
+     * is present.
+     */
+    public String getConductorAgentContent() {
+        if (agentInstructions == null) return null;
+        return agentInstructions.entrySet().stream()
+                .filter(e -> e.getKey().toLowerCase().contains("conductor"))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * True when the target repo's {@code .github/agents/} directory contains a conductor
+     * agent file (filename containing "conductor", case-insensitive).
+     */
+    public boolean hasConductorAgent() {
+        return contextAvailable && getConductorAgentContent() != null;
+    }
+
     /** True when at least one product expert file was loaded. */
     public boolean hasProductExpert() {
         return contextAvailable && productExpertSections != null && !productExpertSections.isEmpty();
@@ -167,8 +192,8 @@ public class RepoContext {
     }
 
     /**
-     * Returns a comment block containing the content of all agent instruction files.
-     * This is the preferred context header when agent files are present.
+     * Returns a comment block containing the content of agent instruction files.
+     * The conductor agent file is listed first when present.
      * Falls back to {@link #samplesComment()} when no agent files were loaded.
      */
     public String contextHeader() {
@@ -178,13 +203,20 @@ public class RepoContext {
                     " * AGENT INSTRUCTIONS — sourced from .github/agents/ in the\n" +
                     " * target test repo. Follow these conventions exactly.\n" +
                     " * ════════════════════════════════════════════════════════\n");
-            agentInstructions.forEach((file, content) -> {
-                sb.append(" *\n * ── ").append(file).append(" ──\n");
-                // Indent each line with " * " so it stays inside the block comment
-                for (String line : content.split("\n")) {
-                    sb.append(" * ").append(line.replace("*/", "* /")).append("\n");
-                }
-            });
+            // Conductor agent first for prominence
+            agentInstructions.entrySet().stream()
+                    .sorted((a, b) -> {
+                        boolean ac = a.getKey().toLowerCase().contains("conductor");
+                        boolean bc = b.getKey().toLowerCase().contains("conductor");
+                        if (ac == bc) return a.getKey().compareTo(b.getKey());
+                        return ac ? -1 : 1;
+                    })
+                    .forEach(entry -> {
+                        sb.append(" *\n * ── ").append(entry.getKey()).append(" ──\n");
+                        for (String line : entry.getValue().split("\n")) {
+                            sb.append(" * ").append(line.replace("*/", "* /")).append("\n");
+                        }
+                    });
             sb.append(" */\n");
             return sb.toString();
         }

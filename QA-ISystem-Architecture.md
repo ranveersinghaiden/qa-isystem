@@ -271,11 +271,9 @@ FeedbackEvent
 
 | Class | Role |
 |-------|------|
-| `AiClient` (interface) | Abstraction over the LLM API; three implementations |
-| `CopilotCliClient` | Calls Copilot API via `gh api` subprocess — default, no token env var needed |
-| `CopilotClient` | Calls Copilot REST API with `GITHUB_COPILOT_TOKEN` |
-| `OpenAiClient` | Calls any OpenAI-compatible endpoint |
-| `AiClientConfig` | Creates the active `AiClient` bean; gated on `aiqa.github.enabled=true` |
+| `AiClient` (interface) | Abstraction over the LLM API; one implementation: `CopilotCliClient` |
+| `CopilotCliClient` | Calls Copilot API via `gh api` subprocess — no token env var needed |
+| `AiClientConfig` | Creates the `CopilotCliClient` bean; gated on `aiqa.github.enabled=true` |
 | `AiProviderProperties` | `@ConfigurationProperties(prefix="aiqa.ai")` |
 | `GitHubService` | GitHub API calls: diff fetch, PR creation, webhook signature verification |
 | `RepoContextService` | Clone + index test repo; build coverage index; extract conventions |
@@ -491,7 +489,7 @@ ImpactEnvelope
       ├─ HIT  → return cached gherkin, no AI call
       └─ MISS ──────────────────────────────────────────────────────────────┐
                                                                             ▼
-③ AiClient.complete()  (copilot-cli / copilot / openai)
+③ AiClient.complete()  (copilot-cli)
    → store response in cache for future identical patterns
 ```
 
@@ -527,6 +525,10 @@ This makes coverage lookup **O(1)** per component at query time.
 | Content has `@SpringBootTest` | Full application context — not a unit test |
 | Content has `RestAssured`, `MockMvc`, `WebTestClient` | HTTP-level testing |
 
+**Conductor agent:** `loadAgentInstructions()` reads all `.github/agents/*.md` files and identifies the one whose content contains "conductor" (case-insensitive). This file is the conductor agent, accessible via `RepoContext.hasConductorAgent()` / `getConductorAgentContent()`, and is used as the primary AI role directive in `BddGenerator`.
+
+**Security:** `runGit()` sanitises all git output before logging or propagating exceptions (strips `https://token@` patterns). `refresh()` returns a generic error message in the API response — raw git error detail is never exposed externally.
+
 ### 7.3 E2ECoverageAnalyzer — Phase 2 Coverage Assessment
 
 Receives the `ImpactEnvelope` with `level=UNKNOWN` and replaces it with a real assessment:
@@ -557,10 +559,15 @@ Decision tree (first match wins):
 
 ### 7.5 BddGenerator — Creating Human-Readable Test Scenarios
 
-Produces BDD scenarios in Gherkin syntax. When the PR has external context,
-`PrContext.asPromptSection()` (compressed summary first, then structured fields) is injected
-into the AI prompt so the LLM sees Jira tickets, Confluence links, and product names when
-writing scenarios.
+Produces BDD scenarios in Gherkin syntax. The system prompt begins with a static safety preamble
+followed by the **conductor agent's instructions** (from `.github/agents/*.md` in the target repo,
+identified by the word "conductor") as the primary AI role directive. When the PR has external
+context, `PrContext.asPromptSection()` (compressed summary first, then structured fields) is
+injected into the AI prompt so the LLM sees Jira tickets, Confluence links, and product names
+when writing scenarios.
+
+`BddGenerator.generate()` throws `IllegalStateException` when Copilot CLI is unavailable or
+returns an empty response — there is no template fallback.
 
 The generated `BddScenario` carries the full `PrContext` forward to codegen-service.
 
@@ -591,7 +598,7 @@ curl -X POST http://localhost:8082/api/strategy/approve-bdd \
 | `GET /api/strategy/status` | Status + pending BDD review count |
 | `GET /api/strategy/pending-bdd` | List all tracked BDD scenarios waiting for approval |
 | `POST /api/strategy/approve-bdd` | Manually trigger codegen from BDD JSON |
-| `POST /api/strategy/github-webhook` | GitHub `pull_request` webhook (BDD/test PR merge/reject) |
+| `POST /api/strategy/github-webhook` | GitHub `pull_request` webhook (BDD/test PR merge/reject) — signature verification enforced by default (`require-secret: true`) |
 | `POST /api/strategy/refresh-context` | Re-pull target test repo, refresh coverage cache |
 | `GET /api/qa/cost/report` | AI call gating / cache / cost metrics |
 
@@ -611,9 +618,10 @@ code generation + execution + healing cycle independently.
 
 1. Consumes `BddScenario` from `TestScriptsQueue`
 2. Routes to the appropriate test runner based on `testType`
-3. Generates Java source code as a string
-4. Runs a `StabilizationLoop` (up to 3 attempts)
-5. Creates a final GitHub PR (`qa/tests/*`) — even on failure (`⚠️ [NEEDS REVIEW]`)
+3. Loads `RepoContext`; throws `IllegalStateException` if `contextAvailable=false` — no template fallback
+4. Generates Java source code as a string
+5. Runs a `StabilizationLoop` (up to 3 attempts)
+6. Creates a final GitHub PR (`qa/tests/*`) — even on failure (`⚠️ [NEEDS REVIEW]`)
 
 ### Test runners
 
@@ -722,12 +730,9 @@ is returned immediately without blocking.
 All services that use AI share the same provider configuration, loaded via `AiProviderProperties`
 when `aiqa.github.enabled=true` is set.
 
-| `aiqa.ai.provider` | Client | Auth | Cost model |
-|--------------------|--------|------|-----------|
-| `copilot-cli` **(default)** | `CopilotCliClient` — `gh api` subprocess | `gh auth login` (no env var) | Flat Copilot seat licence |
-| `copilot` | `CopilotClient` — REST | `GITHUB_COPILOT_TOKEN` | Flat Copilot seat licence |
-| `openai` | `OpenAiClient` — REST | `OPENAI_API_KEY` | Per-token billing |
-| *(none configured)* | — | — | Enhanced template fallback |
+The only supported AI provider is **Copilot CLI** (`CopilotCliClient`), which calls the Copilot
+API via the `gh api` subprocess. Run `gh auth login` once — no token env var is required.
+`aiqa.ai.provider` is hardcoded to `copilot-cli` and is not overridable via an environment variable.
 
 ### Per-service model defaults
 
@@ -744,19 +749,11 @@ when `aiqa.github.enabled=true` is set.
 ```yaml
 aiqa:
   ai:
-    provider: ${AI_PROVIDER:copilot-cli}       # copilot-cli | copilot | openai
+    provider: copilot-cli                      # only supported provider
     copilot-cli:
       gh-cli-path: ${GH_CLI_PATH:gh}
       model:       ${COPILOT_CLI_MODEL:gpt-5}
       timeout-seconds: ${COPILOT_CLI_TIMEOUT:120}
-    copilot:
-      token:    ${GITHUB_COPILOT_TOKEN:}
-      base-url: ${COPILOT_BASE_URL:https://api.githubcopilot.com}
-      model:    ${COPILOT_MODEL:gpt-5}
-    openai:
-      api-key:  ${OPENAI_API_KEY:}
-      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
-      model:    ${OPENAI_MODEL:gpt-5}
 ```
 
 ---
@@ -984,11 +981,9 @@ Current test counts (106 total, 0 failures, zero Mockito):
 | `TestScript` | model | Generated test code + metadata |
 | `TestResult` | model | Execution result from StabilizationLoop |
 | `FeedbackEvent` | model | Rejected PR details; wraps BddScenario or TestScript for feedback-service |
-| `AiClient` | agent (interface) | Abstraction over LLM API |
-| `CopilotCliClient` | agent | `gh api` subprocess — default, no token env var |
-| `CopilotClient` | agent | Copilot REST API with `GITHUB_COPILOT_TOKEN` |
-| `OpenAiClient` | agent | Any OpenAI-compatible endpoint |
-| `AiClientConfig` | config | Creates active `AiClient` bean; gated on `aiqa.github.enabled=true` |
+| `AiClient` | agent (interface) | Abstraction over LLM API; one implementation: `CopilotCliClient` |
+| `CopilotCliClient` | agent | `gh api` subprocess — no token env var needed |
+| `AiClientConfig` | config | Creates `CopilotCliClient` bean; gated on `aiqa.github.enabled=true` |
 | `AiProviderProperties` | config | `@ConfigurationProperties(prefix="aiqa.ai")` |
 | `GitHubService` | service | GitHub API: diff fetch, PR creation, webhook signature verification |
 | `RepoContextService` | service | Clone + index test repo; build coverage index; extract conventions |

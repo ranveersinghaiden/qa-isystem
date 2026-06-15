@@ -82,7 +82,7 @@ public class UITestRunner {
                 context.commonImportsBlock(),
                 parent.getPrId(),
                 scenario.getTitle(),
-                context.isContextAvailable() ? context.getRepoModulePath() : "built-in template",
+                 context.getBasePackage(),
                 prCtxBlock,
                 className,
                 context.extendsClause(),

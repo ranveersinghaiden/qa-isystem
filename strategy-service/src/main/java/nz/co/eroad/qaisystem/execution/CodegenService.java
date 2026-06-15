@@ -59,9 +59,17 @@ public class CodegenService {
 
         RepoContext context = repoContextService.getContext(type);
 
-        log.debug("[CodegenService] Generating {} test for '{}' context={} agentInstructions={}",
+        if (!context.isContextAvailable()) {
+            throw new IllegalStateException(
+                    "[CodegenService] No repo context available for test type '" + type + "'. " +
+                    "Configure aiqa.target-repo.url or aiqa.target-repo.fallback-local-path " +
+                    "to enable test code generation. " +
+                    "Scenario: '" + scenario.getTitle() + "'");
+        }
+
+        log.debug("[CodegenService] Generating {} test for '{}' context={} conductorAgent={} agentInstructions={}",
                 type, scenario.getTitle(), context.isContextAvailable(),
-                context.hasAgentInstructions());
+                context.hasConductorAgent(), context.hasAgentInstructions());
 
         String content = switch (type) {
             case "UI"     -> uiTestRunner.generateCode(scenario, parent, context);
@@ -69,7 +77,7 @@ public class CodegenService {
             default       -> apiTestRunner.generateCode(scenario, parent, context);
         };
 
-        String targetPackage = context.effectivePackage("nz.co.eroad.qaisystem.generated.tests");
+        String targetPackage = context.getBasePackage();
 
         return TestScript.builder()
                 .scriptId(UUID.randomUUID().toString())
@@ -91,8 +99,9 @@ public class CodegenService {
         String safe = title.replaceAll("[^A-Za-z0-9]", "_")
                            .replaceAll("_+", "_")
                            .replaceAll("^_|_$", "");
-        String convention = context.isContextAvailable()
-                ? context.getTestNamingConvention() : "*Test.java";
+        // context.isContextAvailable() is guaranteed true at this point — CodegenService
+        // throws IllegalStateException before reaching here when context is absent.
+        String convention = context.getTestNamingConvention();
         return convention != null && convention.startsWith("Test")
                 ? "Test" + safe + ".java"
                 : safe + type.charAt(0) + type.substring(1).toLowerCase() + "Test.java";

@@ -73,6 +73,8 @@ public class RepoContextService {
 
     private static final int MAX_SAMPLE_FILES = 3;
     private static final int MAX_SAMPLE_SIZE  = 6_000; // chars — skip huge files
+    /** Maximum chars read from a single agent instruction file before truncation (SEC-D2). */
+    private static final int MAX_AGENT_FILE_CHARS = 32_768;
 
     /** PascalCase identifiers that are Java/framework builtins — excluded from coverage index. */
     private static final Set<String> EXCLUDED_NAMES = Set.of(
@@ -103,7 +105,9 @@ public class RepoContextService {
                         props.getFallbackLocalPath());
                 initFromFallback();
             } else {
-                log.info("[RepoContextService] No fallback configured. Using built-in templates.");
+                log.error("[RepoContextService] No fallback configured and no remote URL set. " +
+                        "BDD generation and test code generation WILL FAIL. " +
+                        "Set aiqa.target-repo.url or aiqa.target-repo.fallback-local-path.");
             }
             return;
         }
@@ -123,8 +127,10 @@ public class RepoContextService {
             if (props.hasFallback()) {
                 initFromFallback();
             } else {
-                log.error("[RepoContextService] No fallback configured. Using built-in templates. " +
-                        "Tip: set aiqa.target-repo.fallback-local-path to your local checkout.");
+                log.error("[RepoContextService] No fallback configured. Remote clone/pull failed: {}. " +
+                        "BDD generation and test code generation WILL FAIL. " +
+                        "Tip: set aiqa.target-repo.fallback-local-path to your local checkout.",
+                        e.getMessage());
             }
         }
     }
@@ -200,12 +206,14 @@ public class RepoContextService {
                             "ui",     contextSummary("UI"),
                             "mobile", contextSummary("MOBILE"));
                 } catch (Exception fe) {
+                    // Return generic messages — exception detail may contain git URLs with tokens
+                    log.error("[RepoContextService] Fallback also failed: {}", fe.getMessage());
                     return Map.of("status", "ERROR",
-                            "message", "Remote failed: " + e.getMessage()
-                                    + ". Fallback failed: " + fe.getMessage());
+                            "message", "Remote git operation failed and fallback also failed — check server logs for details");
                 }
             }
-            return Map.of("status", "ERROR", "message", e.getMessage());
+            // Return generic message — exception detail may contain git URLs with tokens
+            return Map.of("status", "ERROR", "message", "Remote git operation failed — check server logs for details");
         }
     }
 
@@ -316,9 +324,22 @@ public class RepoContextService {
         String out = new String(proc.getInputStream().readAllBytes());
         int exit = proc.waitFor();
         if (exit != 0) {
-            throw new IOException("git command failed (exit " + exit + "): " + out.trim());
+            // Sanitise output before including in exception — git may echo back the
+            // clone URL which can contain an embedded token (https://token@github.com/…).
+            String sanitised = sanitiseGitOutput(out.trim());
+            throw new IOException("git command failed (exit " + exit + "): " + sanitised);
         }
-        log.debug("[RepoContextService] git: {}", out.trim());
+        log.debug("[RepoContextService] git: {}", sanitiseGitOutput(out.trim()));
+    }
+
+    /**
+     * Replaces any credential-containing HTTPS URL pattern
+     * {@code https://user:secret@} with {@code https://<redacted>@}
+     * before the string is included in log messages or exception messages.
+     */
+    private static String sanitiseGitOutput(String raw) {
+        if (raw == null) return "";
+        return raw.replaceAll("https://[^@\\s]+@", "https://<redacted>@");
     }
 
     // ─── Context scanning ──────────────────────────────────────────────────────
@@ -491,11 +512,19 @@ public class RepoContextService {
                              || n.endsWith(".instructions.md");
                  })
                  .sorted()
-                 .forEach(p -> {
-                     try {
-                         String name    = p.getFileName().toString();
-                         String nameLow = name.toLowerCase();
-                         String content = Files.readString(p);
+                     .forEach(p -> {
+                      try {
+                          String name    = p.getFileName().toString();
+                          String nameLow = name.toLowerCase();
+                          String content = Files.readString(p);
+
+                          // SEC-D2: Cap agent file size to prevent context-window DoS
+                          if (content.length() > MAX_AGENT_FILE_CHARS) {
+                              log.warn("[RepoContextService] Agent file '{}' truncated from {} to {} chars " +
+                                      "(MAX_AGENT_FILE_CHARS={})",
+                                      name, content.length(), MAX_AGENT_FILE_CHARS, MAX_AGENT_FILE_CHARS);
+                              content = content.substring(0, MAX_AGENT_FILE_CHARS);
+                          }
 
                          boolean isApi    = nameLow.contains("api");
                          boolean isUi     = nameLow.contains("ui")     || nameLow.contains("web")

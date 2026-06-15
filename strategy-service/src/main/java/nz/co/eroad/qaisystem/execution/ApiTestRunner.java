@@ -86,7 +86,7 @@ public class ApiTestRunner {
                 parent.getPrId(),
                 scenario.getTitle(),
                 scenario.getTags(),
-                context.isContextAvailable() ? context.getRepoModulePath() : "built-in template",
+                 context.getBasePackage(),
                 prCtxBlock,
                 className,
                 context.extendsClause(),
