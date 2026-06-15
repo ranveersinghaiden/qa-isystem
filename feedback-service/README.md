@@ -18,11 +18,11 @@ Consumer group: `feedback-service-group`
 |-------|----------------|
 | `FeedbackServiceApplication` | Spring Boot entry point — scans `nz.co.eroad.qaisystem` |
 | `FeedbackEventConsumer` | Kafka consumer — deserialises `FeedbackEvent`, delegates to `PrFeedbackService` |
-| `PrFeedbackService` | Core feedback logic: fetch comments, classify (KNOWLEDGE_GAP vs STYLE_ONLY), update product expert, re-generate, create revised PR |
+| `PrFeedbackService` | Core feedback logic: load prior conversation history from Redis (`{prId}:bdd` or `{prId}:test`), fetch GitHub review comments, classify (KNOWLEDGE_GAP vs STYLE_ONLY), update product expert, call `AiClient.completeWithHistory()` so the model has full context of all prior generation and rejection cycles, save updated history back to `ConversationStore`, create revised PR |
 
 ## Shared from `common`
 
-`GitHubService`, `AiClient`, `OpenAiClient`, `PrTracker`, `RepoContextService`, `RepoContext`, `TargetRepoProperties`, `ProductExpertContext`, all models including `FeedbackEvent`.
+`GitHubService`, `AiClient`, `OpenAiClient`, `PrTracker`, `RepoContextService`, `RepoContext`, `TargetRepoProperties`, `ProductExpertContext`, `ConversationStore`, `ConversationHistory`, `ChatMessage`, all models including `FeedbackEvent`.
 
 ## Feedback Flow
 
@@ -33,21 +33,28 @@ FeedbackQueue message received
 FeedbackEventConsumer deserialises FeedbackEvent
     │
     ├─ PrType.BDD  → PrFeedbackService.handleBddRejection()
-    │     1. Fetch GitHub review comments
-    │     2. AI classify: KNOWLEDGE_GAP or STYLE_ONLY
-    │     3. If KNOWLEDGE_GAP → create product expert update PR
-    │     4. Re-generate BDD scenarios with feedback context
-    │     5. Create revised BDD PR → PrTracker.trackBdd()
+    │     1. Load conversation history from ConversationStore (key: {prId}:bdd)
+    │     2. Fetch GitHub review comments
+    │     3. AI classify: KNOWLEDGE_GAP or STYLE_ONLY
+    │     4. If KNOWLEDGE_GAP → create product expert update PR
+    │     5. Call AiClient.completeWithHistory() — model receives all prior turns
+    │     6. Save updated history back to ConversationStore
+    │     7. Create revised BDD PR → PrTracker.trackBdd()
     │        Title: `[AI-QA] Revised: {prTitle}` (falls back to `… for PR: {prId}`)
     │
     └─ PrType.TEST → PrFeedbackService.handleTestRejection()
-          1. Fetch GitHub review comments
-          2. AI classify: KNOWLEDGE_GAP or STYLE_ONLY
-          3. If KNOWLEDGE_GAP → create product expert update PR
-          4. Re-generate test code with feedback context
-          5. Create revised test PR → PrTracker.trackTest()
+          1. Load conversation history from ConversationStore (key: {prId}:test)
+          2. Fetch GitHub review comments
+          3. AI classify: KNOWLEDGE_GAP or STYLE_ONLY
+          4. If KNOWLEDGE_GAP → create product expert update PR
+          5. Call AiClient.completeWithHistory() — model receives all prior turns
+          6. Save updated history back to ConversationStore
+          7. Create revised test PR → PrTracker.trackTest()
              Title: `[AI-QA] Revised Tests: {prTitle}` (falls back to `… for PR: {prId}`)
 ```
+
+History is serialised to Redis (`qa:chat:{prId}:bdd` / `qa:chat:{prId}:test`), so any pod
+can handle any PR — no long-lived processes or sticky sessions required.
 
 ## Revised PR Title Format
 

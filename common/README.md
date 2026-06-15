@@ -48,10 +48,22 @@ tracking, and AI clients. Every service depends on this; it is never deployed in
 
 | Class | Description |
 |-------|-------------|
-| `AiClient` | Interface: `complete(systemPrompt, userPrompt)`, `isAvailable()`. |
-| `CopilotCliClient` | Calls `gh api https://api.githubcopilot.com/chat/completions` via `ProcessBuilder`. Uses `gh auth` credentials — no token env var required. Default provider. |
+| `AiClient` | Interface: `complete(systemPrompt, userPrompt)`, `isAvailable()`, and default `completeWithHistory(systemPrompt, List<ChatMessage> history, newUserMessage)` for multi-turn conversations. |
+| `CopilotCliClient` | Calls `gh api https://api.githubcopilot.com/chat/completions` via `ProcessBuilder`. Uses `gh auth` credentials — no token env var required. Overrides `completeWithHistory()` to send a full multi-turn messages array. Default provider. |
 | `CopilotClient` | Calls GitHub Copilot REST API. Requires `GITHUB_COPILOT_TOKEN`. |
 | `OpenAiClient` | Calls any OpenAI-compatible endpoint. Supports OpenAI, Azure OpenAI, Ollama, GitHub Models. Requires `OPENAI_API_KEY` (or a custom `OPENAI_BASE_URL` for local models). |
+
+---
+
+## Conversation History (`qaisystem.conversation`)
+
+| Class | Description |
+|-------|-------------|
+| `ChatMessage` | Java 25 record `(String role, String content)`; static factory methods `system()`, `user()`, `assistant()`. |
+| `ConversationHistory` | Java 25 record `(String prId, List<ChatMessage> turns, int totalTurns, Instant lastUpdated)`. |
+| `ConversationStore` | Interface: `save(conversationId, history)`, `load(conversationId)`, `remove(conversationId)`. |
+| `RedisConversationStore` | `@ConditionalOnProperty(spring.data.redis.host)`. GZIP+Base64 compressed. Key: `qa:chat:{conversationId}`. Configurable TTL. 1 MB decompression OOM guard. Size management: compress first, then drop oldest turns. |
+| `InMemoryConversationStore` | `@ConditionalOnMissingBean` fallback. Non-persistent; state is lost on JVM restart. |
 
 ---
 

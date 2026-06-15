@@ -271,8 +271,8 @@ FeedbackEvent
 
 | Class | Role |
 |-------|------|
-| `AiClient` (interface) | Abstraction over the LLM API; one implementation: `CopilotCliClient` |
-| `CopilotCliClient` | Calls Copilot API via `gh api` subprocess — no token env var needed |
+| `AiClient` (interface) | Abstraction over the LLM API. Methods: `complete(systemPrompt, userPrompt)`, `isAvailable()`, and default `completeWithHistory(systemPrompt, List<ChatMessage> history, newUserMessage)` for multi-turn conversations. |
+| `CopilotCliClient` | Calls Copilot API via `gh api` subprocess — no token env var needed. Overrides `completeWithHistory()` to build a full multi-turn messages array for the GitHub Models API. |
 | `AiClientConfig` | Creates the `CopilotCliClient` bean; gated on `aiqa.github.enabled=true` |
 | `AiProviderProperties` | `@ConfigurationProperties(prefix="aiqa.ai")` |
 | `GitHubService` | GitHub API calls: diff fetch, PR creation, webhook signature verification |
@@ -281,6 +281,11 @@ FeedbackEvent
 | `InMemoryPrTracker` | Fallback PR state tracker when Redis is unavailable |
 | `GitDiffParser` | Parse raw unified diff string → `List<GitDiff>` |
 | `KafkaConfig` | `ConcurrentKafkaListenerContainerFactory` with `MANUAL_IMMEDIATE` ack |
+| `ChatMessage` | Java 25 record: `(String role, String content)`. Static factory methods: `system()`, `user()`, `assistant()`. |
+| `ConversationHistory` | Java 25 record: `(String prId, List<ChatMessage> turns, int totalTurns, Instant lastUpdated)`. |
+| `ConversationStore` (interface) | `save(conversationId, history)`, `load(conversationId)`, `remove(conversationId)`. |
+| `RedisConversationStore` | `@ConditionalOnProperty(spring.data.redis.host)`. GZIP+Base64 compressed. Key pattern: `qa:chat:{conversationId}`. Configurable TTL (`aiqa.conversation.ttl-days`). 1 MB decompression OOM guard. Size management: compress first, then drop oldest turns if still over limit. |
+| `InMemoryConversationStore` | `@ConditionalOnMissingBean` fallback. Non-persistent; state lost on JVM restart. |
 
 ---
 
@@ -699,6 +704,17 @@ learns from the reviewer's comments and re-generates improved content.
 The entire feedback cycle runs on a **virtual thread** so the GitHub webhook HTTP response
 is returned immediately without blocking.
 
+### Multi-turn conversation context
+
+`PrFeedbackService` uses stateless multi-turn history to give the AI full context of every
+prior generation and rejection cycle for a given PR:
+
+- **BDD generation** (`BddGenerator` in strategy-service) saves the initial `system` + `user` + `assistant` turns to `ConversationStore` at key `{prId}:bdd` after each scenario is produced.
+- **Test code generation** (`CodegenService` in codegen-service) saves turns at key `{prId}:test`.
+- On each PR rejection, `PrFeedbackService` loads the stored history from Redis (key `{prId}:bdd` or `{prId}:test`) and passes it to `AiClient.completeWithHistory()`, so the model sees every prior generation attempt and rejection comment.
+- The updated history (including the new user feedback turn and assistant response) is saved back to `ConversationStore` after each AI response.
+- Because history is serialised to Redis, any pod can handle any PR — no long-lived processes or sticky sessions are required.
+
 ### PR lifecycle
 
 | Event | Branch | Title format |
@@ -754,7 +770,13 @@ aiqa:
       gh-cli-path: ${GH_CLI_PATH:gh}
       model:       ${COPILOT_CLI_MODEL:gpt-5}
       timeout-seconds: ${COPILOT_CLI_TIMEOUT:120}
+  conversation:
+    ttl-days:             ${AIQA_CONV_TTL_DAYS:30}          # Redis TTL for conversation history; 0 = no expiry
+    max-history-chars:    ${AIQA_CONV_MAX_CHARS:65536}      # uncompressed size threshold; exceeded → compress first, then drop oldest turns
+    max-compressed-bytes: ${AIQA_CONV_MAX_BYTES:32768}      # compressed size limit; if full history fits within this after GZIP, all turns are kept
 ```
+
+> `aiqa.conversation.*` applies to feedback-service, strategy-service, and codegen-service.
 
 ---
 
@@ -848,12 +870,21 @@ QA-ISystem/                 ← parent pom.xml (groupId: nz.co.eroad, version: 0
 ```yaml
 services:
   qa-zookeeper:        # Kafka's metadata coordinator (required by Kafka)
-  qa-redis:            # Redis — PromptResponseCache + RedisPrTracker
+  qa-redis:            # Redis — PromptResponseCache + RedisPrTracker + RedisConversationStore
   qa-kafka:            # The message broker
 ```
 
 The five Java services run as separate JVM processes outside Docker during local development.
 Start infrastructure first, then run services via the JARs.
+
+### Redis key reference
+
+| Key pattern | Owner | Description |
+|-------------|-------|-------------|
+| `qa:pr:{branchName}` | `RedisPrTracker` | Serialised `PrRecord` (BDD or TEST PR state) |
+| `qa:prompt:{hash}` | `PromptResponseCache` | Cached AI prompt → Gherkin response (24 h TTL) |
+| `qa:chat:{prId}:bdd` | `RedisConversationStore` | GZIP-compressed BDD generation conversation history (TTL: `aiqa.conversation.ttl-days`) |
+| `qa:chat:{prId}:test` | `RedisConversationStore` | GZIP-compressed test code generation conversation history (TTL: `aiqa.conversation.ttl-days`) |
 
 > **Stale ZooKeeper fix:** If Kafka crashes with `NodeExistsException`, run:
 > ```bash
@@ -981,10 +1012,15 @@ Current test counts (106 total, 0 failures, zero Mockito):
 | `TestScript` | model | Generated test code + metadata |
 | `TestResult` | model | Execution result from StabilizationLoop |
 | `FeedbackEvent` | model | Rejected PR details; wraps BddScenario or TestScript for feedback-service |
-| `AiClient` | agent (interface) | Abstraction over LLM API; one implementation: `CopilotCliClient` |
-| `CopilotCliClient` | agent | `gh api` subprocess — no token env var needed |
+| `AiClient` | agent (interface) | Abstraction over LLM API; `complete()`, `isAvailable()`, default `completeWithHistory()` |
+| `CopilotCliClient` | agent | `gh api` subprocess — overrides `completeWithHistory()` for multi-turn GitHub Models API calls |
 | `AiClientConfig` | config | Creates `CopilotCliClient` bean; gated on `aiqa.github.enabled=true` |
 | `AiProviderProperties` | config | `@ConfigurationProperties(prefix="aiqa.ai")` |
+| `ChatMessage` | model | Java 25 record `(String role, String content)`; factory methods `system()`, `user()`, `assistant()` |
+| `ConversationHistory` | model | Java 25 record `(String prId, List<ChatMessage> turns, int totalTurns, Instant lastUpdated)` |
+| `ConversationStore` | service (interface) | `save()`, `load()`, `remove()` — conversation history persistence abstraction |
+| `RedisConversationStore` | service | `@ConditionalOnProperty(spring.data.redis.host)`; GZIP+Base64 compressed; key `qa:chat:{id}`; configurable TTL; 1 MB OOM guard |
+| `InMemoryConversationStore` | service | `@ConditionalOnMissingBean` fallback; non-persistent |
 | `GitHubService` | service | GitHub API: diff fetch, PR creation, webhook signature verification |
 | `RepoContextService` | service | Clone + index test repo; build coverage index; extract conventions |
 | `RedisPrTracker` | service | Redis-backed PR state tracker (`@ConditionalOnProperty`) |

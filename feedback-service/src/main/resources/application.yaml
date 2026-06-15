@@ -55,6 +55,10 @@ aiqa:
       token:    ${GITHUB_COPILOT_TOKEN:}
       base-url: ${COPILOT_BASE_URL:https://api.githubcopilot.com}
       model:    ${COPILOT_MODEL:gpt-4o}
+  conversation:
+    ttl-days: ${AIQA_CONV_TTL_DAYS:30}
+    max-history-chars: ${AIQA_CONV_MAX_CHARS:65536}
+    max-compressed-bytes: ${AIQA_CONV_MAX_COMPRESSED:32768}
 
 logging:
   level:

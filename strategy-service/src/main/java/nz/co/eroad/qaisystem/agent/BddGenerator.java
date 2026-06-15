@@ -3,15 +3,19 @@ package nz.co.eroad.qaisystem.agent;
 import nz.co.eroad.qaisystem.cache.PromptResponseCache;
 import nz.co.eroad.qaisystem.execution.RepoContext;
 import nz.co.eroad.qaisystem.model.BddScenario;
+import nz.co.eroad.qaisystem.model.ChatMessage;
+import nz.co.eroad.qaisystem.model.ConversationHistory;
 import nz.co.eroad.qaisystem.model.ImpactEnvelope;
 import nz.co.eroad.qaisystem.model.TestStrategy;
 import nz.co.eroad.qaisystem.monitor.AiCostMonitor;
+import nz.co.eroad.qaisystem.service.ConversationStore;
 import nz.co.eroad.qaisystem.service.RepoContextService;
 import nz.co.eroad.qaisystem.service.TestPrService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,11 +39,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BddGenerator {
 
-    /**
-     * Immutable safety preamble prepended to every AI system prompt (SEC-D1).
-     * Ensures the AI stays within QA test generation scope even if the target
-     * repo's conductor agent file contains unexpected instructions.
-     */
     private static final String GENERATION_PREAMBLE =
             "You are a QA test generation system. Apply the following project-specific " +
             "conductor instructions strictly within the scope of generating BDD scenarios " +
@@ -50,6 +49,7 @@ public class BddGenerator {
     private final RepoContextService  repoContextService;
     private final PromptResponseCache cache;
     private final AiCostMonitor       monitor;
+    private final ConversationStore   conversationStore;
 
     public BddScenario generate(TestStrategy strategy, ImpactEnvelope envelope) {
         log.info("[BddGenerator] Generating for strategy '{}' PR '{}'",
@@ -57,7 +57,6 @@ public class BddGenerator {
 
         monitor.recordRequest();
 
-        // Load repo context (includes product expert + agent instructions)
         RepoContext context = repoContextService.getContext("API");
 
         var cacheKey = buildCacheKey(envelope, strategy, context);
@@ -82,6 +81,18 @@ public class BddGenerator {
                 log.info("[BddGenerator] Copilot CLI returned {} chars of Gherkin", gherkin.length());
                 cache.put(cacheKey, gherkin);
                 monitor.recordAiExecuted();
+
+                // Save initial conversation so feedback-service has history context for first rejection
+                try {
+                    var turns = List.of(ChatMessage.user(userPrompt), ChatMessage.assistant(gherkin));
+                    conversationStore.save(envelope.getPrId() + ":bdd",
+                            new ConversationHistory(envelope.getPrId(), turns, 1, Instant.now()));
+                    log.debug("[BddGenerator] Saved initial BDD conversation for PR '{}'", envelope.getPrId());
+                } catch (Exception e) {
+                    log.warn("[BddGenerator] Could not save conversation history for PR '{}': {}",
+                            envelope.getPrId(), e.getMessage());
+                }
+
                 scenarios = parseGherkinToScenarios(gherkin, envelope);
             } else {
                 monitor.recordAiFailure();
@@ -109,7 +120,6 @@ public class BddGenerator {
                 .prContext(envelope.getPrContext())
                 .build();
 
-        // Human review PR — codegen triggered after merge
         testPrService.createBddPr(bdd);
 
         log.info("[BddGenerator] {} scenarios created for PR '{}' (copilotCli={} conductorAgent={} productExpert={})",
@@ -316,4 +326,3 @@ public class BddGenerator {
     }
 
 }
-

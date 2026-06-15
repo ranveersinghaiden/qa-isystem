@@ -1,13 +1,17 @@
 package nz.co.eroad.qaisystem.execution;
 
 import nz.co.eroad.qaisystem.model.BddScenario;
+import nz.co.eroad.qaisystem.model.ChatMessage;
+import nz.co.eroad.qaisystem.model.ConversationHistory;
 import nz.co.eroad.qaisystem.model.TestResult;
 import nz.co.eroad.qaisystem.model.TestScript;
+import nz.co.eroad.qaisystem.service.ConversationStore;
 import nz.co.eroad.qaisystem.service.RepoContextService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +31,7 @@ public class CodegenService {
     private final MobileTestRunner   mobileTestRunner;
     private final StabilizationLoop  stabilizationLoop;
     private final RepoContextService repoContextService;
+    private final ConversationStore  conversationStore;
 
     public TestResult generateAndExecute(BddScenario scenario) {
         log.info("[CodegenService] Processing scenario '{}' for PR '{}' " +
@@ -77,6 +82,20 @@ public class CodegenService {
             default       -> apiTestRunner.generateCode(scenario, parent, context);
         };
 
+        // Save initial conversation so feedback-service has history context for test rejections
+        if (content != null && !content.isBlank()) {
+            try {
+                String userTurn = "Generate " + type + " test for scenario: " + scenario.getTitle();
+                var turns = List.of(ChatMessage.user(userTurn), ChatMessage.assistant(content));
+                conversationStore.save(parent.getPrId() + ":test",
+                        new ConversationHistory(parent.getPrId(), turns, 1, Instant.now()));
+                log.debug("[CodegenService] Saved initial test conversation for PR '{}'", parent.getPrId());
+            } catch (Exception e) {
+                log.warn("[CodegenService] Could not save conversation history for PR '{}': {}",
+                        parent.getPrId(), e.getMessage());
+            }
+        }
+
         String targetPackage = context.getBasePackage();
 
         return TestScript.builder()
@@ -98,7 +117,6 @@ public class CodegenService {
         String safe = title.replaceAll("[^A-Za-z0-9]", "_")
                            .replaceAll("_+", "_")
                            .replaceAll("^_|_$", "");
-        // context.isContextAvailable() is guaranteed true — throws before reaching here.
         String convention = context.getTestNamingConvention();
         return convention != null && convention.startsWith("Test")
                 ? "Test" + safe + ".java"

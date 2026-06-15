@@ -3,11 +3,13 @@ package nz.co.eroad.qaisystem.agent;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import nz.co.eroad.qaisystem.model.ChatMessage;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -63,11 +65,39 @@ public class CopilotCliClient implements AiClient {
         return available;
     }
 
-    /** Sends a chat completion request and returns the model's text response. */
+    /** Sends a single-turn chat completion request and returns the model's text response. */
     @Override
     public String complete(String systemPrompt, String userPrompt) {
         if (!available) return null;
+        List<Map<String, Object>> messages = List.of(
+                Map.<String, Object>of("role", "system", "content", systemPrompt),
+                Map.<String, Object>of("role", "user",   "content", userPrompt)
+        );
+        return callModelsApi(messages);
+    }
 
+    /** Sends a multi-turn chat completion request with prior conversation history. */
+    @Override
+    public String completeWithHistory(String systemPrompt,
+                                      List<ChatMessage> history,
+                                      String newUserMessage) {
+        if (!available) return null;
+        var messages = new ArrayList<Map<String, Object>>();
+        messages.add(Map.of("role", "system", "content", systemPrompt));
+        for (ChatMessage turn : history) {
+            messages.add(Map.of("role", turn.role(), "content", turn.content()));
+        }
+        messages.add(Map.of("role", "user", "content", newUserMessage));
+        log.debug("[CopilotCliClient] completeWithHistory — {} history turns + new user message",
+                history.size());
+        return callModelsApi(List.copyOf(messages));
+    }
+
+    /**
+     * Builds the JSON request body from the given messages list, writes temp files,
+     * invokes curl against the GitHub Models API, and returns the content string.
+     */
+    private String callModelsApi(List<Map<String, Object>> messages) {
         Path bodyFile   = null;
         Path configFile = null;
         try {
@@ -83,10 +113,7 @@ public class CopilotCliClient implements AiClient {
             Map<String, Object> body = Map.of(
                     "model",       model,
                     "temperature", 0.2,
-                    "messages",    List.of(
-                            Map.of("role", "system", "content", systemPrompt),
-                            Map.of("role", "user",   "content", userPrompt)
-                    )
+                    "messages",    messages
             );
             String bodyJson = objectMapper.writeValueAsString(body);
 
@@ -98,7 +125,6 @@ public class CopilotCliClient implements AiClient {
 
             // Write a curl config file — owner-only (600) so the token is never
             // visible in process arguments (ps aux / procfs).
-            // The config file carries the Authorization header; curl reads it via -K.
             configFile = Files.createTempFile("copilot-cfg-", ".curl",
                     PosixFilePermissions.asFileAttribute(
                             PosixFilePermissions.fromString("rw-------")));
@@ -107,10 +133,6 @@ public class CopilotCliClient implements AiClient {
                     "header = \"Content-Type: application/json\"\n");
 
             // ── 3. Call GitHub Models API via curl ────────────────────────────────
-            // gh api is NOT used here because it only injects Authorization for
-            // api.github.com domains; models.inference.ai.azure.com needs the token
-            // passed explicitly. Token is kept out of the process argument list by
-            // using a config file (rw-------) instead of passing it inline.
             List<String> command = List.of(
                     "curl", "--silent", "--show-error",
                     "--request", "POST",
@@ -119,9 +141,8 @@ public class CopilotCliClient implements AiClient {
                     "--data",    "@" + bodyFile.toString()
             );
 
-            log.debug("[CopilotCliClient] Calling GitHub Models API — model='{}' " +
-                      "(systemPrompt={} chars, userPrompt={} chars)",
-                      model, systemPrompt.length(), userPrompt.length());
+            log.debug("[CopilotCliClient] Calling GitHub Models API — model='{}' ({} messages)",
+                      model, messages.size());
 
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.redirectErrorStream(false);
@@ -170,7 +191,6 @@ public class CopilotCliClient implements AiClient {
             // ── 4. Parse response (OpenAI-compatible schema) ──────────────────────
             String responseJson = stdout.toString().trim();
 
-            // Check for API-level errors returned as JSON with 2xx HTTP but error body
             if (responseJson.contains("\"error\"")) {
                 Map<String, Object> errResp = objectMapper.readValue(
                         responseJson, new TypeReference<>() {});
@@ -265,4 +285,3 @@ public class CopilotCliClient implements AiClient {
         }
     }
 }
-

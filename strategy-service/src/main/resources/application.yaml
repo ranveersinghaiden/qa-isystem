@@ -148,6 +148,10 @@ github:
       gh-cli-path: ${GH_CLI_PATH:gh}              # path to gh executable (must be on PATH)
       model:       ${COPILOT_CLI_MODEL:claude-sonnet-4-5}     # model passed in the JSON body
       timeout-seconds: ${COPILOT_CLI_TIMEOUT:120}
+  conversation:
+    ttl-days: ${AIQA_CONV_TTL_DAYS:30}
+    max-history-chars: ${AIQA_CONV_MAX_CHARS:65536}
+    max-compressed-bytes: ${AIQA_CONV_MAX_COMPRESSED:32768}
 
 server:
   port: 8082
