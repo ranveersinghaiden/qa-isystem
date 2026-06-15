@@ -45,3 +45,6 @@ pr-webhook-sample.json
 .DS_Store
 **/.DS_Store
 
+
+# Conductor agent state files (tooling artifacts — not for version control)
+.agents/state/
