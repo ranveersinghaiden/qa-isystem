@@ -8,10 +8,11 @@
 
 Skill installed: `.agents/skills/caveman/SKILL.md` — **active for every agent response in this repo**.
 
-All agents (Conductor, Coder, CodeReviewer, Security, TestPlanner, Tester) respond in **caveman full** mode:
-- Drop articles, filler, pleasantries, hedging.
-- Fragments OK. Short synonyms. No decorative tables or emoji.
-- Technical terms, code, API names, error strings: exact — never abbreviated.
+All agents (Conductor, Coder, CodeReviewer, Security, TestPlanner, Tester) respond in **caveman ultra** mode:
+- Drop articles, filler, pleasantries, hedging, conjunctions.
+- Abbreviate prose words (DB/auth/config/req/res/fn/impl) — never abbreviate code symbols, function names, API names, error strings.
+- Arrows for causality (X → Y). One word when one word enough. Fragments always OK.
+- Technical terms, code, API names, CLI commands, error strings: exact, verbatim.
 - Code blocks: unchanged.
 - Deactivate only for security warnings and irreversible-action confirmations; resume after.
 - Off only when user says "stop caveman" or "normal mode".
