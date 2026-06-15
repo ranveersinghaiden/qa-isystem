@@ -13,34 +13,34 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * AiClient implementation that calls the GitHub Copilot chat-completions API via the
- * {@code gh api} command from the GitHub CLI.
+ * AiClient implementation that calls the GitHub Models API using the token
+ * managed by the GitHub CLI ({@code gh auth token}).
  *
- * <p><b>Key advantage over {@link CopilotClient}:</b> no token management — the {@code gh}
- * CLI uses the credential store populated by {@code gh auth login}, the same one IntelliJ
- * and the terminal use. Billing is flat-rate (Copilot seat licence) rather than per-token.
+ * <p><b>Endpoint:</b> {@code https://models.inference.ai.azure.com/chat/completions}
+ * — the OpenAI-compatible endpoint for GitHub Models (supports Claude, GPT-4o, etc.).
+ *
+ * <p><b>Note on {@code gh api} vs direct curl:</b> {@code gh api} only injects the
+ * {@code Authorization} header for GitHub's own domains ({@code api.github.com}).
+ * For {@code models.inference.ai.azure.com} the token must be retrieved explicitly
+ * via {@code gh auth token} and passed as a {@code Bearer} header in a {@code curl}
+ * subprocess.
  *
  * <p><b>Prerequisites:</b>
  * <ol>
  *   <li>GitHub CLI installed: {@code brew install gh} (macOS) or equivalent</li>
  *   <li>Authenticated: {@code gh auth login}</li>
- *   <li>Copilot access on the authenticated account</li>
+ *   <li>Token must have the {@code models} permission (fine-grained PAT) or
+ *       use a classic PAT — add the permission at
+ *       <a href="https://github.com/settings/personal-access-tokens">
+ *       github.com/settings/personal-access-tokens</a></li>
+ *   <li>Copilot subscription on the authenticated account</li>
  * </ol>
- *
- * <p>Not annotated with {@code @Service}; created by
- * {@link nz.co.eroad.qaisystem.config.AiClientConfig} when
- * {@code aiqa.ai.provider=copilot-cli} (the recommended default).
- *
- * <p>{@link #isAvailable()} returns {@code false} when {@code gh auth status} fails —
- * the system falls back to enhanced template generation without throwing.
  */
 @Slf4j
 public class CopilotCliClient implements AiClient {
 
-    private static final String COPILOT_API_URL =
-            "https://api.githubcopilot.com/chat/completions";
-    private static final String INTEGRATION_HEADER =
-            "Copilot-Integration-Id: qa-isystem";
+    private static final String MODELS_API_URL =
+            "https://models.inference.ai.azure.com/chat/completions";
 
     private final String       ghCliPath;
     private final String       model;
@@ -63,14 +63,23 @@ public class CopilotCliClient implements AiClient {
         return available;
     }
 
-    /** Sends a chat completion request through {@code gh api} and returns the model's text. */
+    /** Sends a chat completion request and returns the model's text response. */
     @Override
     public String complete(String systemPrompt, String userPrompt) {
         if (!available) return null;
 
-        Path bodyFile = null;
+        Path bodyFile   = null;
+        Path configFile = null;
         try {
-            // Build the chat completions request body as JSON
+            // ── 1. Fetch the GitHub token from gh credential store ────────────────
+            String token = fetchGhToken();
+            if (token == null || token.isBlank()) {
+                log.error("[CopilotCliClient] Could not retrieve token from gh CLI. " +
+                          "Run 'gh auth login' and ensure the token has the 'models' permission.");
+                return null;
+            }
+
+            // ── 2. Build the chat completions request body ────────────────────────
             Map<String, Object> body = Map.of(
                     "model",       model,
                     "temperature", 0.2,
@@ -81,29 +90,40 @@ public class CopilotCliClient implements AiClient {
             );
             String bodyJson = objectMapper.writeValueAsString(body);
 
-            // Write to a temp file to avoid shell escaping and arg-length issues.
-            // Owner-only read/write (600) — file contains the full AI prompt which may include
-            // code diffs; prevent other OS users from reading it.
+            // Write body to a temp file — owner-only (600): prompt may contain diffs.
             bodyFile = Files.createTempFile("copilot-body-", ".json",
                     PosixFilePermissions.asFileAttribute(
                             PosixFilePermissions.fromString("rw-------")));
             Files.writeString(bodyFile, bodyJson);
 
+            // Write a curl config file — owner-only (600) so the token is never
+            // visible in process arguments (ps aux / procfs).
+            // The config file carries the Authorization header; curl reads it via -K.
+            configFile = Files.createTempFile("copilot-cfg-", ".curl",
+                    PosixFilePermissions.asFileAttribute(
+                            PosixFilePermissions.fromString("rw-------")));
+            Files.writeString(configFile,
+                    "header = \"Authorization: Bearer " + token + "\"\n" +
+                    "header = \"Content-Type: application/json\"\n");
+
+            // ── 3. Call GitHub Models API via curl ────────────────────────────────
+            // gh api is NOT used here because it only injects Authorization for
+            // api.github.com domains; models.inference.ai.azure.com needs the token
+            // passed explicitly. Token is kept out of the process argument list by
+            // using a config file (rw-------) instead of passing it inline.
             List<String> command = List.of(
-                    ghCliPath, "api",
-                    COPILOT_API_URL,
-                    "--method", "POST",
-                    "--header", "Content-Type: application/json",
-                    "--header", INTEGRATION_HEADER,
-                    "--input",  bodyFile.toString()
+                    "curl", "--silent", "--show-error",
+                    "--request", "POST",
+                    "--url",     MODELS_API_URL,
+                    "-K",        configFile.toString(),
+                    "--data",    "@" + bodyFile.toString()
             );
 
-            log.debug("[CopilotCliClient] Invoking gh api for model='{}' " +
+            log.debug("[CopilotCliClient] Calling GitHub Models API — model='{}' " +
                       "(systemPrompt={} chars, userPrompt={} chars)",
                       model, systemPrompt.length(), userPrompt.length());
 
             ProcessBuilder pb = new ProcessBuilder(command);
-            pb.environment().put("GIT_TERMINAL_PROMPT", "0");
             pb.redirectErrorStream(false);
 
             Process process = pb.start();
@@ -111,7 +131,6 @@ public class CopilotCliClient implements AiClient {
             var stdout = new StringBuilder();
             var stderr = new StringBuilder();
 
-            // Read stdout and stderr concurrently on virtual threads
             var outThread = Thread.ofVirtual().start(() -> {
                 try (var r = new BufferedReader(
                         new InputStreamReader(process.getInputStream()))) {
@@ -137,54 +156,89 @@ public class CopilotCliClient implements AiClient {
 
             if (!finished) {
                 process.destroyForcibly();
-                log.error("[CopilotCliClient] gh api timed out after {}s", timeoutSeconds);
+                log.error("[CopilotCliClient] GitHub Models API call timed out after {}s",
+                          timeoutSeconds);
                 return null;
             }
 
             if (process.exitValue() != 0) {
-                log.error("[CopilotCliClient] gh api exited with code {} — stderr: {}",
+                log.error("[CopilotCliClient] curl exited with code {} — stderr: {}",
                           process.exitValue(), stderr.toString().trim());
                 return null;
             }
 
-            // Parse the Copilot API JSON response (same schema as OpenAI)
+            // ── 4. Parse response (OpenAI-compatible schema) ──────────────────────
             String responseJson = stdout.toString().trim();
-            Map<String, Object> resp = objectMapper.readValue(
-                    responseJson, new TypeReference<>() {});
 
-            @SuppressWarnings("unchecked")   // Response schema is fixed by Copilot API contract
-            List<Map<String, Object>> choices =
-                    (List<Map<String, Object>>) resp.get("choices");
-            if (choices == null || choices.isEmpty()) {
-                log.warn("[CopilotCliClient] Empty choices array in gh api response");
+            // Check for API-level errors returned as JSON with 2xx HTTP but error body
+            if (responseJson.contains("\"error\"")) {
+                Map<String, Object> errResp = objectMapper.readValue(
+                        responseJson, new TypeReference<>() {});
+                Object errObj = errResp.get("error");
+                log.error("[CopilotCliClient] GitHub Models API error: {}. " +
+                          "Ensure your GitHub token has the 'models' permission. " +
+                          "Fine-grained PAT: add 'models' at " +
+                          "https://github.com/settings/personal-access-tokens. " +
+                          "Classic PAT: no extra scope needed.", errObj);
                 return null;
             }
 
-            @SuppressWarnings("unchecked")   // Message object has a well-known schema
+            Map<String, Object> resp = objectMapper.readValue(
+                    responseJson, new TypeReference<>() {});
+
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> choices =
+                    (List<Map<String, Object>>) resp.get("choices");
+            if (choices == null || choices.isEmpty()) {
+                log.warn("[CopilotCliClient] Empty choices array in API response");
+                return null;
+            }
+
+            @SuppressWarnings("unchecked")
             Map<String, Object> message =
                     (Map<String, Object>) choices.get(0).get("message");
             String content = message == null ? null : (String) message.get("content");
 
-            log.info("[CopilotCliClient] Success — {} chars returned",
-                     content != null ? content.length() : 0);
+            log.info("[CopilotCliClient] Success — {} chars returned by model='{}'",
+                     content != null ? content.length() : 0, model);
             return content;
 
         } catch (Exception e) {
-            log.error("[CopilotCliClient] gh api call failed: {}", e.getMessage(), e);
+            log.error("[CopilotCliClient] API call failed: {}", e.getMessage(), e);
             return null;
         } finally {
-            if (bodyFile != null) {
-                try { Files.deleteIfExists(bodyFile); } catch (IOException ignored) {}
+            if (bodyFile   != null) {
+                try { Files.deleteIfExists(bodyFile);   } catch (IOException ignored) {}
+            }
+            if (configFile != null) {
+                try { Files.deleteIfExists(configFile); } catch (IOException ignored) {}
             }
         }
     }
 
-    // ─── Availability check ───────────────────────────────────────────────────
+    // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    /**
+     * Retrieves the active GitHub token from the gh credential store.
+     * Returns {@code null} when gh is not installed or not authenticated.
+     */
+    private String fetchGhToken() {
+        try {
+            var pb = new ProcessBuilder(ghCliPath, "auth", "token");
+            pb.environment().put("GIT_TERMINAL_PROMPT", "0");
+            pb.redirectErrorStream(false);
+            Process p = pb.start();
+            String out = new String(p.getInputStream().readAllBytes()).trim();
+            p.waitFor(10, TimeUnit.SECONDS);
+            return out.isBlank() ? null : out;
+        } catch (Exception e) {
+            log.warn("[CopilotCliClient] Could not get token from gh: {}", e.getMessage());
+            return null;
+        }
+    }
 
     /**
      * Runs {@code gh auth status} to verify that the CLI is installed and authenticated.
-     * Returns {@code false} silently when gh is not installed or not logged in —
-     * the system will fall back to enhanced template generation.
      */
     private boolean checkCliAvailable() {
         try {
@@ -192,21 +246,21 @@ public class CopilotCliClient implements AiClient {
             pb.environment().put("GIT_TERMINAL_PROMPT", "0");
             pb.redirectErrorStream(true);
             Process p = pb.start();
-            // Drain output so the process doesn't block
             p.getInputStream().transferTo(OutputStream.nullOutputStream());
             boolean done = p.waitFor(10, TimeUnit.SECONDS);
             if (!done) { p.destroyForcibly(); }
             boolean authed = done && p.exitValue() == 0;
             if (authed) {
-                log.info("[CopilotCliClient] Ready — gh CLI authenticated, model='{}'", model);
+                log.info("[CopilotCliClient] Ready — gh CLI authenticated, model='{}' " +
+                         "endpoint='{}'", model, MODELS_API_URL);
             } else {
-                log.info("[CopilotCliClient] Not available — run 'gh auth login' to enable " +
-                         "Copilot CLI mode. Falling back to enhanced-template generation.");
+                log.warn("[CopilotCliClient] Not available — run 'gh auth login' to enable " +
+                         "Copilot CLI mode.");
             }
             return authed;
         } catch (Exception e) {
-            log.info("[CopilotCliClient] gh CLI not found at '{}' — " +
-                     "install with 'brew install gh'. Falling back to template mode.", ghCliPath);
+            log.warn("[CopilotCliClient] gh CLI not found at '{}' — " +
+                     "install with 'brew install gh'.", ghCliPath);
             return false;
         }
     }
