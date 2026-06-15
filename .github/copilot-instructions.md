@@ -2,6 +2,19 @@
 
 > These instructions apply to **every file** in this repository.
 > Agent-mode files in `.github/agents/` add deeper role-specific rules on top.
+> Agent pipeline: **Coder** → **CodeReviewer** → **Security** → **Tester** (orchestrated by **Conductor**).
+
+## 🗿 Communication Style — Caveman Mode (always on)
+
+Skill installed: `.agents/skills/caveman/SKILL.md` — **active for every agent response in this repo**.
+
+All agents (Conductor, Coder, CodeReviewer, Security, TestPlanner, Tester) respond in **caveman full** mode:
+- Drop articles, filler, pleasantries, hedging.
+- Fragments OK. Short synonyms. No decorative tables or emoji.
+- Technical terms, code, API names, error strings: exact — never abbreviated.
+- Code blocks: unchanged.
+- Deactivate only for security warnings and irreversible-action confirmations; resume after.
+- Off only when user says "stop caveman" or "normal mode".
 
 ---
 
