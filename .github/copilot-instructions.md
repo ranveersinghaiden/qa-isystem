@@ -1,7 +1,7 @@
 # GitHub Copilot — Workspace Instructions for QA-ISystem
 
-> These instructions apply to **every file** in this repository.
-> Agent-mode files in `.github/agents/` add deeper role-specific rules on top.
+> **CONSOLIDATED STRUCTURE:** Agent instructions now at [**.github/agents/README.md**](.github/agents/README.md).
+> Shared standards (SHARED-RULES.md, CHECKLISTS.md, GenericCodingPractices.md) + language-specific coders.
 > Agent pipeline: **Coder** → **CodeReviewer** → **Security** → **Tester** (orchestrated by **Conductor**).
 
 ## 🗿 Communication Style — Caveman Mode (always on)
@@ -142,4 +142,3 @@ Scope: service name, e.g. `strategy-service`, `common`, `codegen-service`
 - Duplicate classes that already exist in `common`.
 - Add new Maven dependencies without checking `common/pom.xml` first.
 - Hardcode Kafka topic names, Redis key prefixes, or port numbers in Java code.
-
