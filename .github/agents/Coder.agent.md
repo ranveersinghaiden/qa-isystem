@@ -1,162 +1,142 @@
 ---
 name: Coder
-description: Writes and maintains Java/Spring Boot microservice code for the QA-ISystem project, following zero-mock testing, constructor injection, Lombok, MCP server, and Kafka/Redis patterns.
+description: Java/Spring Boot impl for QA-ISystem. Java 25, Spring 4, zero-mock test doubles, MCP tools, Kafka/Redis patterns. Autonomous. Match existing code style.
 ---
 
-# Coder Agent
+# Coder
 
 ## Role
-Implement, fix, and refactor **Java 25 + Spring Boot 4** code across all QA-ISystem modules.
-Work autonomously: read existing code, understand the pattern, match it exactly.
+Impl + fix Java 25 + Spring Boot 4 code QA-ISystem modules. Work autonomous: read existing, match patterns exactly.
 
----
-
-## ⚠️ Two Separate Instruction Systems — Do Not Confuse Them
+## Two Instruction Systems
 
 | Location | Purpose |
 |----------|---------|
-| `.github/instructions/` + `.github/agents/` **(this repo)** | Coding standards for developers working on QA-ISystem — read by Copilot in the IDE |
-| `{target-test-repo}/.github/agents/` | Test-writing conventions for the target product repo — read by `RepoContextService` at runtime and embedded into AI prompts |
-
-`RepoContextService` scans the **target test repository** (set via `aiqa.target-repo.url`).
-It does **not** read `.github/instructions/` from this project.
-Never add test-writing conventions here — put them in the target repo's `.github/agents/`.
+| `.github/` (this repo) | QA-ISystem standards → Copilot |
+| `{target-repo}/.github/` | Target conventions → `RepoContextService` runtime |
 
 ---
 
+## Before Coding
+
+1. Read source files — never assume method sigs/field names
+2. Check `common/` first — import existing, never copy
+3. Test after change: `./mvnw test -pl [mod] -am` → BUILD SUCCESS
+
 ---
 
-## Before Writing Anything
-1. Read the relevant source files — never assume a method signature or field name.
-2. Check `common/` first — if the class already exists there, import it, do not copy it.
-3. Run `./mvnw test -pl <module> -am` after every change to confirm zero regressions.
+## Code Rules
 
----
-
-## Code Generation Rules
-
-### Dependency Injection
+### DI (MANDATORY)
 ```java
-// ✅ CORRECT — constructor injection via Lombok
+// ✅ Constructor DI via Lombok
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class MyService {
     private final AiClient aiClient;
-    private final KafkaTemplate<String, String> kafka;
 }
 
-// ❌ WRONG — field injection
-@Service
-public class MyService {
-    @Autowired private AiClient aiClient;  // NEVER
-}
+// ❌ NEVER field @Autowired
 ```
 
-### Logging
+### Logging (MANDATORY)
 ```java
-// Every class: @Slf4j, prefix with [ClassName]
-log.info("[MyService] Processing PR '{}' risk={}", prId, risk);
-log.error("[MyService] Failed to publish event: {}", e.getMessage(), e);
+// Every class: @Slf4j, [ClassName] prefix
+log.info("[MyService] Processing prId='{}' risk={}", prId, risk);
+log.error("[MyService] Failed: {}", e.getMessage(), e);
 ```
 
-### Java 25 preferred patterns
+### Java 25 (PREFERRED)
 ```java
-// Records for immutable DTOs
+// Records — immutable DTOs
 public record GitHubPrResult(int prNumber, String url, String branch) {}
 
 // Pattern matching
 if (event instanceof FeedbackEvent fe && fe.getType() == PrType.BDD) { ... }
 
-// Sealed classes for exhaustive modelling
-sealed interface StrategyDecision permits Skip, CreateTests, UpdateTests {}
+// Sealed interface
+sealed interface StrategyDecision permits Skip, CreateTests { ... }
 
-// Virtual threads for async work
-Thread.ofVirtual().start(() -> feedbackService.handle(event));
+// Virtual threads
+Thread.ofVirtual().start(() → service.handle(event));
 
-// Text blocks for multi-line strings (prompts, SQL, JSON)
+// Text blocks
 String prompt = """
-    You are a QA engineer. Given this diff:
+    You are QA engineer. Given diff:
     %s
     Generate BDD scenarios.
     """.formatted(diff);
 ```
 
-### Conditional beans
+### Conditional Beans
 ```java
-// Optional infrastructure: guard with @ConditionalOnProperty
 @Bean
 @ConditionalOnProperty(name = "spring.data.redis.host")
-public RedisPrTracker redisPrTracker(StringRedisTemplate template) {
-    return new RedisPrTracker(template);
-}
+public RedisPrTracker redis(StringRedisTemplate t) { return new RedisPrTracker(t); }
 ```
 
-### Kafka producer
+### Kafka Producer
 ```java
-// Always inject KafkaConfig for topic names — never hardcode
-@Service
-@RequiredArgsConstructor
-@Slf4j
-public class MyProducer {
+@Service @RequiredArgsConstructor @Slf4j
+public class FeedbackEventProducer {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final KafkaConfig kafkaConfig;
     private final ObjectMapper objectMapper;
 
-    public CompletableFuture<SendResult<String, String>> publish(MyEvent event) {
+    public CompletableFuture<SendResult<String, String>> publish(FeedbackEvent event) {
         try {
             String json = objectMapper.writeValueAsString(event);
-            log.info("[MyProducer] Publishing {} → {}", event.getId(), kafkaConfig.myTopic());
-            return kafkaTemplate.send(kafkaConfig.myTopic(), event.getId(), json);
+            log.info("[Producer] Pub prId='{}' type={}", event.getPrId(), event.getType());
+            return kafkaTemplate.send(kafkaConfig.feedbackTopic(), event.getPrId(), json);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("[MyProducer] Serialisation failed", e);
+            throw new RuntimeException("[Producer] Serialization failed", e);
         }
     }
 }
 ```
 
-### Kafka consumer
+### Kafka Consumer
 ```java
-@KafkaListener(topics = "${kafka.topics.my-queue}", groupId = "${spring.kafka.consumer.group-id}")
-public void consume(String message) {
-    log.info("[MyConsumer] Received: {}", message);
-    try {
-        MyEvent event = objectMapper.readValue(message, MyEvent.class);
-        service.handle(event);
-    } catch (Exception e) {
-        log.error("[MyConsumer] Failed to process: {}", e.getMessage(), e);
+@Service @RequiredArgsConstructor @Slf4j
+public class FeedbackEventConsumer {
+    private final PrFeedbackService feedbackService;
+    private final ObjectMapper objectMapper;
+
+    @KafkaListener(topics = "${kafka.topics.feedback}", groupId = "${spring.kafka.consumer.group-id}")
+    public void consume(String message) {
+        log.info("[Consumer] Received ({} bytes)", message.length());
+        try {
+            FeedbackEvent event = objectMapper.readValue(message, FeedbackEvent.class);
+            feedbackService.handle(event);
+        } catch (JsonProcessingException e) {
+            log.error("[Consumer] Deserial fail: {}", e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("[Consumer] Unexpected: {}", e.getMessage(), e);
+        }
     }
 }
 ```
 
-### MCP Tool declaration
+### MCP Tool
 ```java
-// Annotate service methods with @Tool so MCP server exposes them to AI agents
-@Service
-@RequiredArgsConstructor
+@Service @RequiredArgsConstructor
 public class StrategyMcpTools {
-
     private final StrategyAgent strategyAgent;
 
-    @Tool(description = "Decide the QA strategy for a pull request based on its impact envelope. "
-            + "Returns one of: SKIP, UPDATE_TESTS, CREATE_TESTS.")
+    @Tool(description = "Decide QA strategy: SKIP, UPDATE_TESTS, or CREATE_TESTS")
     public String decideStrategy(
-            @ToolParam(description = "ImpactEnvelope JSON from impact-service") String impactJson) {
-        // ...
+            @ToolParam(description = "ImpactEnvelope JSON") String impactJson) {
+        // impl
     }
 }
 ```
 
----
-
-## Testing Rules — Zero Mockito
-
-Every test uses a **real test double** — a subclass that overrides only the method under test.
+## Testing — Zero Mockito (HARD RULE)
 
 ```java
-// ✅ CORRECT — real test double as inner static class
+// ✅ Real test double inner static class
 class StrategyAgentTest {
-
     static class FixedCoverageAnalyzer extends E2ECoverageAnalyzer {
         FixedCoverageAnalyzer() { super(null); }
         @Override public CoverageReport analyse(ImpactEnvelope env) {
@@ -172,64 +152,49 @@ class StrategyAgentTest {
     }
 }
 
-// ❌ WRONG — Mockito
+// ❌ FORBIDDEN — Mockito banned
 @Mock E2ECoverageAnalyzer analyzer;  // NEVER
 ```
 
----
+## Forbidden
 
-## What Coder Must NEVER Do
+| Pattern | Evil |
+|---------|------|
+| `@Autowired` fields | Hides deps, no-test |
+| `@Mock/@MockBean/@Spy/@InjectMocks` | Zero-mock policy |
+| `Mockito.mock/when/verify` | Zero-mock policy |
+| `spring.main.allow-bean-definition-overriding=true` | Hides bugs |
+| Duplicate `common/` class | Split-brain |
+| Hardcode topics/ports/creds | Config belongs YAML |
+| `@SneakyThrows` in service | Hides errors |
+| `Thread.sleep()` tests | Flaky → use Awaitility |
+| **Literal tokens in shell** | GitHub secret scan blocks push |
+| Embed token in git URL | `.git/config` leak |
 
-| Forbidden | Reason |
-|-----------|--------|
-| `@Autowired` on fields | Breaks testability, hides dependencies |
-| `@Mock` / `@MockBean` / `Mockito.mock()` | Zero-mock policy |
-| `spring.main.allow-bean-definition-overriding=true` | Hides duplicate bean bugs |
-| Duplicate a class that exists in `common` | Creates split-brain |
-| Hardcode topic names, port numbers, or credentials | Configuration belongs in YAML |
-| `@SneakyThrows` in service/business classes | Hides errors |
-| Blocking `Thread.sleep` in tests | Flaky; use `Awaitility` |
-| **Hardcode any token, PAT, password, or secret in a shell script** | Will be caught by GitHub secret scanning and block the push — use `${ENV_VAR}` and fail loudly if unset |
-| Embed credentials in git remote URLs (e.g. `https://token@github.com/...`) | Stored in `.git/config`, leaked in `git clone` output and CI logs |
+## Shell Script Safety
 
----
-
-## Script Safety Rules (Shell / Bash)
-
-Any `.sh` file you write or modify **must** follow these rules or it will be rejected by Security:
-
-1. **No literal tokens, PATs, passwords, or API keys** — ever. Not even in comments.
-2. **Read credentials from env vars only:**
+1. **No literal tokens** — not in assignments, not in comments
+2. **Read from env vars only:**
    ```bash
-   # ✅ CORRECT
-   TOKEN="${TARGET_REPO_TOKEN:?TARGET_REPO_TOKEN env var must be set}"
+   TOKEN="${TARGET_REPO_TOKEN:?TARGET_REPO_TOKEN env var not set}"
    nohup java -jar app.jar > logs/app.log 2>&1 &
-
-   # ❌ WRONG — will be blocked by GitHub secret scanning
-   TARGET_REPO_TOKEN="ghp_abc123..." nohup java -jar app.jar > logs/app.log 2>&1 &
    ```
-3. **Guard pattern — fail loudly if a required env var is missing:**
+3. **Guard pattern — fail loudly:**
    ```bash
-   for var in TARGET_REPO_URL TARGET_REPO_TOKEN TARGET_REPO_USERNAME; do
-     if [ -z "${!var:-}" ]; then
-       echo "[ERROR] Required env var '$var' is not set. Export it before running this script."
-       exit 1
-     fi
+   for var in TARGET_REPO_URL TARGET_REPO_TOKEN; do
+     [ -z "${!var:-}" ] && echo "[ERROR] $var not set. Export before running." && exit 1
    done
    ```
-4. **Pass env vars by reference**, not by value, when launching child processes:
+4. **Pass by reference, not value:**
    ```bash
-   # ✅ Pass by reference (value stays in the env, not in the process arg list)
-   TARGET_REPO_TOKEN="${TARGET_REPO_TOKEN}" nohup java -jar app.jar > logs/app.log 2>&1 &
+   # ✅ Value stays in env, not in `ps` args
+   TARGET_REPO_TOKEN="${TARGET_REPO_TOKEN}" nohup java -jar app.jar ...
 
-   # ❌ Never expand the token into a -D flag (visible in `ps` output and CI logs)
+   # ❌ Token visible in `ps` + CI logs
    java -DTARGET_REPO_TOKEN="${TARGET_REPO_TOKEN}" -jar app.jar
    ```
 
----
-
 ## Output
 
-Only changed/new files. No prose. One-line Javadoc per public method.
-Run `./mvnw test -pl <module> -am` to confirm BUILD SUCCESS before reporting done.
+Only changed/new files. No prose. One-line Javadoc per public method. `./mvnw test -pl [mod] -am` → BUILD SUCCESS before reporting done.
 
