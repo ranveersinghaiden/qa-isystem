@@ -310,7 +310,127 @@ else
 fi
 
 # =============================================================================
-# 9. Environment file (.env)
+# 9. Graphify — knowledge-graph tooling
+# =============================================================================
+header "Graphify (knowledge-graph)"
+
+# -- uv (fast Python package manager, preferred by graphify) ------------------
+UV_OK=false
+if command -v uv &>/dev/null; then
+  UV_VER=$(uv --version 2>/dev/null | head -1 | awk '{print $2}')
+  success "uv ${UV_VER}"
+  UV_OK=true
+else
+  if [ "${CHECK_ONLY}" = true ]; then
+    add_warning "uv not found. Graphify install will fall back to pip. Install uv: brew install uv"
+  else
+    if [ "${IS_MAC}" = true ]; then
+      info "Installing uv via Homebrew (Python package manager for graphify)..."
+      brew install uv && UV_OK=true && success "uv installed" || \
+        warn "uv install failed — graphify will use pip fallback"
+    else
+      info "Installing uv via official installer..."
+      curl -LsSf https://astral.sh/uv/install.sh | sh 2>/dev/null && \
+        export PATH="${HOME}/.local/bin:${PATH}" && UV_OK=true && success "uv installed" || \
+        warn "uv install failed — graphify will use pip fallback"
+    fi
+  fi
+fi
+
+# -- graphifyy package --------------------------------------------------------
+GRAPHIFY_OK=false
+GRAPHIFY_PYTHON=""
+
+# Try to detect existing installation
+if command -v uv &>/dev/null; then
+  _UV_PY=$(uv tool run graphifyy python -c "import sys; print(sys.executable)" 2>/dev/null || true)
+  if [ -n "${_UV_PY}" ]; then
+    GRAPHIFY_PYTHON="${_UV_PY}"
+    GRAPHIFY_OK=true
+    GRAPHIFY_VER=$(uv tool run graphifyy python -c "import graphify; print(getattr(graphify,'__version__','installed'))" 2>/dev/null || echo "installed")
+    success "graphifyy ${GRAPHIFY_VER} (uv tool)"
+  fi
+fi
+
+if [ "${GRAPHIFY_OK}" = false ]; then
+  # Try system/venv python
+  for PY in python3 python; do
+    if command -v "${PY}" &>/dev/null && "${PY}" -c "import graphify" 2>/dev/null; then
+      GRAPHIFY_PYTHON=$(${PY} -c "import sys; print(sys.executable)")
+      GRAPHIFY_OK=true
+      success "graphifyy found via ${PY}"
+      break
+    fi
+  done
+fi
+
+if [ "${GRAPHIFY_OK}" = false ]; then
+  if [ "${CHECK_ONLY}" = true ]; then
+    add_warning "graphifyy not installed. Run: uv tool install graphifyy  OR  pip install graphifyy"
+  else
+    info "Installing graphifyy..."
+    if command -v uv &>/dev/null; then
+      uv tool install --upgrade graphifyy -q 2>&1 | tail -3 && {
+        _UV_PY=$(uv tool run graphifyy python -c "import sys; print(sys.executable)" 2>/dev/null || true)
+        [ -n "${_UV_PY}" ] && GRAPHIFY_PYTHON="${_UV_PY}" && GRAPHIFY_OK=true
+      }
+    fi
+    # pip fallback — project venv
+    if [ "${GRAPHIFY_OK}" = false ]; then
+      VENV_DIR="${ROOT_DIR}/.venv"
+      if [ ! -d "${VENV_DIR}" ]; then
+        python3 -m venv "${VENV_DIR}" 2>/dev/null || true
+      fi
+      if [ -f "${VENV_DIR}/bin/python" ]; then
+        "${VENV_DIR}/bin/python" -m pip install graphifyy -q 2>/dev/null && \
+          GRAPHIFY_PYTHON="${VENV_DIR}/bin/python" && GRAPHIFY_OK=true
+      fi
+    fi
+    if [ "${GRAPHIFY_OK}" = true ]; then
+      success "graphifyy installed"
+    else
+      add_warning "graphifyy install failed. Run manually: uv tool install graphifyy"
+    fi
+  fi
+fi
+
+# Persist interpreter path for future graphify runs
+if [ "${GRAPHIFY_OK}" = true ] && [ -n "${GRAPHIFY_PYTHON}" ]; then
+  mkdir -p "${ROOT_DIR}/graphify-out"
+  echo "${GRAPHIFY_PYTHON}" > "${ROOT_DIR}/graphify-out/.graphify_python"
+  echo "${ROOT_DIR}" > "${ROOT_DIR}/graphify-out/.graphify_root"
+  success "graphify interpreter path saved → graphify-out/.graphify_python"
+fi
+
+# -- graphify hook install (post-commit auto-rebuild) -------------------------
+if [ "${GRAPHIFY_OK}" = true ]; then
+  cd "${ROOT_DIR}"
+  if [ -d "${ROOT_DIR}/.git" ]; then
+    if [ "${CHECK_ONLY}" = true ]; then
+      if [ -f "${ROOT_DIR}/.git/hooks/post-commit" ] && grep -q "graphify" "${ROOT_DIR}/.git/hooks/post-commit" 2>/dev/null; then
+        success "graphify post-commit hook already installed"
+      else
+        add_warning "graphify hook not installed. Run: graphify hook install"
+      fi
+    else
+      # Run via the resolved interpreter so uv tool or venv path is used correctly
+      if command -v graphify &>/dev/null; then
+        graphify hook install 2>&1 && success "graphify post-commit hook installed" || \
+          add_warning "graphify hook install failed. Run manually: graphify hook install"
+      elif [ -n "${GRAPHIFY_PYTHON}" ]; then
+        "${GRAPHIFY_PYTHON}" -m graphify hook install 2>&1 && success "graphify post-commit hook installed" || \
+          add_warning "graphify hook install failed. Run manually: graphify hook install"
+      else
+        add_warning "graphify CLI not on PATH. Run manually: graphify hook install"
+      fi
+    fi
+  else
+    warn "Not a git repository — skipping graphify hook install"
+  fi
+fi
+
+# =============================================================================
+# 10. Environment file (.env)
 # =============================================================================
 header "Environment Configuration"
 ENV_FILE="${ROOT_DIR}/.env"
@@ -338,7 +458,7 @@ else
 fi
 
 # =============================================================================
-# 10. Build (optional)
+# 11. Build (optional)
 # =============================================================================
 if [ "${DO_BUILD}" = true ]; then
   header "Maven Build"
@@ -405,6 +525,11 @@ cat << 'NEXT_STEPS'
 
   6. (Optional) Monitor AI cost metrics:
        curl http://localhost:8082/api/qa/cost/report
+
+  7. (Optional) Build knowledge graph of the codebase:
+       /graphify                        # full pipeline - run inside Claude/Copilot
+       graphify query "how does a PR flow through the pipeline?"
+       graphify hook status             # check post-commit hook
 
   ─────────────────────────────────────────────────────────────────────────────
 
