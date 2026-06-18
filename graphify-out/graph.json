@@ -1,0 +1,478 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "setup.sh",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L1",
+      "metadata": {
+        "language": "bash",
+        "kind": "file"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup",
+      "community": 1,
+      "norm_label": "setup.sh"
+    },
+    {
+      "label": "setup.sh script",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L1",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_entrypoint"
+      },
+      "_origin": "ast",
+      "id": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "community": 0,
+      "norm_label": "setup.sh script"
+    },
+    {
+      "label": "info()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L34",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_info",
+      "community": 0,
+      "norm_label": "info()"
+    },
+    {
+      "label": "success()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L35",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_success",
+      "community": 1,
+      "norm_label": "success()"
+    },
+    {
+      "label": "warn()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L36",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_warn",
+      "community": 0,
+      "norm_label": "warn()"
+    },
+    {
+      "label": "error()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L37",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_error",
+      "community": 1,
+      "norm_label": "error()"
+    },
+    {
+      "label": "die()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L38",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_die",
+      "community": 1,
+      "norm_label": "die()"
+    },
+    {
+      "label": "header()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L39",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_header",
+      "community": 0,
+      "norm_label": "header()"
+    },
+    {
+      "label": "note()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L40",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_note",
+      "community": 1,
+      "norm_label": "note()"
+    },
+    {
+      "label": "add_warning()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L66",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_add_warning",
+      "community": 0,
+      "norm_label": "add_warning()"
+    },
+    {
+      "label": "add_error()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L67",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_add_error",
+      "community": 0,
+      "norm_label": "add_error()"
+    },
+    {
+      "label": "brew_install()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L116",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_brew_install",
+      "community": 0,
+      "norm_label": "brew_install()"
+    },
+    {
+      "label": "java_version()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L159",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_java_version",
+      "community": 1,
+      "norm_label": "java_version()"
+    }
+  ],
+  "links": [
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L67",
+      "weight": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_add_error",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L66",
+      "weight": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_add_warning",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L116",
+      "weight": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_brew_install",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L38",
+      "weight": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_die",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_error",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L39",
+      "weight": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_header",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_info",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L159",
+      "weight": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_java_version",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L40",
+      "weight": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_note",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_success",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_warn",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "scripts_setup",
+      "target": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L94",
+      "weight": 1.0,
+      "context": "call",
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_add_error",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L203",
+      "weight": 1.0,
+      "context": "call",
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_add_warning",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L139",
+      "weight": 1.0,
+      "context": "call",
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_brew_install",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L58",
+      "weight": 1.0,
+      "context": "call",
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_die",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L503",
+      "weight": 1.0,
+      "context": "call",
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_error",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L72",
+      "weight": 1.0,
+      "context": "call",
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_header",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L75",
+      "weight": 1.0,
+      "context": "call",
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_info",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L103",
+      "weight": 1.0,
+      "context": "call",
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_note",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L91",
+      "weight": 1.0,
+      "context": "call",
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_success",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L96",
+      "weight": 1.0,
+      "context": "call",
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_warn",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L124",
+      "weight": 1.0,
+      "context": "call",
+      "source": "scripts_setup_brew_install",
+      "target": "scripts_setup_info",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L127",
+      "weight": 1.0,
+      "context": "call",
+      "source": "scripts_setup_brew_install",
+      "target": "scripts_setup_warn",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L38",
+      "weight": 1.0,
+      "context": "call",
+      "source": "scripts_setup_die",
+      "target": "scripts_setup_error",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L128",
+      "weight": 1.0,
+      "context": "call",
+      "source": "scripts_setup_brew_install",
+      "target": "scripts_setup_add_warning",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L120",
+      "weight": 1.0,
+      "context": "call",
+      "source": "scripts_setup_brew_install",
+      "target": "scripts_setup_add_error",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "e42ab9fdf47ee55f0f636c1862128bb5bf310d4a"
+}
