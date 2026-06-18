@@ -48,3 +48,23 @@ pr-webhook-sample.json
 
 # Conductor agent state files (tooling artifacts — not for version control)
 .agents/state/
+
+# Graphify outputs and parallel chunking files (all local-only tooling artifacts)
+graphify-out/
+.graphify_cache/
+extract_ast.py
+generate_extraction_prompts.py
+prepare_chunks.py
+prepare_extraction.py
+*prepare_chunks*
+*prepare_extraction*
+*.graphify_ast.json
+
+# Skills lock file (machine-local, not shared)
+skills-lock.json
+
+# Runtime logs
+logs/
+
+# Webhook sample payloads — may contain real diff content, repo names, or author info
+pr-webhook-sample-1.json

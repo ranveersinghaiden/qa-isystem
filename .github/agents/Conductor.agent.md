@@ -246,6 +246,52 @@ Touch `common` first when a feature affects shared infrastructure; rebuild depen
 
 ---
 
+## VCS Hygiene — What Goes In Git
+
+### ✅ MUST be in git
+| Path | Why |
+|------|-----|
+| `.github/agents/**` | Agent instructions, checklists, shared rules |
+| `.github/instructions/**` | Copilot IDE coding conventions |
+| `.github/copilot-instructions.md` | Top-level workspace instructions |
+| `.github/workflows/**` | CI/CD pipeline definitions |
+| `.github/mcp.json` | MCP server registry |
+| `.agents/skills/**` | Skill definitions (SKILL.md + README.md per skill) |
+| `.env.example` | Credential template — no real secrets |
+| `.gitignore`, `.gitattributes` | VCS config |
+| `.mvn/**` | Maven wrapper config |
+| `pom.xml` (all modules) | Build definitions |
+| `src/**` (all modules) | Application source + tests |
+| `**/Dockerfile` | Container build definitions |
+| `docker-compose*.yml` | Local dev / prod compose files |
+| `scripts/**` | Operational shell scripts |
+| `README.md`, `QA-ISystem-Architecture.md` | Primary project docs |
+| `BDD_And_CodeGen_Logic.md` | Design documentation |
+| `Board-Presentation-QA-ISystem.md` | Project presentation doc |
+
+### ❌ MUST NOT be in git
+| Path / Pattern | Why |
+|----------------|-----|
+| `graphify-out/` | Local graphify knowledge-graph cache — machine-specific |
+| `extract_ast.py`, `generate_extraction_prompts.py` | Graphify-generated scripts — not project code |
+| `prepare_chunks.py`, `prepare_extraction.py` | Graphify chunking helpers — regenerated each run |
+| `skills-lock.json` | Machine-local skills lock file |
+| `logs/` | Runtime log files |
+| `target/` | Maven build outputs |
+| `.env`, `*.env`, `.env.local` | Secrets — never commit |
+| `pr-webhook-sample*.json` | May contain real diff/repo/author data |
+| `.agents/state/` | Conductor runtime state (transient, machine-local) |
+| `.DS_Store` | macOS filesystem metadata |
+
+### Gate 2 — Human git commands
+```bash
+git add [files from ✅ list above]
+git commit -m "type(scope): message"
+git push
+```
+
+---
+
 ## Safety Rules — Set `BLOCKED` and stop when:
 - Security finds CRITICAL/HIGH issues at any gate.
 - CodeReviewer finds BLOCKER/MAJOR that are unresolved after 3 review cycles.
