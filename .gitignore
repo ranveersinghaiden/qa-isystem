@@ -50,7 +50,6 @@ pr-webhook-sample.json
 .agents/state/
 
 # Graphify outputs and parallel chunking files (all local-only tooling artifacts)
-graphify-out/
 .graphify_cache/
 extract_ast.py
 generate_extraction_prompts.py
