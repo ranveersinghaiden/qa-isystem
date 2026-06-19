@@ -45,20 +45,20 @@ Git / Webhook
 │  strategy-service  :8082   AI-native, self-improving             │
 │                                                                  │
 │  ① AiCallGate   — rule-based gate (40-60% of AI calls skipped)  │
-│  ② StrategyAgent — SKIP / UPDATE_TESTS / CREATE_TESTS            │
+│  ② StrategyAgent — SKIP / UPDATE_TESTS / CREATE_TESTS           │
 │  ③ BddGenerator  — PromptResponseCache → AI or template         │
 │  ④ GitHub PR     — BDD review PR (qa/bdd/*)                     │
 │                                                                  │
-│  On BDD PR merge  → TestScriptsQueue → codegen-service          │
-│  On BDD PR reject → PrFeedbackService → revised BDD PR         │
+│  On BDD PR merge  → TestScriptsQueue → codegen-service           │
+│  On BDD PR reject → PrFeedbackService → revised BDD PR           │
 │                                                                  │
-│  CodegenService  — API / UI / Mobile test runners               │
-│  StabilizationLoop — run→fail→fix up to 3×                      │
+│  CodegenService  — API / UI / Mobile test runners                │
+│  StabilizationLoop — run→fail→fix up to 3×                       │
 │  Final Test PR   — (qa/tests/*)                                  │
 │                                                                  │
-│  AiCostMonitor   — GET /api/qa/cost/report                      │
+│  AiCostMonitor   — GET /api/qa/cost/report                       │
 │                                                                  │
-│  AI providers (aiqa.ai.provider):                               │
+│  AI providers (aiqa.ai.provider):                                │
 │    copilot-cli (default) — gh api, flat seat licence             │
 │    copilot               — Copilot REST API + token              │
 │    openai                — any OpenAI-compatible endpoint        │

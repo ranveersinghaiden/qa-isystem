@@ -4,14 +4,754 @@
   "graph": {},
   "nodes": [
     {
+      "label": "README.md",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "readme",
+      "community": 12,
+      "norm_label": "readme.md"
+    },
+    {
+      "label": "QA-ISystem \u2014 Autonomous AI-Driven QA Pipeline",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "community": 12,
+      "norm_label": "qa-isystem \u2014 autonomous ai-driven qa pipeline"
+    },
+    {
+      "label": "Table of Contents",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L8",
+      "_origin": "ast",
+      "id": "readme_table_of_contents",
+      "community": 12,
+      "norm_label": "table of contents"
+    },
+    {
+      "label": "Architecture",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L25",
+      "_origin": "ast",
+      "id": "readme_architecture",
+      "community": 12,
+      "norm_label": "architecture"
+    },
+    {
+      "label": "Module Overview",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L78",
+      "_origin": "ast",
+      "id": "readme_module_overview",
+      "community": 12,
+      "norm_label": "module overview"
+    },
+    {
+      "label": "Kafka Topics",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L91",
+      "_origin": "ast",
+      "id": "readme_kafka_topics",
+      "community": 12,
+      "norm_label": "kafka topics"
+    },
+    {
+      "label": "Pipeline Flow",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L106",
+      "_origin": "ast",
+      "id": "readme_pipeline_flow",
+      "community": 12,
+      "norm_label": "pipeline flow"
+    },
+    {
+      "label": "Quick Start",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L144",
+      "_origin": "ast",
+      "id": "readme_quick_start",
+      "community": 12,
+      "norm_label": "quick start"
+    },
+    {
+      "label": "Prerequisites",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L146",
+      "_origin": "ast",
+      "id": "readme_prerequisites",
+      "community": 12,
+      "norm_label": "prerequisites"
+    },
+    {
+      "label": "1 \u2014 Start infrastructure",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L155",
+      "_origin": "ast",
+      "id": "readme_1_start_infrastructure",
+      "community": 12,
+      "norm_label": "1 \u2014 start infrastructure"
+    },
+    {
+      "label": "2 \u2014 Build",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L164",
+      "_origin": "ast",
+      "id": "readme_2_build",
+      "community": 12,
+      "norm_label": "2 \u2014 build"
+    },
+    {
+      "label": "3 \u2014 Configure (optional)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L170",
+      "_origin": "ast",
+      "id": "readme_3_configure_optional",
+      "community": 12,
+      "norm_label": "3 \u2014 configure (optional)"
+    },
+    {
+      "label": "4 \u2014 Start services (separate terminals)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L201",
+      "_origin": "ast",
+      "id": "readme_4_start_services_separate_terminals",
+      "community": 12,
+      "norm_label": "4 \u2014 start services (separate terminals)"
+    },
+    {
+      "label": "5 \u2014 Trigger the pipeline",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L249",
+      "_origin": "ast",
+      "id": "readme_5_trigger_the_pipeline",
+      "community": 12,
+      "norm_label": "5 \u2014 trigger the pipeline"
+    },
+    {
+      "label": "6 \u2014 Useful runtime commands",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L273",
+      "_origin": "ast",
+      "id": "readme_6_useful_runtime_commands",
+      "community": 12,
+      "norm_label": "6 \u2014 useful runtime commands"
+    },
+    {
+      "label": "API Reference",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L299",
+      "_origin": "ast",
+      "id": "readme_api_reference",
+      "community": 12,
+      "norm_label": "api reference"
+    },
+    {
+      "label": "pr-service `:8080`",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L301",
+      "_origin": "ast",
+      "id": "readme_pr_service_8080",
+      "community": 12,
+      "norm_label": "pr-service `:8080`"
+    },
+    {
+      "label": "`PullRequest` payload fields",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L310",
+      "_origin": "ast",
+      "id": "readme_pullrequest_payload_fields",
+      "community": 12,
+      "norm_label": "`pullrequest` payload fields"
+    },
+    {
+      "label": "impact-service `:8081`",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L323",
+      "_origin": "ast",
+      "id": "readme_impact_service_8081",
+      "community": 12,
+      "norm_label": "impact-service `:8081`"
+    },
+    {
+      "label": "strategy-service `:8082`",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L330",
+      "_origin": "ast",
+      "id": "readme_strategy_service_8082",
+      "community": 12,
+      "norm_label": "strategy-service `:8082`"
+    },
+    {
+      "label": "AI Provider Configuration",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L343",
+      "_origin": "ast",
+      "id": "readme_ai_provider_configuration",
+      "community": 12,
+      "norm_label": "ai provider configuration"
+    },
+    {
+      "label": "copilot-cli (default) \u2014 how it works",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L352",
+      "_origin": "ast",
+      "id": "readme_copilot_cli_default_how_it_works",
+      "community": 12,
+      "norm_label": "copilot-cli (default) \u2014 how it works"
+    },
+    {
+      "label": "Cost Optimisation",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L390",
+      "_origin": "ast",
+      "id": "readme_cost_optimisation",
+      "community": 12,
+      "norm_label": "cost optimisation"
+    },
+    {
+      "label": "CI/CD Pipelines",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L435",
+      "_origin": "ast",
+      "id": "readme_ci_cd_pipelines",
+      "community": 12,
+      "norm_label": "ci/cd pipelines"
+    },
+    {
+      "label": "gh CLI on the deploy server",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L454",
+      "_origin": "ast",
+      "id": "readme_gh_cli_on_the_deploy_server",
+      "community": 12,
+      "norm_label": "gh cli on the deploy server"
+    },
+    {
+      "label": "Required secrets",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L463",
+      "_origin": "ast",
+      "id": "readme_required_secrets",
+      "community": 12,
+      "norm_label": "required secrets"
+    },
+    {
+      "label": "Production `.env` variables (on deploy server)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L471",
+      "_origin": "ast",
+      "id": "readme_production_env_variables_on_deploy_server",
+      "community": 12,
+      "norm_label": "production `.env` variables (on deploy server)"
+    },
+    {
+      "label": "AI Feedback Loop",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L486",
+      "_origin": "ast",
+      "id": "readme_ai_feedback_loop",
+      "community": 12,
+      "norm_label": "ai feedback loop"
+    },
+    {
+      "label": "Target repo convention",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L508",
+      "_origin": "ast",
+      "id": "readme_target_repo_convention",
+      "community": 12,
+      "norm_label": "target repo convention"
+    },
+    {
+      "label": "Running Tests",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L525",
+      "_origin": "ast",
+      "id": "readme_running_tests",
+      "community": 12,
+      "norm_label": "running tests"
+    },
+    {
+      "label": "Manual Testing & Process Monitoring",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L560",
+      "_origin": "ast",
+      "id": "readme_manual_testing_process_monitoring",
+      "community": 3,
+      "norm_label": "manual testing & process monitoring"
+    },
+    {
+      "label": "Typical Workflow",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L564",
+      "_origin": "ast",
+      "id": "readme_typical_workflow",
+      "community": 3,
+      "norm_label": "typical workflow"
+    },
+    {
+      "label": "1 \u2014 Trigger Test PRs Manually",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L576",
+      "_origin": "ast",
+      "id": "readme_1_trigger_test_prs_manually",
+      "community": 3,
+      "norm_label": "1 \u2014 trigger test prs manually"
+    },
+    {
+      "label": "Single PR (demo)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L578",
+      "_origin": "ast",
+      "id": "readme_single_pr_demo",
+      "community": 3,
+      "norm_label": "single pr (demo)"
+    },
+    {
+      "label": "Single PR (custom payload)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L584",
+      "_origin": "ast",
+      "id": "readme_single_pr_custom_payload",
+      "community": 3,
+      "norm_label": "single pr (custom payload)"
+    },
+    {
+      "label": "Multiple PRs (concurrent test)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L599",
+      "_origin": "ast",
+      "id": "readme_multiple_prs_concurrent_test",
+      "community": 3,
+      "norm_label": "multiple prs (concurrent test)"
+    },
+    {
+      "label": "2 \u2014 Monitor Service Health",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L616",
+      "_origin": "ast",
+      "id": "readme_2_monitor_service_health",
+      "community": 3,
+      "norm_label": "2 \u2014 monitor service health"
+    },
+    {
+      "label": "All services at once",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L618",
+      "_origin": "ast",
+      "id": "readme_all_services_at_once",
+      "community": 3,
+      "norm_label": "all services at once"
+    },
+    {
+      "label": "Individual service status with pending work",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L628",
+      "_origin": "ast",
+      "id": "readme_individual_service_status_with_pending_work",
+      "community": 3,
+      "norm_label": "individual service status with pending work"
+    },
+    {
+      "label": "3 \u2014 Monitor Service Logs in Real-Time",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L647",
+      "_origin": "ast",
+      "id": "readme_3_monitor_service_logs_in_real_time",
+      "community": 3,
+      "norm_label": "3 \u2014 monitor service logs in real-time"
+    },
+    {
+      "label": "Tail all service logs",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L649",
+      "_origin": "ast",
+      "id": "readme_tail_all_service_logs",
+      "community": 3,
+      "norm_label": "tail all service logs"
+    },
+    {
+      "label": "Monitor single service",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L656",
+      "_origin": "ast",
+      "id": "readme_monitor_single_service",
+      "community": 3,
+      "norm_label": "monitor single service"
+    },
+    {
+      "label": "Key log patterns to watch",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L669",
+      "_origin": "ast",
+      "id": "readme_key_log_patterns_to_watch",
+      "community": 3,
+      "norm_label": "key log patterns to watch"
+    },
+    {
+      "label": "4 \u2014 Inspect Kafka Topics",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L684",
+      "_origin": "ast",
+      "id": "readme_4_inspect_kafka_topics",
+      "community": 3,
+      "norm_label": "4 \u2014 inspect kafka topics"
+    },
+    {
+      "label": "List all topics",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L686",
+      "_origin": "ast",
+      "id": "readme_list_all_topics",
+      "community": 3,
+      "norm_label": "list all topics"
+    },
+    {
+      "label": "Inspect pending messages",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L692",
+      "_origin": "ast",
+      "id": "readme_inspect_pending_messages",
+      "community": 3,
+      "norm_label": "inspect pending messages"
+    },
+    {
+      "label": "Reset Kafka state (clear all messages)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L712",
+      "_origin": "ast",
+      "id": "readme_reset_kafka_state_clear_all_messages",
+      "community": 3,
+      "norm_label": "reset kafka state (clear all messages)"
+    },
+    {
+      "label": "5 \u2014 Inspect Redis State",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L721",
+      "_origin": "ast",
+      "id": "readme_5_inspect_redis_state",
+      "community": 3,
+      "norm_label": "5 \u2014 inspect redis state"
+    },
+    {
+      "label": "Check cached BDD scenarios and test results",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L723",
+      "_origin": "ast",
+      "id": "readme_check_cached_bdd_scenarios_and_test_results",
+      "community": 3,
+      "norm_label": "check cached bdd scenarios and test results"
+    },
+    {
+      "label": "Example cost report output",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L739",
+      "_origin": "ast",
+      "id": "readme_example_cost_report_output",
+      "community": 3,
+      "norm_label": "example cost report output"
+    },
+    {
+      "label": "6 \u2014 Check GitHub API for Created PRs",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L754",
+      "_origin": "ast",
+      "id": "readme_6_check_github_api_for_created_prs",
+      "community": 3,
+      "norm_label": "6 \u2014 check github api for created prs"
+    },
+    {
+      "label": "List all QA-generated PRs in target repo",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L756",
+      "_origin": "ast",
+      "id": "readme_list_all_qa_generated_prs_in_target_repo",
+      "community": 3,
+      "norm_label": "list all qa-generated prs in target repo"
+    },
+    {
+      "label": "Inspect individual PR",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L772",
+      "_origin": "ast",
+      "id": "readme_inspect_individual_pr",
+      "community": 3,
+      "norm_label": "inspect individual pr"
+    },
+    {
+      "label": "7 \u2014 Monitor Docker Container Performance",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L783",
+      "_origin": "ast",
+      "id": "readme_7_monitor_docker_container_performance",
+      "community": 3,
+      "norm_label": "7 \u2014 monitor docker container performance"
+    },
+    {
+      "label": "Real-time container stats (CPU, memory, network)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L785",
+      "_origin": "ast",
+      "id": "readme_real_time_container_stats_cpu_memory_network",
+      "community": 3,
+      "norm_label": "real-time container stats (cpu, memory, network)"
+    },
+    {
+      "label": "Parse container logs for errors",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L799",
+      "_origin": "ast",
+      "id": "readme_parse_container_logs_for_errors",
+      "community": 3,
+      "norm_label": "parse container logs for errors"
+    },
+    {
+      "label": "8 \u2014 Real-World Example: 3-PR Concurrent Test",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L815",
+      "_origin": "ast",
+      "id": "readme_8_real_world_example_3_pr_concurrent_test",
+      "community": 3,
+      "norm_label": "8 \u2014 real-world example: 3-pr concurrent test"
+    },
+    {
+      "label": "Step 1: Generate test payloads",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L819",
+      "_origin": "ast",
+      "id": "readme_step_1_generate_test_payloads",
+      "community": 3,
+      "norm_label": "step 1: generate test payloads"
+    },
+    {
+      "label": "Step 2: Clear Redis and Kafka (fresh state)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L827",
+      "_origin": "ast",
+      "id": "readme_step_2_clear_redis_and_kafka_fresh_state",
+      "community": 3,
+      "norm_label": "step 2: clear redis and kafka (fresh state)"
+    },
+    {
+      "label": "Step 3: Verify services are up",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L835",
+      "_origin": "ast",
+      "id": "readme_step_3_verify_services_are_up",
+      "community": 3,
+      "norm_label": "step 3: verify services are up"
+    },
+    {
+      "label": "Step 4: Start log monitoring in a separate terminal",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L843",
+      "_origin": "ast",
+      "id": "readme_step_4_start_log_monitoring_in_a_separate_terminal",
+      "community": 3,
+      "norm_label": "step 4: start log monitoring in a separate terminal"
+    },
+    {
+      "label": "Step 5: Submit all 3 PRs simultaneously",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L853",
+      "_origin": "ast",
+      "id": "readme_step_5_submit_all_3_prs_simultaneously",
+      "community": 3,
+      "norm_label": "step 5: submit all 3 prs simultaneously"
+    },
+    {
+      "label": "Step 6: Monitor pipeline progression",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L867",
+      "_origin": "ast",
+      "id": "readme_step_6_monitor_pipeline_progression",
+      "community": 3,
+      "norm_label": "step 6: monitor pipeline progression"
+    },
+    {
+      "label": "Step 7: Track specific PR outcomes",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L888",
+      "_origin": "ast",
+      "id": "readme_step_7_track_specific_pr_outcomes",
+      "community": 3,
+      "norm_label": "step 7: track specific pr outcomes"
+    },
+    {
+      "label": "Step 8: Approve all BDD PRs (manual gate)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L907",
+      "_origin": "ast",
+      "id": "readme_step_8_approve_all_bdd_prs_manual_gate",
+      "community": 3,
+      "norm_label": "step 8: approve all bdd prs (manual gate)"
+    },
+    {
+      "label": "Step 9: Check final results",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L920",
+      "_origin": "ast",
+      "id": "readme_step_9_check_final_results",
+      "community": 3,
+      "norm_label": "step 9: check final results"
+    },
+    {
+      "label": "9 \u2014 Troubleshooting Common Issues",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L935",
+      "_origin": "ast",
+      "id": "readme_9_troubleshooting_common_issues",
+      "community": 3,
+      "norm_label": "9 \u2014 troubleshooting common issues"
+    },
+    {
+      "label": "No Kafka messages appearing",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L937",
+      "_origin": "ast",
+      "id": "readme_no_kafka_messages_appearing",
+      "community": 3,
+      "norm_label": "no kafka messages appearing"
+    },
+    {
+      "label": "Services not responding (502 / connection refused)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L951",
+      "_origin": "ast",
+      "id": "readme_services_not_responding_502_connection_refused",
+      "community": 3,
+      "norm_label": "services not responding (502 / connection refused)"
+    },
+    {
+      "label": "BDD PR not created (stuck in strategy-service)",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L962",
+      "_origin": "ast",
+      "id": "readme_bdd_pr_not_created_stuck_in_strategy_service",
+      "community": 3,
+      "norm_label": "bdd pr not created (stuck in strategy-service)"
+    },
+    {
+      "label": "AI call failing (\"No such file or directory: copilot\")",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L975",
+      "_origin": "ast",
+      "id": "readme_ai_call_failing_no_such_file_or_directory_copilot",
+      "community": 3,
+      "norm_label": "ai call failing (\"no such file or directory: copilot\")"
+    },
+    {
+      "label": "Redis connection failing",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L989",
+      "_origin": "ast",
+      "id": "readme_redis_connection_failing",
+      "community": 3,
+      "norm_label": "redis connection failing"
+    },
+    {
+      "label": "Technology Stack",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L1004",
+      "_origin": "ast",
+      "id": "readme_technology_stack",
+      "community": 12,
+      "norm_label": "technology stack"
+    },
+    {
+      "label": "Future Roadmap",
+      "file_type": "document",
+      "source_file": "README.md",
+      "source_location": "L1021",
+      "_origin": "ast",
+      "id": "readme_future_roadmap",
+      "community": 12,
+      "norm_label": "future roadmap"
+    },
+    {
       "label": "QA-ISystem-Architecture.md",
       "file_type": "document",
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "qa_isystem_architecture",
       "community": 5,
-      "norm_label": "qa-isystem-architecture.md"
+      "norm_label": "qa-isystem-architecture.md",
+      "id": "qa_isystem_architecture"
     },
     {
       "label": "QA-ISystem: Complete Architecture & Design Reference",
@@ -19,9 +759,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
       "community": 5,
-      "norm_label": "qa-isystem: complete architecture & design reference"
+      "norm_label": "qa-isystem: complete architecture & design reference",
+      "id": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference"
     },
     {
       "label": "1. What Problem Does This System Solve?",
@@ -29,9 +769,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L8",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_1_what_problem_does_this_system_solve",
       "community": 5,
-      "norm_label": "1. what problem does this system solve?"
+      "norm_label": "1. what problem does this system solve?",
+      "id": "qa_isystem_architecture_1_what_problem_does_this_system_solve"
     },
     {
       "label": "2. System Overview",
@@ -39,9 +779,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L29",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_2_system_overview",
       "community": 5,
-      "norm_label": "2. system overview"
+      "norm_label": "2. system overview",
+      "id": "qa_isystem_architecture_2_system_overview"
     },
     {
       "label": "3. What Is Apache Kafka and Why Is It Used Here?",
@@ -49,9 +789,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L93",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_3_what_is_apache_kafka_and_why_is_it_used_here",
       "community": 5,
-      "norm_label": "3. what is apache kafka and why is it used here?"
+      "norm_label": "3. what is apache kafka and why is it used here?",
+      "id": "qa_isystem_architecture_3_what_is_apache_kafka_and_why_is_it_used_here"
     },
     {
       "label": "Why Kafka instead of direct HTTP calls?",
@@ -59,9 +799,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L97",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_why_kafka_instead_of_direct_http_calls",
       "community": 5,
-      "norm_label": "why kafka instead of direct http calls?"
+      "norm_label": "why kafka instead of direct http calls?",
+      "id": "qa_isystem_architecture_why_kafka_instead_of_direct_http_calls"
     },
     {
       "label": "Kafka topics",
@@ -69,9 +809,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L105",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_kafka_topics",
       "community": 5,
-      "norm_label": "kafka topics"
+      "norm_label": "kafka topics",
+      "id": "qa_isystem_architecture_kafka_topics"
     },
     {
       "label": "Key Kafka concepts used here",
@@ -79,9 +819,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L118",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_key_kafka_concepts_used_here",
       "community": 5,
-      "norm_label": "key kafka concepts used here"
+      "norm_label": "key kafka concepts used here",
+      "id": "qa_isystem_architecture_key_kafka_concepts_used_here"
     },
     {
       "label": "4. The `common` Module",
@@ -89,9 +829,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L131",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_4_the_common_module",
       "community": 9,
-      "norm_label": "4. the `common` module"
+      "norm_label": "4. the `common` module",
+      "id": "qa_isystem_architecture_4_the_common_module"
     },
     {
       "label": "Key models",
@@ -99,9 +839,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L135",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_key_models",
       "community": 9,
-      "norm_label": "key models"
+      "norm_label": "key models",
+      "id": "qa_isystem_architecture_key_models"
     },
     {
       "label": "`PullRequest`",
@@ -109,9 +849,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L137",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_pullrequest",
       "community": 9,
-      "norm_label": "`pullrequest`"
+      "norm_label": "`pullrequest`",
+      "id": "qa_isystem_architecture_pullrequest"
     },
     {
       "label": "`GitDiff`",
@@ -119,9 +859,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L172",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_gitdiff",
       "community": 9,
-      "norm_label": "`gitdiff`"
+      "norm_label": "`gitdiff`",
+      "id": "qa_isystem_architecture_gitdiff"
     },
     {
       "label": "`PrContext`",
@@ -129,9 +869,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L188",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_prcontext",
       "community": 9,
-      "norm_label": "`prcontext`"
+      "norm_label": "`prcontext`",
+      "id": "qa_isystem_architecture_prcontext"
     },
     {
       "label": "`ImpactEnvelope`",
@@ -139,9 +879,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L207",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_impactenvelope",
       "community": 9,
-      "norm_label": "`impactenvelope`"
+      "norm_label": "`impactenvelope`",
+      "id": "qa_isystem_architecture_impactenvelope"
     },
     {
       "label": "`CoverageReport`",
@@ -149,9 +889,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L227",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_coveragereport",
       "community": 9,
-      "norm_label": "`coveragereport`"
+      "norm_label": "`coveragereport`",
+      "id": "qa_isystem_architecture_coveragereport"
     },
     {
       "label": "`BddScenario`",
@@ -159,9 +899,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L242",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_bddscenario",
       "community": 9,
-      "norm_label": "`bddscenario`"
+      "norm_label": "`bddscenario`",
+      "id": "qa_isystem_architecture_bddscenario"
     },
     {
       "label": "`FeedbackEvent`",
@@ -169,9 +909,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L257",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_feedbackevent",
       "community": 9,
-      "norm_label": "`feedbackevent`"
+      "norm_label": "`feedbackevent`",
+      "id": "qa_isystem_architecture_feedbackevent"
     },
     {
       "label": "Shared services in `common`",
@@ -179,9 +919,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L270",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_shared_services_in_common",
       "community": 9,
-      "norm_label": "shared services in `common`"
+      "norm_label": "shared services in `common`",
+      "id": "qa_isystem_architecture_shared_services_in_common"
     },
     {
       "label": "5. pr-service \u2014 Phase 0: Ingestion, Context Extraction & Compression",
@@ -189,9 +929,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L292",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_5_pr_service_phase_0_ingestion_context_extraction_compression",
       "community": 5,
-      "norm_label": "5. pr-service \u2014 phase 0: ingestion, context extraction & compression"
+      "norm_label": "5. pr-service \u2014 phase 0: ingestion, context extraction & compression",
+      "id": "qa_isystem_architecture_5_pr_service_phase_0_ingestion_context_extraction_compression"
     },
     {
       "label": "What it does",
@@ -199,9 +939,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L296",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_what_it_does",
       "community": 5,
-      "norm_label": "what it does"
+      "norm_label": "what it does",
+      "id": "qa_isystem_architecture_what_it_does"
     },
     {
       "label": "Context compression configuration",
@@ -209,9 +949,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L311",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_context_compression_configuration",
       "community": 5,
-      "norm_label": "context compression configuration"
+      "norm_label": "context compression configuration",
+      "id": "qa_isystem_architecture_context_compression_configuration"
     },
     {
       "label": "Classes",
@@ -219,9 +959,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L327",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_classes",
       "community": 5,
-      "norm_label": "classes"
+      "norm_label": "classes",
+      "id": "qa_isystem_architecture_classes"
     },
     {
       "label": "Endpoints",
@@ -229,9 +969,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L340",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_endpoints",
       "community": 5,
-      "norm_label": "endpoints"
+      "norm_label": "endpoints",
+      "id": "qa_isystem_architecture_endpoints"
     },
     {
       "label": "6. impact-service \u2014 Phase 1: Deterministic Analysis",
@@ -239,9 +979,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L351",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_6_impact_service_phase_1_deterministic_analysis",
       "community": 11,
-      "norm_label": "6. impact-service \u2014 phase 1: deterministic analysis"
+      "norm_label": "6. impact-service \u2014 phase 1: deterministic analysis",
+      "id": "qa_isystem_architecture_6_impact_service_phase_1_deterministic_analysis"
     },
     {
       "label": "The 5-step pipeline",
@@ -249,9 +989,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L357",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_the_5_step_pipeline",
       "community": 11,
-      "norm_label": "the 5-step pipeline"
+      "norm_label": "the 5-step pipeline",
+      "id": "qa_isystem_architecture_the_5_step_pipeline"
     },
     {
       "label": "Step 1: GitDiffParser \u2014 Reading the raw diff",
@@ -259,9 +999,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L364",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_step_1_gitdiffparser_reading_the_raw_diff",
       "community": 11,
-      "norm_label": "step 1: gitdiffparser \u2014 reading the raw diff"
+      "norm_label": "step 1: gitdiffparser \u2014 reading the raw diff",
+      "id": "qa_isystem_architecture_step_1_gitdiffparser_reading_the_raw_diff"
     },
     {
       "label": "Step 2: DependencyGraph \u2014 Who depends on what?",
@@ -269,9 +1009,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L387",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_step_2_dependencygraph_who_depends_on_what",
       "community": 11,
-      "norm_label": "step 2: dependencygraph \u2014 who depends on what?"
+      "norm_label": "step 2: dependencygraph \u2014 who depends on what?",
+      "id": "qa_isystem_architecture_step_2_dependencygraph_who_depends_on_what"
     },
     {
       "label": "Step 3: ChangeTypeDetector \u2014 What kind of change is this?",
@@ -279,9 +1019,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L412",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_step_3_changetypedetector_what_kind_of_change_is_this",
       "community": 11,
-      "norm_label": "step 3: changetypedetector \u2014 what kind of change is this?"
+      "norm_label": "step 3: changetypedetector \u2014 what kind of change is this?",
+      "id": "qa_isystem_architecture_step_3_changetypedetector_what_kind_of_change_is_this"
     },
     {
       "label": "Step 4: RiskScorer \u2014 How risky is this change?",
@@ -289,9 +1029,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L432",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_step_4_riskscorer_how_risky_is_this_change",
       "community": 11,
-      "norm_label": "step 4: riskscorer \u2014 how risky is this change?"
+      "norm_label": "step 4: riskscorer \u2014 how risky is this change?",
+      "id": "qa_isystem_architecture_step_4_riskscorer_how_risky_is_this_change"
     },
     {
       "label": "Step 4b: AIImpactEvaluator \u2014 AI Last Resort (optional)",
@@ -299,9 +1039,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L454",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_step_4b_aiimpactevaluator_ai_last_resort_optional",
       "community": 11,
-      "norm_label": "step 4b: aiimpactevaluator \u2014 ai last resort (optional)"
+      "norm_label": "step 4b: aiimpactevaluator \u2014 ai last resort (optional)",
+      "id": "qa_isystem_architecture_step_4b_aiimpactevaluator_ai_last_resort_optional"
     },
     {
       "label": "Step 5: IntegrationTestScopeClassifier",
@@ -309,9 +1049,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L460",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_step_5_integrationtestscopeclassifier",
       "community": 11,
-      "norm_label": "step 5: integrationtestscopeclassifier"
+      "norm_label": "step 5: integrationtestscopeclassifier",
+      "id": "qa_isystem_architecture_step_5_integrationtestscopeclassifier"
     },
     {
       "label": "7. strategy-service \u2014 Phases 2\u20134: Strategy, BDD Generation, GitHub PR",
@@ -319,9 +1059,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L476",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_7_strategy_service_phases_2_4_strategy_bdd_generation_github_pr",
       "community": 8,
-      "norm_label": "7. strategy-service \u2014 phases 2\u20134: strategy, bdd generation, github pr"
+      "norm_label": "7. strategy-service \u2014 phases 2\u20134: strategy, bdd generation, github pr",
+      "id": "qa_isystem_architecture_7_strategy_service_phases_2_4_strategy_bdd_generation_github_pr"
     },
     {
       "label": "7.1 AI Cost Gating \u2014 Three Layers Before Any API Call",
@@ -329,9 +1069,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L480",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_7_1_ai_cost_gating_three_layers_before_any_api_call",
       "community": 8,
-      "norm_label": "7.1 ai cost gating \u2014 three layers before any api call"
+      "norm_label": "7.1 ai cost gating \u2014 three layers before any api call",
+      "id": "qa_isystem_architecture_7_1_ai_cost_gating_three_layers_before_any_api_call"
     },
     {
       "label": "7.2 RepoContextService \u2014 Cloning and Indexing the Test Repository",
@@ -339,9 +1079,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L509",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_7_2_repocontextservice_cloning_and_indexing_the_test_repository",
       "community": 8,
-      "norm_label": "7.2 repocontextservice \u2014 cloning and indexing the test repository"
+      "norm_label": "7.2 repocontextservice \u2014 cloning and indexing the test repository",
+      "id": "qa_isystem_architecture_7_2_repocontextservice_cloning_and_indexing_the_test_repository"
     },
     {
       "label": "7.3 E2ECoverageAnalyzer \u2014 Phase 2 Coverage Assessment",
@@ -349,9 +1089,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L537",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_7_3_e2ecoverageanalyzer_phase_2_coverage_assessment",
       "community": 8,
-      "norm_label": "7.3 e2ecoverageanalyzer \u2014 phase 2 coverage assessment"
+      "norm_label": "7.3 e2ecoverageanalyzer \u2014 phase 2 coverage assessment",
+      "id": "qa_isystem_architecture_7_3_e2ecoverageanalyzer_phase_2_coverage_assessment"
     },
     {
       "label": "7.4 StrategyAgent \u2014 The Decision Maker",
@@ -359,9 +1099,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L548",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_7_4_strategyagent_the_decision_maker",
       "community": 8,
-      "norm_label": "7.4 strategyagent \u2014 the decision maker"
+      "norm_label": "7.4 strategyagent \u2014 the decision maker",
+      "id": "qa_isystem_architecture_7_4_strategyagent_the_decision_maker"
     },
     {
       "label": "7.5 BddGenerator \u2014 Creating Human-Readable Test Scenarios",
@@ -369,9 +1109,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L565",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_7_5_bddgenerator_creating_human_readable_test_scenarios",
       "community": 8,
-      "norm_label": "7.5 bddgenerator \u2014 creating human-readable test scenarios"
+      "norm_label": "7.5 bddgenerator \u2014 creating human-readable test scenarios",
+      "id": "qa_isystem_architecture_7_5_bddgenerator_creating_human_readable_test_scenarios"
     },
     {
       "label": "Two-phase agent pipeline (primary path)",
@@ -379,9 +1119,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L570",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_two_phase_agent_pipeline_primary_path",
       "community": 8,
-      "norm_label": "two-phase agent pipeline (primary path)"
+      "norm_label": "two-phase agent pipeline (primary path)",
+      "id": "qa_isystem_architecture_two_phase_agent_pipeline_primary_path"
     },
     {
       "label": "Live monitoring",
@@ -389,9 +1129,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L589",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_live_monitoring",
       "community": 8,
-      "norm_label": "live monitoring"
+      "norm_label": "live monitoring",
+      "id": "qa_isystem_architecture_live_monitoring"
     },
     {
       "label": "Concurrency and process lifecycle",
@@ -399,9 +1139,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L596",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_concurrency_and_process_lifecycle",
       "community": 8,
-      "norm_label": "concurrency and process lifecycle"
+      "norm_label": "concurrency and process lifecycle",
+      "id": "qa_isystem_architecture_concurrency_and_process_lifecycle"
     },
     {
       "label": "Fallback",
@@ -409,9 +1149,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L604",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_fallback",
       "community": 8,
-      "norm_label": "fallback"
+      "norm_label": "fallback",
+      "id": "qa_isystem_architecture_fallback"
     },
     {
       "label": "7.6 GitHub PR Workflow",
@@ -419,9 +1159,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L617",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_7_6_github_pr_workflow",
       "community": 8,
-      "norm_label": "7.6 github pr workflow"
+      "norm_label": "7.6 github pr workflow",
+      "id": "qa_isystem_architecture_7_6_github_pr_workflow"
     },
     {
       "label": "7.7 Endpoints",
@@ -429,9 +1169,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L635",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_7_7_endpoints",
       "community": 8,
-      "norm_label": "7.7 endpoints"
+      "norm_label": "7.7 endpoints",
+      "id": "qa_isystem_architecture_7_7_endpoints"
     },
     {
       "label": "8. codegen-service \u2014 Phase 5: Test Code Generation",
@@ -439,9 +1179,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L648",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_8_codegen_service_phase_5_test_code_generation",
       "community": 5,
-      "norm_label": "8. codegen-service \u2014 phase 5: test code generation"
+      "norm_label": "8. codegen-service \u2014 phase 5: test code generation",
+      "id": "qa_isystem_architecture_8_codegen_service_phase_5_test_code_generation"
     },
     {
       "label": "What it does",
@@ -449,9 +1189,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L658",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_what_it_does_658",
       "community": 5,
-      "norm_label": "what it does"
+      "norm_label": "what it does",
+      "id": "qa_isystem_architecture_what_it_does_658"
     },
     {
       "label": "Test runners",
@@ -459,9 +1199,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L667",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_test_runners",
       "community": 5,
-      "norm_label": "test runners"
+      "norm_label": "test runners",
+      "id": "qa_isystem_architecture_test_runners"
     },
     {
       "label": "StabilizationLoop \u2014 Run, Fail, Fix",
@@ -469,9 +1209,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L683",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_stabilizationloop_run_fail_fix",
       "community": 5,
-      "norm_label": "stabilizationloop \u2014 run, fail, fix"
+      "norm_label": "stabilizationloop \u2014 run, fail, fix",
+      "id": "qa_isystem_architecture_stabilizationloop_run_fail_fix"
     },
     {
       "label": "GitHub PR title format",
@@ -479,9 +1219,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L710",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_github_pr_title_format",
       "community": 5,
-      "norm_label": "github pr title format"
+      "norm_label": "github pr title format",
+      "id": "qa_isystem_architecture_github_pr_title_format"
     },
     {
       "label": "9. feedback-service \u2014 AI Feedback Loop",
@@ -489,9 +1229,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L720",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_9_feedback_service_ai_feedback_loop",
       "community": 5,
-      "norm_label": "9. feedback-service \u2014 ai feedback loop"
+      "norm_label": "9. feedback-service \u2014 ai feedback loop",
+      "id": "qa_isystem_architecture_9_feedback_service_ai_feedback_loop"
     },
     {
       "label": "What it does",
@@ -499,9 +1239,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L727",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_what_it_does_727",
       "community": 5,
-      "norm_label": "what it does"
+      "norm_label": "what it does",
+      "id": "qa_isystem_architecture_what_it_does_727"
     },
     {
       "label": "Multi-turn conversation context",
@@ -509,9 +1249,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L743",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_multi_turn_conversation_context",
       "community": 5,
-      "norm_label": "multi-turn conversation context"
+      "norm_label": "multi-turn conversation context",
+      "id": "qa_isystem_architecture_multi_turn_conversation_context"
     },
     {
       "label": "PR lifecycle",
@@ -519,9 +1259,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L754",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_pr_lifecycle",
       "community": 5,
-      "norm_label": "pr lifecycle"
+      "norm_label": "pr lifecycle",
+      "id": "qa_isystem_architecture_pr_lifecycle"
     },
     {
       "label": "Target repo knowledge structure",
@@ -529,9 +1269,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L763",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_target_repo_knowledge_structure",
       "community": 5,
-      "norm_label": "target repo knowledge structure"
+      "norm_label": "target repo knowledge structure",
+      "id": "qa_isystem_architecture_target_repo_knowledge_structure"
     },
     {
       "label": "10. AI Provider Configuration",
@@ -539,9 +1279,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L780",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_10_ai_provider_configuration",
       "community": 5,
-      "norm_label": "10. ai provider configuration"
+      "norm_label": "10. ai provider configuration",
+      "id": "qa_isystem_architecture_10_ai_provider_configuration"
     },
     {
       "label": "Per-service model defaults",
@@ -549,9 +1289,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L793",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_per_service_model_defaults",
       "community": 5,
-      "norm_label": "per-service model defaults"
+      "norm_label": "per-service model defaults",
+      "id": "qa_isystem_architecture_per_service_model_defaults"
     },
     {
       "label": "Full config reference",
@@ -559,9 +1299,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L803",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_full_config_reference",
       "community": 5,
-      "norm_label": "full config reference"
+      "norm_label": "full config reference",
+      "id": "qa_isystem_architecture_full_config_reference"
     },
     {
       "label": "11. The Two-Phase Coverage Assessment \u2014 In Depth",
@@ -569,9 +1309,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L830",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_11_the_two_phase_coverage_assessment_in_depth",
       "community": 5,
-      "norm_label": "11. the two-phase coverage assessment \u2014 in depth"
+      "norm_label": "11. the two-phase coverage assessment \u2014 in depth",
+      "id": "qa_isystem_architecture_11_the_two_phase_coverage_assessment_in_depth"
     },
     {
       "label": "The problem it solves",
@@ -579,9 +1319,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L832",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_the_problem_it_solves",
       "community": 5,
-      "norm_label": "the problem it solves"
+      "norm_label": "the problem it solves",
+      "id": "qa_isystem_architecture_the_problem_it_solves"
     },
     {
       "label": "Phase 1 in impact-service",
@@ -589,9 +1329,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L840",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_phase_1_in_impact_service",
       "community": 5,
-      "norm_label": "phase 1 in impact-service"
+      "norm_label": "phase 1 in impact-service",
+      "id": "qa_isystem_architecture_phase_1_in_impact_service"
     },
     {
       "label": "Phase 2 in strategy-service",
@@ -599,9 +1339,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L852",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_phase_2_in_strategy_service",
       "community": 5,
-      "norm_label": "phase 2 in strategy-service"
+      "norm_label": "phase 2 in strategy-service",
+      "id": "qa_isystem_architecture_phase_2_in_strategy_service"
     },
     {
       "label": "12. Kafka Manual Acknowledgement \u2014 Why It Matters",
@@ -609,9 +1349,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L870",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_12_kafka_manual_acknowledgement_why_it_matters",
       "community": 5,
-      "norm_label": "12. kafka manual acknowledgement \u2014 why it matters"
+      "norm_label": "12. kafka manual acknowledgement \u2014 why it matters",
+      "id": "qa_isystem_architecture_12_kafka_manual_acknowledgement_why_it_matters"
     },
     {
       "label": "13. Multi-Module Maven Build",
@@ -619,9 +1359,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L892",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_13_multi_module_maven_build",
       "community": 5,
-      "norm_label": "13. multi-module maven build"
+      "norm_label": "13. multi-module maven build",
+      "id": "qa_isystem_architecture_13_multi_module_maven_build"
     },
     {
       "label": "14. Docker Compose Setup",
@@ -629,9 +1369,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L915",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_14_docker_compose_setup",
       "community": 5,
-      "norm_label": "14. docker compose setup"
+      "norm_label": "14. docker compose setup",
+      "id": "qa_isystem_architecture_14_docker_compose_setup"
     },
     {
       "label": "Redis key reference",
@@ -639,9 +1379,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L927",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_redis_key_reference",
       "community": 5,
-      "norm_label": "redis key reference"
+      "norm_label": "redis key reference",
+      "id": "qa_isystem_architecture_redis_key_reference"
     },
     {
       "label": "15. Testing the System Locally",
@@ -649,9 +1389,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L944",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_15_testing_the_system_locally",
       "community": 5,
-      "norm_label": "15. testing the system locally"
+      "norm_label": "15. testing the system locally",
+      "id": "qa_isystem_architecture_15_testing_the_system_locally"
     },
     {
       "label": "Quick start",
@@ -659,9 +1399,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L946",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_quick_start",
       "community": 5,
-      "norm_label": "quick start"
+      "norm_label": "quick start",
+      "id": "qa_isystem_architecture_quick_start"
     },
     {
       "label": "Automated script",
@@ -669,9 +1409,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L976",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_automated_script",
       "community": 5,
-      "norm_label": "automated script"
+      "norm_label": "automated script",
+      "id": "qa_isystem_architecture_automated_script"
     },
     {
       "label": "GitHub PR creation (optional)",
@@ -679,9 +1419,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L986",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_github_pr_creation_optional",
       "community": 5,
-      "norm_label": "github pr creation (optional)"
+      "norm_label": "github pr creation (optional)",
+      "id": "qa_isystem_architecture_github_pr_creation_optional"
     },
     {
       "label": "Running tests",
@@ -689,9 +1429,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L995",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_running_tests",
       "community": 5,
-      "norm_label": "running tests"
+      "norm_label": "running tests",
+      "id": "qa_isystem_architecture_running_tests"
     },
     {
       "label": "16. Summary of Heuristics and Why They Were Chosen",
@@ -699,9 +1439,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1014",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_16_summary_of_heuristics_and_why_they_were_chosen",
       "community": 5,
-      "norm_label": "16. summary of heuristics and why they were chosen"
+      "norm_label": "16. summary of heuristics and why they were chosen",
+      "id": "qa_isystem_architecture_16_summary_of_heuristics_and_why_they_were_chosen"
     },
     {
       "label": "17. Class Reference Table",
@@ -709,9 +1449,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1038",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_17_class_reference_table",
-      "community": 12,
-      "norm_label": "17. class reference table"
+      "community": 5,
+      "norm_label": "17. class reference table",
+      "id": "qa_isystem_architecture_17_class_reference_table"
     },
     {
       "label": "common module",
@@ -719,9 +1459,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1040",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_common_module",
-      "community": 12,
-      "norm_label": "common module"
+      "community": 5,
+      "norm_label": "common module",
+      "id": "qa_isystem_architecture_common_module"
     },
     {
       "label": "pr-service",
@@ -729,9 +1469,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1078",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_pr_service",
-      "community": 12,
-      "norm_label": "pr-service"
+      "community": 5,
+      "norm_label": "pr-service",
+      "id": "qa_isystem_architecture_pr_service"
     },
     {
       "label": "impact-service",
@@ -739,9 +1479,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1092",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_impact_service",
-      "community": 12,
-      "norm_label": "impact-service"
+      "community": 5,
+      "norm_label": "impact-service",
+      "id": "qa_isystem_architecture_impact_service"
     },
     {
       "label": "strategy-service",
@@ -749,9 +1489,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1109",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_strategy_service",
-      "community": 12,
-      "norm_label": "strategy-service"
+      "community": 5,
+      "norm_label": "strategy-service",
+      "id": "qa_isystem_architecture_strategy_service"
     },
     {
       "label": "codegen-service",
@@ -759,9 +1499,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1128",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_codegen_service",
-      "community": 12,
-      "norm_label": "codegen-service"
+      "community": 5,
+      "norm_label": "codegen-service",
+      "id": "qa_isystem_architecture_codegen_service"
     },
     {
       "label": "feedback-service",
@@ -769,9 +1509,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1145",
       "_origin": "ast",
-      "id": "qa_isystem_architecture_feedback_service",
-      "community": 12,
-      "norm_label": "feedback-service"
+      "community": 5,
+      "norm_label": "feedback-service",
+      "id": "qa_isystem_architecture_feedback_service"
     },
     {
       "label": "AiProviderProperties.java",
@@ -779,9 +1519,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "config_aiproviderproperties",
       "community": 10,
-      "norm_label": "aiproviderproperties.java"
+      "norm_label": "aiproviderproperties.java",
+      "id": "config_aiproviderproperties"
     },
     {
       "label": "AiProviderProperties",
@@ -789,9 +1529,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L16",
       "_origin": "ast",
-      "id": "config_aiproviderproperties_aiproviderproperties",
       "community": 10,
-      "norm_label": "aiproviderproperties"
+      "norm_label": "aiproviderproperties",
+      "id": "config_aiproviderproperties_aiproviderproperties"
     },
     {
       "label": "CopilotCliConfig",
@@ -799,9 +1539,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L35",
       "_origin": "ast",
-      "id": "config_aiproviderproperties_copilotcliconfig",
       "community": 10,
-      "norm_label": "copilotcliconfig"
+      "norm_label": "copilotcliconfig",
+      "id": "config_aiproviderproperties_copilotcliconfig"
     },
     {
       "label": "CopilotAgentConfig",
@@ -809,9 +1549,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L45",
       "_origin": "ast",
-      "id": "config_aiproviderproperties_copilotagentconfig",
       "community": 10,
-      "norm_label": "copilotagentconfig"
+      "norm_label": "copilotagentconfig",
+      "id": "config_aiproviderproperties_copilotagentconfig"
     },
     {
       "label": "OpenAiConfig",
@@ -819,9 +1559,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L67",
       "_origin": "ast",
-      "id": "config_aiproviderproperties_openaiconfig",
       "community": 10,
-      "norm_label": "openaiconfig"
+      "norm_label": "openaiconfig",
+      "id": "config_aiproviderproperties_openaiconfig"
     },
     {
       "label": "CopilotConfig",
@@ -829,9 +1569,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L78",
       "_origin": "ast",
-      "id": "config_aiproviderproperties_copilotconfig",
       "community": 10,
-      "norm_label": "copilotconfig"
+      "norm_label": "copilotconfig",
+      "id": "config_aiproviderproperties_copilotconfig"
     },
     {
       "label": "create_test_payloads.py",
@@ -839,9 +1579,9 @@
       "source_file": "scripts/create_test_payloads.py",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "scripts_create_test_payloads",
       "community": 13,
-      "norm_label": "create_test_payloads.py"
+      "norm_label": "create_test_payloads.py",
+      "id": "scripts_create_test_payloads"
     },
     {
       "label": "CopilotAgentClient.java",
@@ -849,9 +1589,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "agent_copilotagentclient",
       "community": 7,
-      "norm_label": "copilotagentclient.java"
+      "norm_label": "copilotagentclient.java",
+      "id": "agent_copilotagentclient"
     },
     {
       "label": "CopilotAgentClient",
@@ -859,9 +1599,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L49",
       "_origin": "ast",
-      "id": "agent_copilotagentclient_copilotagentclient",
       "community": 7,
-      "norm_label": "copilotagentclient"
+      "norm_label": "copilotagentclient",
+      "id": "agent_copilotagentclient_copilotagentclient"
     },
     {
       "label": ".CopilotAgentClient()",
@@ -869,9 +1609,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L65",
       "_origin": "ast",
-      "id": "agent_copilotagentclient_copilotagentclient_copilotagentclient",
       "community": 7,
-      "norm_label": ".copilotagentclient()"
+      "norm_label": ".copilotagentclient()",
+      "id": "agent_copilotagentclient_copilotagentclient_copilotagentclient"
     },
     {
       "label": "AiProviderProperties",
@@ -879,9 +1619,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L65",
       "_origin": "ast",
-      "id": "aiproviderproperties",
       "community": 7,
-      "norm_label": "aiproviderproperties"
+      "norm_label": "aiproviderproperties",
+      "id": "aiproviderproperties"
     },
     {
       "label": "ObjectMapper",
@@ -889,9 +1629,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L65",
       "_origin": "ast",
-      "id": "objectmapper",
       "community": 7,
-      "norm_label": "objectmapper"
+      "norm_label": "objectmapper",
+      "id": "objectmapper"
     },
     {
       "label": ".runAgent()",
@@ -899,9 +1639,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L94",
       "_origin": "ast",
-      "id": "agent_copilotagentclient_copilotagentclient_runagent",
       "community": 7,
-      "norm_label": ".runagent()"
+      "norm_label": ".runagent()",
+      "id": "agent_copilotagentclient_copilotagentclient_runagent"
     },
     {
       "label": "String",
@@ -909,9 +1649,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L94",
       "_origin": "ast",
-      "id": "string",
       "community": 7,
-      "norm_label": "string"
+      "norm_label": "string",
+      "id": "string"
     },
     {
       "label": "Path",
@@ -919,9 +1659,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L94",
       "_origin": "ast",
-      "id": "path",
       "community": 7,
-      "norm_label": "path"
+      "norm_label": "path",
+      "id": "path"
     },
     {
       "label": ".extractChunkText()",
@@ -929,9 +1669,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L221",
       "_origin": "ast",
-      "id": "agent_copilotagentclient_copilotagentclient_extractchunktext",
       "community": 7,
-      "norm_label": ".extractchunktext()"
+      "norm_label": ".extractchunktext()",
+      "id": "agent_copilotagentclient_copilotagentclient_extractchunktext"
     },
     {
       "label": "StringBuilder",
@@ -939,9 +1679,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L221",
       "_origin": "ast",
-      "id": "stringbuilder",
       "community": 7,
-      "norm_label": "stringbuilder"
+      "norm_label": "stringbuilder",
+      "id": "stringbuilder"
     },
     {
       "label": ".availableSlots()",
@@ -949,9 +1689,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L253",
       "_origin": "ast",
-      "id": "agent_copilotagentclient_copilotagentclient_availableslots",
       "community": 7,
-      "norm_label": ".availableslots()"
+      "norm_label": ".availableslots()",
+      "id": "agent_copilotagentclient_copilotagentclient_availableslots"
     },
     {
       "label": "RepoContextService.java",
@@ -1719,7 +2459,7 @@
       "source_file": "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": "capturingbddgenerator",
       "id": "agent_strategyagenttest_capturingbddgenerator"
     },
@@ -1729,7 +2469,7 @@
       "source_file": "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java",
       "source_location": "L32",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": ".capturingbddgenerator()",
       "id": "agent_strategyagenttest_capturingbddgenerator_capturingbddgenerator"
     },
@@ -1739,7 +2479,7 @@
       "source_file": "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": ".generate()",
       "id": "agent_strategyagenttest_capturingbddgenerator_generate"
     },
@@ -1749,7 +2489,7 @@
       "source_file": "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": "teststrategy",
       "id": "strategy_service_src_test_java_nz_co_eroad_qaisystem_agent_strategyagenttest_java_teststrategy"
     },
@@ -1759,7 +2499,7 @@
       "source_file": "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": "impactenvelope",
       "id": "strategy_service_src_test_java_nz_co_eroad_qaisystem_agent_strategyagenttest_java_impactenvelope"
     },
@@ -1769,7 +2509,7 @@
       "source_file": "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": "bddscenario",
       "id": "strategy_service_src_test_java_nz_co_eroad_qaisystem_agent_strategyagenttest_java_bddscenario"
     },
@@ -1779,7 +2519,7 @@
       "source_file": "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": "override",
       "id": "override"
     },
@@ -1789,7 +2529,7 @@
       "source_file": "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java",
       "source_location": "L42",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": "silenttestprservice",
       "id": "agent_strategyagenttest_silenttestprservice"
     },
@@ -1799,7 +2539,7 @@
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": "testprservice",
       "id": "testprservice"
     },
@@ -1809,7 +2549,7 @@
       "source_file": "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": ".silenttestprservice()",
       "id": "agent_strategyagenttest_silenttestprservice_silenttestprservice"
     },
@@ -1819,7 +2559,7 @@
       "source_file": "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java",
       "source_location": "L44",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": ".createbddpr()",
       "id": "agent_strategyagenttest_silenttestprservice_createbddpr"
     },
@@ -1829,7 +2569,7 @@
       "source_file": "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java",
       "source_location": "L44",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": "string",
       "id": "strategy_service_src_test_java_nz_co_eroad_qaisystem_agent_strategyagenttest_java_string"
     },
@@ -1839,7 +2579,7 @@
       "source_file": "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": ".createfinaltestpr()",
       "id": "agent_strategyagenttest_silenttestprservice_createfinaltestpr"
     },
@@ -1849,7 +2589,7 @@
       "source_file": "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": "testscript",
       "id": "testscript"
     },
@@ -1859,7 +2599,7 @@
       "source_file": "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": "testresult",
       "id": "testresult"
     },
@@ -1919,7 +2659,7 @@
       "source_file": "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java",
       "source_location": "L53",
       "_origin": "ast",
-      "community": 3,
+      "community": 1,
       "norm_label": ".analyze()",
       "id": "agent_strategyagenttest_fixedcoverageanalyzer_analyze"
     },
@@ -2310,12 +3050,742 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "readme",
+      "target": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L486",
+      "weight": 1.0,
+      "source": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "target": "readme_ai_feedback_loop",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L343",
+      "weight": 1.0,
+      "source": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "target": "readme_ai_provider_configuration",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L299",
+      "weight": 1.0,
+      "source": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "target": "readme_api_reference",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "target": "readme_architecture",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L435",
+      "weight": 1.0,
+      "source": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "target": "readme_ci_cd_pipelines",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L390",
+      "weight": 1.0,
+      "source": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "target": "readme_cost_optimisation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L1021",
+      "weight": 1.0,
+      "source": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "target": "readme_future_roadmap",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L91",
+      "weight": 1.0,
+      "source": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "target": "readme_kafka_topics",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L560",
+      "weight": 1.0,
+      "source": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "target": "readme_manual_testing_process_monitoring",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "target": "readme_module_overview",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L106",
+      "weight": 1.0,
+      "source": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "target": "readme_pipeline_flow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L144",
+      "weight": 1.0,
+      "source": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "target": "readme_quick_start",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L525",
+      "weight": 1.0,
+      "source": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "target": "readme_running_tests",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "target": "readme_table_of_contents",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L1004",
+      "weight": 1.0,
+      "source": "readme_qa_isystem_autonomous_ai_driven_qa_pipeline",
+      "target": "readme_technology_stack",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L155",
+      "weight": 1.0,
+      "source": "readme_quick_start",
+      "target": "readme_1_start_infrastructure",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L164",
+      "weight": 1.0,
+      "source": "readme_quick_start",
+      "target": "readme_2_build",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L170",
+      "weight": 1.0,
+      "source": "readme_quick_start",
+      "target": "readme_3_configure_optional",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L201",
+      "weight": 1.0,
+      "source": "readme_quick_start",
+      "target": "readme_4_start_services_separate_terminals",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L249",
+      "weight": 1.0,
+      "source": "readme_quick_start",
+      "target": "readme_5_trigger_the_pipeline",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L273",
+      "weight": 1.0,
+      "source": "readme_quick_start",
+      "target": "readme_6_useful_runtime_commands",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L146",
+      "weight": 1.0,
+      "source": "readme_quick_start",
+      "target": "readme_prerequisites",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L323",
+      "weight": 1.0,
+      "source": "readme_api_reference",
+      "target": "readme_impact_service_8081",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L301",
+      "weight": 1.0,
+      "source": "readme_api_reference",
+      "target": "readme_pr_service_8080",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L330",
+      "weight": 1.0,
+      "source": "readme_api_reference",
+      "target": "readme_strategy_service_8082",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L310",
+      "weight": 1.0,
+      "source": "readme_pr_service_8080",
+      "target": "readme_pullrequest_payload_fields",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L352",
+      "weight": 1.0,
+      "source": "readme_ai_provider_configuration",
+      "target": "readme_copilot_cli_default_how_it_works",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L454",
+      "weight": 1.0,
+      "source": "readme_ci_cd_pipelines",
+      "target": "readme_gh_cli_on_the_deploy_server",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L471",
+      "weight": 1.0,
+      "source": "readme_ci_cd_pipelines",
+      "target": "readme_production_env_variables_on_deploy_server",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L463",
+      "weight": 1.0,
+      "source": "readme_ci_cd_pipelines",
+      "target": "readme_required_secrets",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L508",
+      "weight": 1.0,
+      "source": "readme_ai_feedback_loop",
+      "target": "readme_target_repo_convention",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L576",
+      "weight": 1.0,
+      "source": "readme_manual_testing_process_monitoring",
+      "target": "readme_1_trigger_test_prs_manually",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L616",
+      "weight": 1.0,
+      "source": "readme_manual_testing_process_monitoring",
+      "target": "readme_2_monitor_service_health",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L647",
+      "weight": 1.0,
+      "source": "readme_manual_testing_process_monitoring",
+      "target": "readme_3_monitor_service_logs_in_real_time",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L684",
+      "weight": 1.0,
+      "source": "readme_manual_testing_process_monitoring",
+      "target": "readme_4_inspect_kafka_topics",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L721",
+      "weight": 1.0,
+      "source": "readme_manual_testing_process_monitoring",
+      "target": "readme_5_inspect_redis_state",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L754",
+      "weight": 1.0,
+      "source": "readme_manual_testing_process_monitoring",
+      "target": "readme_6_check_github_api_for_created_prs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L783",
+      "weight": 1.0,
+      "source": "readme_manual_testing_process_monitoring",
+      "target": "readme_7_monitor_docker_container_performance",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L815",
+      "weight": 1.0,
+      "source": "readme_manual_testing_process_monitoring",
+      "target": "readme_8_real_world_example_3_pr_concurrent_test",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L935",
+      "weight": 1.0,
+      "source": "readme_manual_testing_process_monitoring",
+      "target": "readme_9_troubleshooting_common_issues",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L564",
+      "weight": 1.0,
+      "source": "readme_manual_testing_process_monitoring",
+      "target": "readme_typical_workflow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L599",
+      "weight": 1.0,
+      "source": "readme_1_trigger_test_prs_manually",
+      "target": "readme_multiple_prs_concurrent_test",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L584",
+      "weight": 1.0,
+      "source": "readme_1_trigger_test_prs_manually",
+      "target": "readme_single_pr_custom_payload",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L578",
+      "weight": 1.0,
+      "source": "readme_1_trigger_test_prs_manually",
+      "target": "readme_single_pr_demo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L618",
+      "weight": 1.0,
+      "source": "readme_2_monitor_service_health",
+      "target": "readme_all_services_at_once",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L628",
+      "weight": 1.0,
+      "source": "readme_2_monitor_service_health",
+      "target": "readme_individual_service_status_with_pending_work",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L669",
+      "weight": 1.0,
+      "source": "readme_3_monitor_service_logs_in_real_time",
+      "target": "readme_key_log_patterns_to_watch",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L656",
+      "weight": 1.0,
+      "source": "readme_3_monitor_service_logs_in_real_time",
+      "target": "readme_monitor_single_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L649",
+      "weight": 1.0,
+      "source": "readme_3_monitor_service_logs_in_real_time",
+      "target": "readme_tail_all_service_logs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L692",
+      "weight": 1.0,
+      "source": "readme_4_inspect_kafka_topics",
+      "target": "readme_inspect_pending_messages",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L686",
+      "weight": 1.0,
+      "source": "readme_4_inspect_kafka_topics",
+      "target": "readme_list_all_topics",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L712",
+      "weight": 1.0,
+      "source": "readme_4_inspect_kafka_topics",
+      "target": "readme_reset_kafka_state_clear_all_messages",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L723",
+      "weight": 1.0,
+      "source": "readme_5_inspect_redis_state",
+      "target": "readme_check_cached_bdd_scenarios_and_test_results",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L739",
+      "weight": 1.0,
+      "source": "readme_5_inspect_redis_state",
+      "target": "readme_example_cost_report_output",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L772",
+      "weight": 1.0,
+      "source": "readme_6_check_github_api_for_created_prs",
+      "target": "readme_inspect_individual_pr",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L756",
+      "weight": 1.0,
+      "source": "readme_6_check_github_api_for_created_prs",
+      "target": "readme_list_all_qa_generated_prs_in_target_repo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L799",
+      "weight": 1.0,
+      "source": "readme_7_monitor_docker_container_performance",
+      "target": "readme_parse_container_logs_for_errors",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L785",
+      "weight": 1.0,
+      "source": "readme_7_monitor_docker_container_performance",
+      "target": "readme_real_time_container_stats_cpu_memory_network",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L819",
+      "weight": 1.0,
+      "source": "readme_8_real_world_example_3_pr_concurrent_test",
+      "target": "readme_step_1_generate_test_payloads",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L827",
+      "weight": 1.0,
+      "source": "readme_8_real_world_example_3_pr_concurrent_test",
+      "target": "readme_step_2_clear_redis_and_kafka_fresh_state",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L835",
+      "weight": 1.0,
+      "source": "readme_8_real_world_example_3_pr_concurrent_test",
+      "target": "readme_step_3_verify_services_are_up",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L843",
+      "weight": 1.0,
+      "source": "readme_8_real_world_example_3_pr_concurrent_test",
+      "target": "readme_step_4_start_log_monitoring_in_a_separate_terminal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L853",
+      "weight": 1.0,
+      "source": "readme_8_real_world_example_3_pr_concurrent_test",
+      "target": "readme_step_5_submit_all_3_prs_simultaneously",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L867",
+      "weight": 1.0,
+      "source": "readme_8_real_world_example_3_pr_concurrent_test",
+      "target": "readme_step_6_monitor_pipeline_progression",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L888",
+      "weight": 1.0,
+      "source": "readme_8_real_world_example_3_pr_concurrent_test",
+      "target": "readme_step_7_track_specific_pr_outcomes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L907",
+      "weight": 1.0,
+      "source": "readme_8_real_world_example_3_pr_concurrent_test",
+      "target": "readme_step_8_approve_all_bdd_prs_manual_gate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L920",
+      "weight": 1.0,
+      "source": "readme_8_real_world_example_3_pr_concurrent_test",
+      "target": "readme_step_9_check_final_results",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L975",
+      "weight": 1.0,
+      "source": "readme_9_troubleshooting_common_issues",
+      "target": "readme_ai_call_failing_no_such_file_or_directory_copilot",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L962",
+      "weight": 1.0,
+      "source": "readme_9_troubleshooting_common_issues",
+      "target": "readme_bdd_pr_not_created_stuck_in_strategy_service",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L937",
+      "weight": 1.0,
+      "source": "readme_9_troubleshooting_common_issues",
+      "target": "readme_no_kafka_messages_appearing",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L989",
+      "weight": 1.0,
+      "source": "readme_9_troubleshooting_common_issues",
+      "target": "readme_redis_connection_failing",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "README.md",
+      "source_location": "L951",
+      "weight": 1.0,
+      "source": "readme_9_troubleshooting_common_issues",
+      "target": "readme_services_not_responding_502_connection_refused",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture",
-      "target": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference"
     },
     {
       "relation": "contains",
@@ -2323,9 +3793,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L780",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_10_ai_provider_configuration",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_10_ai_provider_configuration"
     },
     {
       "relation": "contains",
@@ -2333,9 +3803,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L830",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_11_the_two_phase_coverage_assessment_in_depth",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_11_the_two_phase_coverage_assessment_in_depth"
     },
     {
       "relation": "contains",
@@ -2343,9 +3813,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L870",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_12_kafka_manual_acknowledgement_why_it_matters",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_12_kafka_manual_acknowledgement_why_it_matters"
     },
     {
       "relation": "contains",
@@ -2353,9 +3823,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L892",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_13_multi_module_maven_build",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_13_multi_module_maven_build"
     },
     {
       "relation": "contains",
@@ -2363,9 +3833,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L915",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_14_docker_compose_setup",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_14_docker_compose_setup"
     },
     {
       "relation": "contains",
@@ -2373,9 +3843,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L944",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_15_testing_the_system_locally",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_15_testing_the_system_locally"
     },
     {
       "relation": "contains",
@@ -2383,9 +3853,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1014",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_16_summary_of_heuristics_and_why_they_were_chosen",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_16_summary_of_heuristics_and_why_they_were_chosen"
     },
     {
       "relation": "contains",
@@ -2393,9 +3863,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1038",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_17_class_reference_table",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_17_class_reference_table"
     },
     {
       "relation": "contains",
@@ -2403,9 +3873,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_1_what_problem_does_this_system_solve",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_1_what_problem_does_this_system_solve"
     },
     {
       "relation": "contains",
@@ -2413,9 +3883,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_2_system_overview",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_2_system_overview"
     },
     {
       "relation": "contains",
@@ -2423,9 +3893,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L93",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_3_what_is_apache_kafka_and_why_is_it_used_here",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_3_what_is_apache_kafka_and_why_is_it_used_here"
     },
     {
       "relation": "contains",
@@ -2433,9 +3903,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L131",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_4_the_common_module",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_4_the_common_module"
     },
     {
       "relation": "contains",
@@ -2443,9 +3913,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L292",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_5_pr_service_phase_0_ingestion_context_extraction_compression",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_5_pr_service_phase_0_ingestion_context_extraction_compression"
     },
     {
       "relation": "contains",
@@ -2453,9 +3923,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L351",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_6_impact_service_phase_1_deterministic_analysis",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_6_impact_service_phase_1_deterministic_analysis"
     },
     {
       "relation": "contains",
@@ -2463,9 +3933,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L476",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_7_strategy_service_phases_2_4_strategy_bdd_generation_github_pr",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_7_strategy_service_phases_2_4_strategy_bdd_generation_github_pr"
     },
     {
       "relation": "contains",
@@ -2473,9 +3943,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L648",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_8_codegen_service_phase_5_test_code_generation",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_8_codegen_service_phase_5_test_code_generation"
     },
     {
       "relation": "contains",
@@ -2483,9 +3953,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L720",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_qa_isystem_complete_architecture_design_reference",
-      "target": "qa_isystem_architecture_9_feedback_service_ai_feedback_loop",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_9_feedback_service_ai_feedback_loop"
     },
     {
       "relation": "contains",
@@ -2493,9 +3963,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L105",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_3_what_is_apache_kafka_and_why_is_it_used_here",
-      "target": "qa_isystem_architecture_kafka_topics",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_kafka_topics"
     },
     {
       "relation": "contains",
@@ -2503,9 +3973,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L118",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_3_what_is_apache_kafka_and_why_is_it_used_here",
-      "target": "qa_isystem_architecture_key_kafka_concepts_used_here",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_key_kafka_concepts_used_here"
     },
     {
       "relation": "contains",
@@ -2513,9 +3983,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L97",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_3_what_is_apache_kafka_and_why_is_it_used_here",
-      "target": "qa_isystem_architecture_why_kafka_instead_of_direct_http_calls",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_why_kafka_instead_of_direct_http_calls"
     },
     {
       "relation": "contains",
@@ -2523,9 +3993,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L135",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_4_the_common_module",
-      "target": "qa_isystem_architecture_key_models",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_key_models"
     },
     {
       "relation": "contains",
@@ -2533,9 +4003,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L270",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_4_the_common_module",
-      "target": "qa_isystem_architecture_shared_services_in_common",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_shared_services_in_common"
     },
     {
       "relation": "contains",
@@ -2543,9 +4013,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L242",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_key_models",
-      "target": "qa_isystem_architecture_bddscenario",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_bddscenario"
     },
     {
       "relation": "contains",
@@ -2553,9 +4023,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L227",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_key_models",
-      "target": "qa_isystem_architecture_coveragereport",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_coveragereport"
     },
     {
       "relation": "contains",
@@ -2563,9 +4033,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L257",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_key_models",
-      "target": "qa_isystem_architecture_feedbackevent",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_feedbackevent"
     },
     {
       "relation": "contains",
@@ -2573,9 +4043,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L172",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_key_models",
-      "target": "qa_isystem_architecture_gitdiff",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_gitdiff"
     },
     {
       "relation": "contains",
@@ -2583,9 +4053,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L207",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_key_models",
-      "target": "qa_isystem_architecture_impactenvelope",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_impactenvelope"
     },
     {
       "relation": "contains",
@@ -2593,9 +4063,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L188",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_key_models",
-      "target": "qa_isystem_architecture_prcontext",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_prcontext"
     },
     {
       "relation": "contains",
@@ -2603,9 +4073,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L137",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_key_models",
-      "target": "qa_isystem_architecture_pullrequest",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_pullrequest"
     },
     {
       "relation": "contains",
@@ -2613,9 +4083,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L327",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_5_pr_service_phase_0_ingestion_context_extraction_compression",
-      "target": "qa_isystem_architecture_classes",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_classes"
     },
     {
       "relation": "contains",
@@ -2623,9 +4093,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L311",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_5_pr_service_phase_0_ingestion_context_extraction_compression",
-      "target": "qa_isystem_architecture_context_compression_configuration",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_context_compression_configuration"
     },
     {
       "relation": "contains",
@@ -2633,9 +4103,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L340",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_5_pr_service_phase_0_ingestion_context_extraction_compression",
-      "target": "qa_isystem_architecture_endpoints",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_endpoints"
     },
     {
       "relation": "contains",
@@ -2643,9 +4113,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L296",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_5_pr_service_phase_0_ingestion_context_extraction_compression",
-      "target": "qa_isystem_architecture_what_it_does",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_what_it_does"
     },
     {
       "relation": "contains",
@@ -2653,9 +4123,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L364",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_6_impact_service_phase_1_deterministic_analysis",
-      "target": "qa_isystem_architecture_step_1_gitdiffparser_reading_the_raw_diff",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_step_1_gitdiffparser_reading_the_raw_diff"
     },
     {
       "relation": "contains",
@@ -2663,9 +4133,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L387",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_6_impact_service_phase_1_deterministic_analysis",
-      "target": "qa_isystem_architecture_step_2_dependencygraph_who_depends_on_what",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_step_2_dependencygraph_who_depends_on_what"
     },
     {
       "relation": "contains",
@@ -2673,9 +4143,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L412",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_6_impact_service_phase_1_deterministic_analysis",
-      "target": "qa_isystem_architecture_step_3_changetypedetector_what_kind_of_change_is_this",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_step_3_changetypedetector_what_kind_of_change_is_this"
     },
     {
       "relation": "contains",
@@ -2683,9 +4153,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L432",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_6_impact_service_phase_1_deterministic_analysis",
-      "target": "qa_isystem_architecture_step_4_riskscorer_how_risky_is_this_change",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_step_4_riskscorer_how_risky_is_this_change"
     },
     {
       "relation": "contains",
@@ -2693,9 +4163,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L454",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_6_impact_service_phase_1_deterministic_analysis",
-      "target": "qa_isystem_architecture_step_4b_aiimpactevaluator_ai_last_resort_optional",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_step_4b_aiimpactevaluator_ai_last_resort_optional"
     },
     {
       "relation": "contains",
@@ -2703,9 +4173,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L460",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_6_impact_service_phase_1_deterministic_analysis",
-      "target": "qa_isystem_architecture_step_5_integrationtestscopeclassifier",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_step_5_integrationtestscopeclassifier"
     },
     {
       "relation": "contains",
@@ -2713,9 +4183,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L357",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_6_impact_service_phase_1_deterministic_analysis",
-      "target": "qa_isystem_architecture_the_5_step_pipeline",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_the_5_step_pipeline"
     },
     {
       "relation": "contains",
@@ -2723,9 +4193,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L480",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_7_strategy_service_phases_2_4_strategy_bdd_generation_github_pr",
-      "target": "qa_isystem_architecture_7_1_ai_cost_gating_three_layers_before_any_api_call",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_7_1_ai_cost_gating_three_layers_before_any_api_call"
     },
     {
       "relation": "contains",
@@ -2733,9 +4203,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L509",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_7_strategy_service_phases_2_4_strategy_bdd_generation_github_pr",
-      "target": "qa_isystem_architecture_7_2_repocontextservice_cloning_and_indexing_the_test_repository",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_7_2_repocontextservice_cloning_and_indexing_the_test_repository"
     },
     {
       "relation": "contains",
@@ -2743,9 +4213,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L537",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_7_strategy_service_phases_2_4_strategy_bdd_generation_github_pr",
-      "target": "qa_isystem_architecture_7_3_e2ecoverageanalyzer_phase_2_coverage_assessment",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_7_3_e2ecoverageanalyzer_phase_2_coverage_assessment"
     },
     {
       "relation": "contains",
@@ -2753,9 +4223,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L548",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_7_strategy_service_phases_2_4_strategy_bdd_generation_github_pr",
-      "target": "qa_isystem_architecture_7_4_strategyagent_the_decision_maker",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_7_4_strategyagent_the_decision_maker"
     },
     {
       "relation": "contains",
@@ -2763,9 +4233,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L565",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_7_strategy_service_phases_2_4_strategy_bdd_generation_github_pr",
-      "target": "qa_isystem_architecture_7_5_bddgenerator_creating_human_readable_test_scenarios",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_7_5_bddgenerator_creating_human_readable_test_scenarios"
     },
     {
       "relation": "contains",
@@ -2773,9 +4243,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L617",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_7_strategy_service_phases_2_4_strategy_bdd_generation_github_pr",
-      "target": "qa_isystem_architecture_7_6_github_pr_workflow",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_7_6_github_pr_workflow"
     },
     {
       "relation": "contains",
@@ -2783,9 +4253,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L635",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_7_strategy_service_phases_2_4_strategy_bdd_generation_github_pr",
-      "target": "qa_isystem_architecture_7_7_endpoints",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_7_7_endpoints"
     },
     {
       "relation": "contains",
@@ -2793,9 +4263,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L596",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_7_5_bddgenerator_creating_human_readable_test_scenarios",
-      "target": "qa_isystem_architecture_concurrency_and_process_lifecycle",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_concurrency_and_process_lifecycle"
     },
     {
       "relation": "contains",
@@ -2803,9 +4273,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L604",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_7_5_bddgenerator_creating_human_readable_test_scenarios",
-      "target": "qa_isystem_architecture_fallback",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_fallback"
     },
     {
       "relation": "contains",
@@ -2813,9 +4283,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L589",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_7_5_bddgenerator_creating_human_readable_test_scenarios",
-      "target": "qa_isystem_architecture_live_monitoring",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_live_monitoring"
     },
     {
       "relation": "contains",
@@ -2823,9 +4293,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L570",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_7_5_bddgenerator_creating_human_readable_test_scenarios",
-      "target": "qa_isystem_architecture_two_phase_agent_pipeline_primary_path",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_two_phase_agent_pipeline_primary_path"
     },
     {
       "relation": "contains",
@@ -2833,9 +4303,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L710",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_8_codegen_service_phase_5_test_code_generation",
-      "target": "qa_isystem_architecture_github_pr_title_format",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_github_pr_title_format"
     },
     {
       "relation": "contains",
@@ -2843,9 +4313,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L683",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_8_codegen_service_phase_5_test_code_generation",
-      "target": "qa_isystem_architecture_stabilizationloop_run_fail_fix",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_stabilizationloop_run_fail_fix"
     },
     {
       "relation": "contains",
@@ -2853,9 +4323,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L667",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_8_codegen_service_phase_5_test_code_generation",
-      "target": "qa_isystem_architecture_test_runners",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_test_runners"
     },
     {
       "relation": "contains",
@@ -2863,9 +4333,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L658",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_8_codegen_service_phase_5_test_code_generation",
-      "target": "qa_isystem_architecture_what_it_does_658",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_what_it_does_658"
     },
     {
       "relation": "contains",
@@ -2873,9 +4343,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L743",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_9_feedback_service_ai_feedback_loop",
-      "target": "qa_isystem_architecture_multi_turn_conversation_context",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_multi_turn_conversation_context"
     },
     {
       "relation": "contains",
@@ -2883,9 +4353,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L754",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_9_feedback_service_ai_feedback_loop",
-      "target": "qa_isystem_architecture_pr_lifecycle",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_pr_lifecycle"
     },
     {
       "relation": "contains",
@@ -2893,9 +4363,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L763",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_9_feedback_service_ai_feedback_loop",
-      "target": "qa_isystem_architecture_target_repo_knowledge_structure",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_target_repo_knowledge_structure"
     },
     {
       "relation": "contains",
@@ -2903,9 +4373,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L727",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_9_feedback_service_ai_feedback_loop",
-      "target": "qa_isystem_architecture_what_it_does_727",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_what_it_does_727"
     },
     {
       "relation": "contains",
@@ -2913,9 +4383,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L803",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_10_ai_provider_configuration",
-      "target": "qa_isystem_architecture_full_config_reference",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_full_config_reference"
     },
     {
       "relation": "contains",
@@ -2923,9 +4393,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L793",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_10_ai_provider_configuration",
-      "target": "qa_isystem_architecture_per_service_model_defaults",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_per_service_model_defaults"
     },
     {
       "relation": "contains",
@@ -2933,9 +4403,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L840",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_11_the_two_phase_coverage_assessment_in_depth",
-      "target": "qa_isystem_architecture_phase_1_in_impact_service",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_phase_1_in_impact_service"
     },
     {
       "relation": "contains",
@@ -2943,9 +4413,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L852",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_11_the_two_phase_coverage_assessment_in_depth",
-      "target": "qa_isystem_architecture_phase_2_in_strategy_service",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_phase_2_in_strategy_service"
     },
     {
       "relation": "contains",
@@ -2953,9 +4423,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L832",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_11_the_two_phase_coverage_assessment_in_depth",
-      "target": "qa_isystem_architecture_the_problem_it_solves",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_the_problem_it_solves"
     },
     {
       "relation": "contains",
@@ -2963,9 +4433,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L927",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_14_docker_compose_setup",
-      "target": "qa_isystem_architecture_redis_key_reference",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_redis_key_reference"
     },
     {
       "relation": "contains",
@@ -2973,9 +4443,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L976",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_15_testing_the_system_locally",
-      "target": "qa_isystem_architecture_automated_script",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_automated_script"
     },
     {
       "relation": "contains",
@@ -2983,9 +4453,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L986",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_15_testing_the_system_locally",
-      "target": "qa_isystem_architecture_github_pr_creation_optional",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_github_pr_creation_optional"
     },
     {
       "relation": "contains",
@@ -2993,9 +4463,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L946",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_15_testing_the_system_locally",
-      "target": "qa_isystem_architecture_quick_start",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_quick_start"
     },
     {
       "relation": "contains",
@@ -3003,9 +4473,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L995",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_15_testing_the_system_locally",
-      "target": "qa_isystem_architecture_running_tests",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_running_tests"
     },
     {
       "relation": "contains",
@@ -3013,9 +4483,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1128",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_17_class_reference_table",
-      "target": "qa_isystem_architecture_codegen_service",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_codegen_service"
     },
     {
       "relation": "contains",
@@ -3023,9 +4493,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1040",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_17_class_reference_table",
-      "target": "qa_isystem_architecture_common_module",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_common_module"
     },
     {
       "relation": "contains",
@@ -3033,9 +4503,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1145",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_17_class_reference_table",
-      "target": "qa_isystem_architecture_feedback_service",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_feedback_service"
     },
     {
       "relation": "contains",
@@ -3043,9 +4513,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1092",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_17_class_reference_table",
-      "target": "qa_isystem_architecture_impact_service",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_impact_service"
     },
     {
       "relation": "contains",
@@ -3053,9 +4523,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1078",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_17_class_reference_table",
-      "target": "qa_isystem_architecture_pr_service",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_pr_service"
     },
     {
       "relation": "contains",
@@ -3063,9 +4533,9 @@
       "source_file": "QA-ISystem-Architecture.md",
       "source_location": "L1109",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "qa_isystem_architecture_17_class_reference_table",
-      "target": "qa_isystem_architecture_strategy_service",
-      "confidence_score": 1.0
+      "target": "qa_isystem_architecture_strategy_service"
     },
     {
       "relation": "contains",
@@ -3145,9 +4615,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient",
-      "target": "objectmapper",
-      "confidence_score": 1.0
+      "target": "objectmapper"
     },
     {
       "relation": "imports",
@@ -3156,9 +4626,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient",
-      "target": "path",
-      "confidence_score": 1.0
+      "target": "path"
     },
     {
       "relation": "method",
@@ -3186,9 +4656,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L221",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient_copilotagentclient",
-      "target": "agent_copilotagentclient_copilotagentclient_extractchunktext",
-      "confidence_score": 1.0
+      "target": "agent_copilotagentclient_copilotagentclient_extractchunktext"
     },
     {
       "relation": "method",
@@ -3218,9 +4688,9 @@
       "source_location": "L65",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient_copilotagentclient_copilotagentclient",
-      "target": "objectmapper",
-      "confidence_score": 1.0
+      "target": "objectmapper"
     },
     {
       "relation": "calls",
@@ -3240,9 +4710,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L143",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient_copilotagentclient_runagent",
-      "target": "agent_copilotagentclient_copilotagentclient_extractchunktext",
-      "confidence_score": 1.0
+      "target": "agent_copilotagentclient_copilotagentclient_extractchunktext"
     },
     {
       "relation": "references",
@@ -3251,9 +4721,9 @@
       "source_location": "L94",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient_copilotagentclient_runagent",
-      "target": "path",
-      "confidence_score": 1.0
+      "target": "path"
     },
     {
       "relation": "references",
@@ -3262,9 +4732,9 @@
       "source_location": "L94",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient_copilotagentclient_runagent",
-      "target": "string",
-      "confidence_score": 1.0
+      "target": "string"
     },
     {
       "relation": "references",
@@ -3273,9 +4743,9 @@
       "source_location": "L221",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient_copilotagentclient_extractchunktext",
-      "target": "string",
-      "confidence_score": 1.0
+      "target": "string"
     },
     {
       "relation": "calls",
@@ -3295,9 +4765,9 @@
       "source_location": "L221",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient_copilotagentclient_extractchunktext",
-      "target": "stringbuilder",
-      "confidence_score": 1.0
+      "target": "stringbuilder"
     },
     {
       "relation": "imports",
@@ -6975,5 +8445,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "080b1cbd64eef00a6572b4e565d2f67883728c0b"
+  "built_at_commit": "f99e7639070db90d810765f73b5e9c6f8ee30fed"
 }
