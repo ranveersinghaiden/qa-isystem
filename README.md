@@ -17,7 +17,8 @@ produces executable test code → stabilises failing tests → self-improves fro
 8. [CI/CD Pipelines](#cicd-pipelines)
 9. [AI Feedback Loop](#ai-feedback-loop)
 10. [Running Tests](#running-tests)
-11. [Future Roadmap](#future-roadmap)
+11. [Manual Testing & Process Monitoring](#manual-testing--process-monitoring)
+12. [Future Roadmap](#future-roadmap)
 
 ---
 
@@ -553,6 +554,450 @@ BUILD SUCCESS
 | strategy-service | `ApiTestRunnerTest` | 7 | code generation, repo context |
 | strategy-service | `StrategyAgentTest` | 10 | SKIP/CREATE logic, fallback rules |
 | codegen-service | `ApiTestRunnerTest` | 7 | code generation |
+
+---
+
+## Manual Testing & Process Monitoring
+
+This section explains how to manually test the full pipeline and monitor each service's output and process outcome.
+
+### Typical Workflow
+
+```
+1. Start infrastructure (Docker)
+2. Start all 5 services
+3. Trigger PR webhook(s)
+4. Monitor service logs in real-time
+5. Track process state in Redis/Kafka
+6. Query GitHub API for PR creation
+7. Check final outcome (scenarios generated, tests written, PR created)
+```
+
+### 1 — Trigger Test PRs Manually
+
+#### Single PR (demo)
+
+```bash
+curl -X POST http://localhost:8080/api/pr/demo
+```
+
+#### Single PR (custom payload)
+
+```bash
+curl -X POST http://localhost:8080/api/pr/submit \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "feat: payment gateway integration",
+    "author": "user@example.com",
+    "repositoryName": "payment-service",
+    "sourceBranch": "feature/payments",
+    "products": "payments,auth",
+    "rawDiffContent": "diff --git a/PaymentService.java ..."
+  }'
+```
+
+#### Multiple PRs (concurrent test)
+
+```bash
+# Create test payloads (Python script generates 3 distinct PRs)
+python scripts/create_test_payloads.py
+
+# Submit all 3 simultaneously in background jobs
+for i in 1 2 3; do
+  curl -X POST http://localhost:8080/api/pr/submit \
+    -H "Content-Type: application/json" \
+    -d @pr-webhook-test-${i}.json &
+done
+wait
+```
+
+**Why concurrent?** Tests semaphore behaviour (should serialize through Copilot agent pool if max-concurrent-agents=3).
+
+### 2 — Monitor Service Health
+
+#### All services at once
+
+```bash
+for port in 8080 8081 8082 8083 8084; do
+  echo "=== Port $port ===" && \
+  curl -s http://localhost:$port/health | jq -r '.[] | @json' && \
+  echo
+done
+```
+
+#### Individual service status with pending work
+
+```bash
+# pr-service health
+curl http://localhost:8080/health
+
+# impact-service status
+curl http://localhost:8081/api/impact/status
+
+# strategy-service status + pending BDD count
+curl http://localhost:8082/api/strategy/status
+
+# codegen-service status
+curl http://localhost:8083/health
+
+# feedback-service status
+curl http://localhost:8084/health
+```
+
+### 3 — Monitor Service Logs in Real-Time
+
+#### Tail all service logs
+
+```bash
+# In one terminal, tail all logs with service name prefix
+tail -f logs/*.log | while read line; do echo "[$(date '+%H:%M:%S')] $line"; done
+```
+
+#### Monitor single service
+
+```bash
+# Live tail — updates every line as services write
+tail -f logs/strategy-service.log
+
+# Search for specific patterns
+grep -f logs/strategy-service.log -e "CopilotAgentClient" -e "BddGenerator" -e "agent=" -e "PR #" --line-buffered
+
+# Watch completion of a specific PR
+watch -n 1 "grep 'PR-XXXXXXXX' logs/strategy-service.log"
+```
+
+#### Key log patterns to watch
+
+| Service | Pattern | Meaning |
+|---------|---------|---------|
+| pr-service | `[PRService] Kafka published.*FeatureUpdatesQueue` | PR ingested, sent to impact analysis |
+| impact-service | `[ImpactService] ImpactEnvelope → published.*ImpactResultsQueue` | Impact analysis complete, sent to strategy |
+| strategy-service | `[StrategyAgent] decision=SKIP\|UPDATE_TESTS\|CREATE_TESTS` | Gating decision made |
+| strategy-service | `[BddGenerator].*CopilotAgentClient.*agent=X` | AI agent (Conductor/TestPlanner) starting |
+| strategy-service | `[CopilotAgentClient] [Conductor\|TestPlanner].*completed` | Agent finished, output captured |
+| strategy-service | `[TestPrService] created.*qa/bdd.*PR #\d+` | BDD review PR created on GitHub |
+| strategy-service | `[AiCostMonitor].*skipped.*cache.*calls` | Cost gating metrics logged |
+| codegen-service | `[CodegenService].*test code generated.*scenarios=\d+` | Test code produced |
+| codegen-service | `[StabilizationLoop].*iteration \d+ of 3` | Test stabilisation loop in progress |
+| codegen-service | `[TestPrService] created.*qa/tests.*PR #\d+` | Final test PR created |
+
+### 4 — Inspect Kafka Topics
+
+#### List all topics
+
+```bash
+docker exec qa-kafka kafka-topics --list --bootstrap-server localhost:9092
+```
+
+#### Inspect pending messages
+
+```bash
+# FeatureUpdatesQueue (PRs waiting for impact analysis)
+docker exec qa-kafka kafka-console-consumer --bootstrap-server localhost:9092 \
+  --topic FeatureUpdatesQueue --from-beginning --max-messages 10 | jq .
+
+# ImpactResultsQueue (impact analysis results waiting for strategy)
+docker exec qa-kafka kafka-console-consumer --bootstrap-server localhost:9092 \
+  --topic ImpactResultsQueue --from-beginning --max-messages 10 | jq .
+
+# TestScriptsQueue (BDD scenarios waiting for codegen)
+docker exec qa-kafka kafka-console-consumer --bootstrap-server localhost:9092 \
+  --topic TestScriptsQueue --from-beginning --max-messages 10 | jq .
+
+# FeedbackQueue (rejected PRs waiting for re-generation)
+docker exec qa-kafka kafka-console-consumer --bootstrap-server localhost:9092 \
+  --topic FeedbackQueue --from-beginning --max-messages 10 | jq .
+```
+
+#### Reset Kafka state (clear all messages)
+
+⚠️ **Destructive** — clears all pending work. Use only before starting a fresh test.
+
+```bash
+docker compose down -v  # deletes Kafka volumes
+docker compose up -d && sleep 5
+```
+
+### 5 — Inspect Redis State
+
+#### Check cached BDD scenarios and test results
+
+```bash
+# List all Redis keys
+redis-cli KEYS "*" | head -20
+
+# Inspect pending BDD scenarios
+redis-cli GET "qa:bdd:pending:PR-XXXXXXXX"
+
+# Inspect cached prompt responses (cost optimisation)
+redis-cli KEYS "qa:cache:*" | wc -l   # count cached responses
+
+# View PromptResponseCache hit/miss via cost report
+curl http://localhost:8082/api/qa/cost/report | jq .
+```
+
+#### Example cost report output
+
+```json
+{
+  "totalRequests": 42,
+  "skippedByGate": 18,
+  "cacheHits": 8,
+  "copilotCalls": 16,
+  "skipRatePct": "42.9%",
+  "cacheHitRatePct": "19.0%",
+  "aiCallRatePct": "38.1%",
+  "estimatedSavedPct": "61.9%"
+}
+```
+
+### 6 — Check GitHub API for Created PRs
+
+#### List all QA-generated PRs in target repo
+
+```bash
+# All PRs with AI-QA prefix
+gh pr list --repo ranveersinghaiden/xeroAssignment \
+  --search "is:pr head:qa/" --json number,title,state,url | jq .
+
+# Count BDD PRs
+gh pr list --repo ranveersinghaiden/xeroAssignment \
+  --search "is:pr head:qa/bdd/" --json number | jq 'length'
+
+# Count test PRs
+gh pr list --repo ranveersinghaiden/xeroAssignment \
+  --search "is:pr head:qa/tests/" --json number | jq 'length'
+```
+
+#### Inspect individual PR
+
+```bash
+# Get PR details: title, body, number of review comments
+gh pr view 79 --repo ranveersinghaiden/xeroAssignment \
+  --json number,title,body,commits,reviews
+
+# Get review comments
+gh pr view 79 --repo ranveersinghaiden/xeroAssignment --comments
+```
+
+### 7 — Monitor Docker Container Performance
+
+#### Real-time container stats (CPU, memory, network)
+
+```bash
+# Watch all containers, refresh every 2 seconds
+docker stats --no-stream=false
+
+# Focus on just Kafka, Zookeeper, Redis
+docker stats qa-kafka qa-zookeeper qa-redis
+
+# Log container stats to file for analysis
+docker stats --no-stream=false >> docker-stats.log &
+# (run for the duration of your test, then kill the bg job)
+```
+
+#### Parse container logs for errors
+
+```bash
+# Kafka errors
+docker logs qa-kafka | grep -i "error\|exception" | head -20
+
+# Redis errors
+docker logs qa-redis | grep -i "error" | head -20
+
+# Zookeeper errors
+docker logs qa-zookeeper | grep -i "error" | head -20
+
+# Watch Kafka leader elections (can block imports)
+docker logs qa-kafka | grep -i "leader" | tail -5
+```
+
+### 8 — Real-World Example: 3-PR Concurrent Test
+
+**Goal:** Trigger 3 distinct PRs simultaneously and track each through the pipeline.
+
+#### Step 1: Generate test payloads
+
+```bash
+python scripts/create_test_payloads.py
+echo "Generated: pr-webhook-test-1.json, pr-webhook-test-2.json, pr-webhook-test-3.json"
+ls -la pr-webhook-test-*.json
+```
+
+#### Step 2: Clear Redis and Kafka (fresh state)
+
+```bash
+redis-cli FLUSHALL
+docker compose down -v && docker compose up -d && sleep 5
+docker compose ps  # wait for (healthy)
+```
+
+#### Step 3: Verify services are up
+
+```bash
+for port in 8080 8081 8082 8083 8084; do
+  curl -s http://localhost:$port/health | jq -r '.status' || echo "Port $port: DOWN"
+done
+```
+
+#### Step 4: Start log monitoring in a separate terminal
+
+```bash
+# Terminal 2: Watch strategy-service for PR outcomes
+tail -f logs/strategy-service.log | grep -E "PR-|CopilotAgent|TestPrService"
+
+# Terminal 3: Watch container performance
+docker stats qa-kafka qa-zookeeper qa-redis --no-stream=false
+```
+
+#### Step 5: Submit all 3 PRs simultaneously
+
+```bash
+# Terminal 1: Execute all 3 in parallel background jobs
+for i in 1 2 3; do
+  echo "Submitting PR $i..." && \
+  curl -X POST http://localhost:8080/api/pr/submit \
+    -H "Content-Type: application/json" \
+    -d @pr-webhook-test-${i}.json &
+done
+wait
+echo "All 3 PR webhooks submitted at $(date)"
+```
+
+#### Step 6: Monitor pipeline progression
+
+Each PR moves through stages. Watch the logs for:
+
+```
+T+0s    → PR submitted
+T+5-10s → PR ingested by pr-service
+T+10-15s → impact-service analysis complete
+T+15-20s → StrategyAgent decision (SKIP/CREATE_TESTS)
+T+20-60s → BddGenerator running CopilotAgentClient
+          (Phase 1: Conductor → test plan, Phase 2: TestPlanner → Gherkin)
+          Watch: "[CopilotAgentClient] [Conductor] started"
+                 "[CopilotAgentClient] [TestPlanner] started"
+                 "[CopilotAgentClient] [TestPlanner] completed"
+T+60-70s → GitHub PR created (BDD review PR)
+T+70-90s → Await BDD approval (manual: ./scripts/approve-bdd.sh --yes)
+T+90-120s → codegen-service processes BDD scenarios
+T+120-150s → Test stabilisation loop (up to 3 iterations)
+T+150-160s → Final test PR created
+```
+
+#### Step 7: Track specific PR outcomes
+
+For each PR ID (e.g., `PR-92FD5CFA`), query:
+
+```bash
+# What stage did it reach?
+grep "PR-92FD5CFA" logs/strategy-service.log | tail -5
+
+# How many scenarios were generated?
+grep "PR-92FD5CFA" logs/strategy-service.log | grep "scenarios="
+
+# Which PRs were created on GitHub?
+gh pr list --repo ranveersinghaiden/xeroAssignment \
+  --search "is:pr head:qa/" --json number,title | jq '.[] | select(.title | contains("VSF-3501"))'
+
+# Approval waiting list
+curl http://localhost:8082/api/strategy/pending-bdd | jq .
+```
+
+#### Step 8: Approve all BDD PRs (manual gate)
+
+```bash
+# List pending PRs waiting for approval
+./scripts/approve-bdd.sh --list
+
+# Approve all and trigger codegen
+./scripts/approve-bdd.sh --yes
+
+# Watch codegen output
+tail -f logs/codegen-service.log | grep -E "test code|PR #"
+```
+
+#### Step 9: Check final results
+
+```bash
+# List all test PRs created
+gh pr list --repo ranveersinghaiden/xeroAssignment \
+  --search "is:pr head:qa/tests/" --json number,title
+
+# Count total scenario output
+grep "scenarios=" logs/strategy-service.log | awk -F'scenarios=' '{sum += $2} END {print "Total scenarios: " sum}'
+
+# Get total test generation time
+echo "Start: $(grep 'Submitting PR 1' logs/*.log | head -1)"
+echo "End:   $(grep 'final test PR\|✅ \[AI-QA\]' logs/codegen-service.log | tail -1)"
+```
+
+### 9 — Troubleshooting Common Issues
+
+#### No Kafka messages appearing
+
+```bash
+# Check Kafka broker is healthy
+docker logs qa-kafka | tail -20
+
+# Check Kafka topics exist
+docker exec qa-kafka kafka-topics --list --bootstrap-server localhost:9092
+
+# Verify producer is writing
+docker exec qa-kafka kafka-console-consumer --bootstrap-server localhost:9092 \
+  --topic FeatureUpdatesQueue --from-beginning --max-messages 1
+```
+
+#### Services not responding (502 / connection refused)
+
+```bash
+# Check service process is running
+lsof -i :8082  # replace with port
+
+# Restart a specific service
+killall java
+./scripts/start-local.sh --skip-build
+```
+
+#### BDD PR not created (stuck in strategy-service)
+
+```bash
+# Check for exceptions
+grep "error\|exception" logs/strategy-service.log | tail -20
+
+# Check GitHub API token is valid
+gh auth status
+
+# Manually check pending BDD list
+curl http://localhost:8082/api/strategy/pending-bdd | jq .
+```
+
+#### AI call failing ("No such file or directory: copilot")
+
+```bash
+# Verify copilot CLI is installed
+which copilot
+
+# Verify ghq is authenticated
+gh auth status
+
+# Fall back to template mode
+export AI_PROVIDER=none
+# (will use template BDD instead)
+```
+
+#### Redis connection failing
+
+```bash
+# Check Redis is running
+docker ps | grep redis
+
+# Check Redis can be reached
+redis-cli ping
+
+# Restart Redis
+docker compose restart qa-redis
+```
 
 ---
 
