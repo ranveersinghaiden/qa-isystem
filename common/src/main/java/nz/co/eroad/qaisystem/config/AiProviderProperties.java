@@ -50,13 +50,18 @@ public class AiProviderProperties {
         private int maxConcurrentAgents = 3;
         /** Hard timeout in seconds before subprocess is forcibly killed. Default: {@code 300}. */
         private int agentTimeoutSeconds = 300;
-        /** Maximum characters to capture from subprocess stdout before truncation. Default: {@code 200000}. */
+        /** Maximum characters to accumulate from agent text chunks before truncation. Default: {@code 200000}. */
         private int maxOutputChars = 200_000;
         /**
          * Working directory for the subprocess (the cloned target repo root).
          * Leave blank to use the value from {@code aiqa.target-repo.local-path}.
          */
         private String workingDir = "";
+        /**
+         * Maximum number of autopilot continuation messages before the subprocess exits.
+         * Passed via {@code --max-autopilot-continues}. Default: {@code 5}.
+         */
+        private int maxAutopilotContinues = 5;
     }
 
     @Data

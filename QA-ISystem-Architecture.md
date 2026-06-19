@@ -564,15 +564,51 @@ Decision tree (first match wins):
 
 ### 7.5 BddGenerator — Creating Human-Readable Test Scenarios
 
-Produces BDD scenarios in Gherkin syntax. The system prompt begins with a static safety preamble
-followed by the **conductor agent's instructions** (from `.github/agents/*.md` in the target repo,
-identified by the word "conductor") as the primary AI role directive. When the PR has external
-context, `PrContext.asPromptSection()` (compressed summary first, then structured fields) is
-injected into the AI prompt so the LLM sees Jira tickets, Confluence links, and product names
-when writing scenarios.
+Produces BDD scenarios in Gherkin syntax using a **two-phase copilot agent pipeline**
+delegated via `CopilotAgentClient`.
 
-`BddGenerator.generate()` throws `IllegalStateException` when Copilot CLI is unavailable or
-returns an empty response — there is no template fallback.
+#### Two-phase agent pipeline (primary path)
+
+```
+Phase 1 — Conductor agent
+  copilot --acp --stdio --allow-all --max-autopilot-continues 5
+          --agent=Conductor -p "<test plan request>"
+  Reads: target repo's .github/agents/Conductor.agent.md (automatically)
+  Produces: structured test plan (numbered list of test areas)
+
+Phase 2 — TestPlanner agent
+  copilot --acp --stdio --allow-all --max-autopilot-continues 5
+          --agent=TestPlanner -p "<Phase 1 test plan + Gherkin instruction>"
+  Reads: target repo's .github/agents/TestPlanner.agent.md (automatically)
+  Produces: Gherkin feature file starting with "Feature:"
+```
+
+Each agent runs in the **cloned target repo directory** as its working directory, so the CLI
+loads the repo's own `.github/agents/` instruction files naturally — no manual loading required.
+
+#### Live monitoring
+
+The `--acp --stdio` flags make the subprocess emit JSON-RPC JSONL packets on stdout.
+`CopilotAgentClient` parses each line for `agent_message_chunk` events and logs the text
+at INFO in real time, making pipeline progress visible in service logs without polling.
+Stderr is always drained on a separate virtual thread to prevent OS pipe-buffer deadlock.
+
+#### Concurrency and process lifecycle
+
+- `Semaphore(maxConcurrentAgents=3)` limits simultaneous subprocess launches (configurable).
+- `process.destroyForcibly()` is called on timeout **and** in the `finally` block as defensive
+  cleanup — it is a no-op for already-terminated processes, preventing orphaned Node.js processes
+  if an unexpected exception occurs after `pb.start()`.
+- Each subprocess runs on virtual threads for stdout/stderr I/O.
+
+#### Fallback
+
+If the agent pipeline raises an exception, `BddGenerator` falls back to the `AiClient`
+(single-shot GitHub Models API call). If the CLI does not emit structured JSON-RPC packets,
+raw stdout is returned as-is.
+
+`BddGenerator.generate()` throws `IllegalStateException` when both the pipeline and the
+fallback fail — there is no template placeholder.
 
 The generated `BddScenario` carries the full `PrContext` forward to codegen-service.
 
@@ -750,6 +786,10 @@ The only supported AI provider is **Copilot CLI** (`CopilotCliClient`), which ca
 API via the `gh api` subprocess. Run `gh auth login` once — no token env var is required.
 `aiqa.ai.provider` is hardcoded to `copilot-cli` and is not overridable via an environment variable.
 
+BDD generation additionally uses **`CopilotAgentClient`** (strategy-service only) which launches
+a direct `copilot` subprocess in ACP/stdio mode for the two-phase Conductor → TestPlanner pipeline.
+This is separate from `CopilotCliClient` and uses a different executable path and concurrency model.
+
 ### Per-service model defaults
 
 | Service | Default model | Why |
@@ -770,6 +810,13 @@ aiqa:
       gh-cli-path: ${GH_CLI_PATH:gh}
       model:       ${COPILOT_CLI_MODEL:gpt-5}
       timeout-seconds: ${COPILOT_CLI_TIMEOUT:120}
+    copilot-agent:                             # strategy-service only — two-phase BDD pipeline
+      copilot-cli-path: ${COPILOT_CLI_PATH:copilot}
+      max-concurrent-agents: ${COPILOT_MAX_CONCURRENT:3}      # semaphore limit
+      agent-timeout-seconds: ${COPILOT_AGENT_TIMEOUT:300}     # hard kill per subprocess
+      max-output-chars: ${COPILOT_MAX_OUTPUT_CHARS:200000}    # accumulated text cap
+      max-autopilot-continues: ${COPILOT_MAX_AUTOPILOT_CONTINUES:5}  # CLI continuation limit
+      working-dir: ${COPILOT_AGENT_WORKING_DIR:}              # blank = target-repo local-path
   conversation:
     ttl-days:             ${AIQA_CONV_TTL_DAYS:30}          # Redis TTL for conversation history; 0 = no expiry
     max-history-chars:    ${AIQA_CONV_MAX_CHARS:65536}      # uncompressed size threshold; exceeded → compress first, then drop oldest turns

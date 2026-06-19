@@ -80,8 +80,8 @@
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java": {
-    "mtime": 1780962969.2905927,
-    "ast_hash": "e0eb7c738cb145b79d51a474c822b51d",
+    "mtime": 1781825803.0086145,
+    "ast_hash": "51468e6138881dcc1059f17c20fa8e09",
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/config/AppConfig.java": {
@@ -225,8 +225,8 @@
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/service/RepoContextService.java": {
-    "mtime": 1781481786.987263,
-    "ast_hash": "07c61e5824e2462cbae8d5122d2b2da6",
+    "mtime": 1781825809.1246085,
+    "ast_hash": "fc6c7df88f20accbabdac907349c94d2",
     "semantic_hash": ""
   },
   "feedback-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java": {
@@ -430,8 +430,8 @@
     "semantic_hash": ""
   },
   "scripts/start-local.sh": {
-    "mtime": 1781481767.623444,
-    "ast_hash": "7187c3d1e440dfc2d13e6fa6f3c85f20",
+    "mtime": 1781760601.1822102,
+    "ast_hash": "bbdd21a4fea6cde46f36696dc98d3165",
     "semantic_hash": ""
   },
   "scripts/start-services-test.sh": {
@@ -440,8 +440,8 @@
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/BddGenerator.java": {
-    "mtime": 1781491217.4826512,
-    "ast_hash": "7d62a7170894efb773d17989bec985a8",
+    "mtime": 1781826001.5183485,
+    "ast_hash": "410aedf92134647d9ffba04a9be3de5e",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java": {
@@ -550,8 +550,8 @@
     "semantic_hash": ""
   },
   "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java": {
-    "mtime": 1781491223.755252,
-    "ast_hash": "0d8ae8397fc5a2e9707977d24f649a09",
+    "mtime": 1781826047.8810966,
+    "ast_hash": "a687096245e93e298d10ba97fca65824",
     "semantic_hash": ""
   },
   "strategy-service/src/test/java/nz/co/eroad/qaisystem/execution/ApiTestRunnerTest.java": {
@@ -865,8 +865,8 @@
     "semantic_hash": ""
   },
   "strategy-service/src/main/resources/application.yaml": {
-    "mtime": 1781491265.4701943,
-    "ast_hash": "9e12c1d91270bea192282f9c3570abbb",
+    "mtime": 1781826011.8006299,
+    "ast_hash": "d6f457e12336e30334b712f684ce3f12",
     "semantic_hash": ""
   },
   "strategy-service/src/main/resources/productExpert-templates/README.md": {
@@ -882,6 +882,21 @@
   "QA-ISystem-Architecture.pdf": {
     "mtime": 1779896110.112515,
     "ast_hash": "1e2a9e693f233f28262d551a3b97bf8b",
+    "semantic_hash": ""
+  },
+  "pr-webhook-test.json": {
+    "mtime": 1781763503.4287474,
+    "ast_hash": "379c3e474340d5eeca89720c36a315ab",
+    "semantic_hash": ""
+  },
+  "scripts/_launch-strategy.sh": {
+    "mtime": 1781763973.9930625,
+    "ast_hash": "7a99d5402c386967a243694587afce98",
+    "semantic_hash": ""
+  },
+  "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java": {
+    "mtime": 1781826089.5629938,
+    "ast_hash": "15ad703a0f101137bb9309f8b10bb474",
     "semantic_hash": ""
   }
 }
