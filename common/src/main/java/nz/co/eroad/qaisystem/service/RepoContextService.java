@@ -232,6 +232,14 @@ public class RepoContextService {
      * <p>Returns an empty map when no repo is configured or the clone failed.
      * {@code E2ECoverageAnalyzer} uses this to determine actual E2E test coverage.
      */
+    /**
+     * Returns the local filesystem path where the target repo is cloned/located.
+     * Used by agent subprocess clients to set the working directory.
+     */
+    public java.nio.file.Path getLocalRepoPath() {
+        return java.nio.file.Path.of(props.getLocalPath());
+    }
+
     public Map<String, List<String>> getCoverageIndex() {
         return coverageIndex;
     }

@@ -23,6 +23,9 @@ public class AiProviderProperties {
     /** GitHub Copilot CLI backend settings (recommended default). */
     private CopilotCliConfig copilotCli = new CopilotCliConfig();
 
+    /** Copilot agent subprocess settings (two-phase pipeline). */
+    private CopilotAgentConfig copilotAgent = new CopilotAgentConfig();
+
     /** OpenAI (or OpenAI-compatible) backend settings. */
     private OpenAiConfig openai = new OpenAiConfig();
 
@@ -37,6 +40,23 @@ public class AiProviderProperties {
         private String model = "gpt-4o";
         /** Timeout in seconds for each gh api subprocess call. Default: {@code 120}. */
         private int timeoutSeconds = 120;
+    }
+
+    @Data
+    public static class CopilotAgentConfig {
+        /** Path to the copilot CLI executable. Default: {@code copilot} (must be on PATH). */
+        private String copilotCliPath = "copilot";
+        /** Maximum simultaneous copilot subprocesses. Default: {@code 3}. */
+        private int maxConcurrentAgents = 3;
+        /** Hard timeout in seconds before subprocess is forcibly killed. Default: {@code 300}. */
+        private int agentTimeoutSeconds = 300;
+        /** Maximum characters to capture from subprocess stdout before truncation. Default: {@code 200000}. */
+        private int maxOutputChars = 200_000;
+        /**
+         * Working directory for the subprocess (the cloned target repo root).
+         * Leave blank to use the value from {@code aiqa.target-repo.local-path}.
+         */
+        private String workingDir = "";
     }
 
     @Data

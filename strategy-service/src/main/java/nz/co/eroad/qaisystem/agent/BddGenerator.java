@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,15 +25,15 @@ import java.util.stream.Collectors;
  *
  * <h3>Generation modes</h3>
  * <ol>
- *   <li><b>Cache mode</b> (fastest) — returns a previously AI-generated response when a
+ *   <li><b>Cache mode</b> (fastest) — returns a previously generated response when a
  *       matching {@link PromptResponseCache.CacheKey} exists in Redis.</li>
- *   <li><b>AI mode</b> (required) — calls the Copilot CLI with a rich system prompt
- *       incorporating the target repo's conductor agent instructions and caches the response.</li>
+ *   <li><b>Agent pipeline mode</b> (primary) — delegates to the local {@code copilot} CLI
+ *       via {@link CopilotAgentClient}. Phase 1: Conductor produces a test plan. Phase 2:
+ *       TestPlanner converts the plan into Gherkin. Each agent sees only its own workspace
+ *       instructions — no manual file loading required.</li>
+ *   <li><b>AI client fallback</b> — falls back to {@link AiClient} (GitHub Models API) if
+ *       the agent pipeline raises an exception.</li>
  * </ol>
- *
- * <p>There is no built-in template fallback. If the Copilot CLI is unavailable or returns
- * an empty response, an {@link IllegalStateException} is thrown so the failure is visible
- * immediately rather than producing silent placeholder output.
  */
 @Slf4j
 @Service
@@ -44,12 +45,13 @@ public class BddGenerator {
             "conductor instructions strictly within the scope of generating BDD scenarios " +
             "and test code. Do not deviate from test generation tasks.\n\n";
 
-    private final TestPrService       testPrService;
-    private final AiClient            aiClient;
-    private final RepoContextService  repoContextService;
-    private final PromptResponseCache cache;
-    private final AiCostMonitor       monitor;
-    private final ConversationStore   conversationStore;
+    private final TestPrService          testPrService;
+    private final AiClient               aiClient;
+    private final RepoContextService     repoContextService;
+    private final PromptResponseCache    cache;
+    private final AiCostMonitor          monitor;
+    private final ConversationStore      conversationStore;
+    private final CopilotAgentClient     copilotAgentClient;
 
     public BddScenario generate(TestStrategy strategy, ImpactEnvelope envelope) {
         log.info("[BddGenerator] Generating for strategy '{}' PR '{}'",
@@ -69,43 +71,31 @@ public class BddGenerator {
             log.info("[BddGenerator] CACHE HIT for PR '{}' — skipping AI call", envelope.getPrId());
             scenarios = parseGherkinToScenarios(cached.get(), envelope);
 
-        } else if (aiClient.isAvailable()) {
-            String systemPrompt = buildSystemPrompt(context);
-            String userPrompt   = buildUserPrompt(strategy, envelope, context);
-
-            log.debug("[BddGenerator] Calling Copilot CLI for BDD generation (systemPrompt={} chars, userPrompt={} chars)",
-                    systemPrompt.length(), userPrompt.length());
-
-            String gherkin = aiClient.complete(systemPrompt, userPrompt);
-            if (gherkin != null && !gherkin.isBlank()) {
-                log.info("[BddGenerator] Copilot CLI returned {} chars of Gherkin", gherkin.length());
-                cache.put(cacheKey, gherkin);
-                monitor.recordAiExecuted();
-
-                // Save initial conversation so feedback-service has history context for first rejection
-                try {
-                    var turns = List.of(ChatMessage.user(userPrompt), ChatMessage.assistant(gherkin));
-                    conversationStore.save(envelope.getPrId() + ":bdd",
-                            new ConversationHistory(envelope.getPrId(), turns, 1, Instant.now()));
-                    log.debug("[BddGenerator] Saved initial BDD conversation for PR '{}'", envelope.getPrId());
-                } catch (Exception e) {
-                    log.warn("[BddGenerator] Could not save conversation history for PR '{}': {}",
-                            envelope.getPrId(), e.getMessage());
-                }
-
-                scenarios = parseGherkinToScenarios(gherkin, envelope);
-            } else {
+        } else {
+            String gherkin = generateGherkin(strategy, envelope, context);
+            if (gherkin == null || gherkin.isBlank()) {
                 monitor.recordAiFailure();
                 throw new IllegalStateException(
-                        "[BddGenerator] Copilot CLI returned an empty response for PR '"
-                        + envelope.getPrId() + "'. Check 'gh auth status' and retry.");
+                        "[BddGenerator] No Gherkin output produced for PR '"
+                        + envelope.getPrId() + "'. Check copilot CLI and gh auth status.");
             }
 
-        } else {
-            throw new IllegalStateException(
-                    "[BddGenerator] Copilot CLI is not available. " +
-                    "Run 'gh auth login' and ensure the 'gh' executable is on PATH. " +
-                    "PR: " + envelope.getPrId());
+            log.info("[BddGenerator] Agent pipeline returned {} chars of Gherkin", gherkin.length());
+            cache.put(cacheKey, gherkin);
+            monitor.recordAiExecuted();
+
+            try {
+                var turns = List.of(ChatMessage.user(buildConductorPrompt(strategy, envelope)),
+                        ChatMessage.assistant(gherkin));
+                conversationStore.save(envelope.getPrId() + ":bdd",
+                        new ConversationHistory(envelope.getPrId(), turns, 1, Instant.now()));
+                log.debug("[BddGenerator] Saved initial BDD conversation for PR '{}'", envelope.getPrId());
+            } catch (Exception e) {
+                log.warn("[BddGenerator] Could not save conversation history for PR '{}': {}",
+                        envelope.getPrId(), e.getMessage());
+            }
+
+            scenarios = parseGherkinToScenarios(gherkin, envelope);
         }
 
         BddScenario bdd = BddScenario.builder()
@@ -122,54 +112,143 @@ public class BddGenerator {
 
         testPrService.createBddPr(bdd);
 
-        log.info("[BddGenerator] {} scenarios created for PR '{}' (copilotCli={} conductorAgent={} productExpert={})",
+        log.info("[BddGenerator] {} scenarios created for PR '{}' (conductorAgent={} productExpert={})",
                 scenarios.size(), envelope.getPrId(),
-                aiClient.isAvailable(), context.hasConductorAgent(), context.hasProductExpert());
+                context.hasConductorAgent(), context.hasProductExpert());
 
         return bdd;
     }
 
-    // ─── Cache key builder ─────────────────────────────────────────────────────
+    // ─── Generation orchestration ──────────────────────────────────────────────
 
-    /** Builds a cache key from the envelope's primary classification attributes. */
-    private PromptResponseCache.CacheKey buildCacheKey(ImpactEnvelope envelope,
-                                                        TestStrategy strategy,
-                                                        RepoContext context) {
-        var changeTypes = envelope.getDetectedChangeTypes();
-        String changeType = (changeTypes == null || changeTypes.isEmpty())
-                ? "UNKNOWN" : changeTypes.get(0).name();
-
-        var components = envelope.getImpactedComponents();
-        String componentType = (components == null || components.isEmpty())
-                ? "UNKNOWN" : components.get(0).getType().name();
-
-        String repoName = (context != null && context.getBasePackage() != null)
-                ? context.getBasePackage() : "default";
-
-        return new PromptResponseCache.CacheKey(
-                changeType, componentType, envelope.getRiskLevel().name(), repoName);
+    /**
+     * Primary path: two-phase copilot agent pipeline.
+     * Fallback: {@link AiClient} single-shot call.
+     */
+    private String generateGherkin(TestStrategy strategy, ImpactEnvelope envelope,
+                                   RepoContext context) {
+        try {
+            return runTwoPhaseAgentPipeline(strategy, envelope);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(
+                    "[BddGenerator] Interrupted during agent pipeline for PR '"
+                    + envelope.getPrId() + "'", e);
+        } catch (Exception e) {
+            log.warn("[BddGenerator] Agent pipeline failed for PR '{}' — falling back to AiClient: {}",
+                    envelope.getPrId(), e.getMessage());
+            if (!aiClient.isAvailable()) {
+                throw new IllegalStateException(
+                        "[BddGenerator] Agent pipeline failed and AiClient is not available. "
+                        + "PR: " + envelope.getPrId(), e);
+            }
+            var systemPrompt = buildSystemPrompt(context);
+            var userPrompt   = buildUserPrompt(strategy, envelope, context);
+            log.debug("[BddGenerator] AiClient fallback (systemPrompt={} chars, userPrompt={} chars)",
+                    systemPrompt.length(), userPrompt.length());
+            return aiClient.complete(systemPrompt, userPrompt);
+        }
     }
 
-    // ─── AI prompt builders ────────────────────────────────────────────────────
+    /**
+     * Phase 1 → Conductor produces a structured test plan.
+     * Phase 2 → TestPlanner converts the plan into a Gherkin feature file.
+     * Each phase runs in the cloned target repo directory so the agent reads
+     * its own {@code .github/agents/} instructions naturally.
+     */
+    private String runTwoPhaseAgentPipeline(TestStrategy strategy, ImpactEnvelope envelope)
+            throws InterruptedException {
+        Path workingDir = repoContextService.getLocalRepoPath();
+        log.info("[BddGenerator] Starting two-phase agent pipeline for PR '{}' workingDir='{}'",
+                envelope.getPrId(), workingDir);
+
+        // Phase 1 — Conductor: decide what to test
+        var conductorPrompt = buildConductorPrompt(strategy, envelope);
+        log.debug("[BddGenerator] Phase 1 Conductor prompt ({} chars)", conductorPrompt.length());
+        var testPlan = copilotAgentClient.runAgent("Conductor", conductorPrompt, workingDir);
+        log.info("[BddGenerator] Phase 1 complete — Conductor produced {} chars", testPlan.length());
+
+        // Phase 2 — TestPlanner: write Gherkin from the test plan
+        var testPlannerPrompt = buildTestPlannerPrompt(testPlan, strategy, envelope);
+        log.debug("[BddGenerator] Phase 2 TestPlanner prompt ({} chars)", testPlannerPrompt.length());
+        var gherkin = copilotAgentClient.runAgent("TestPlanner", testPlannerPrompt, workingDir);
+        log.info("[BddGenerator] Phase 2 complete — TestPlanner produced {} chars", gherkin.length());
+
+        return gherkin;
+    }
+
+    // ─── Prompt builders ───────────────────────────────────────────────────────
+
+    private String buildConductorPrompt(TestStrategy strategy, ImpactEnvelope envelope) {
+        var reqs = strategy.getNewTestRequirements().stream()
+                .map(r -> "  - " + r.getFeatureName() + " (" + r.getTestType() + ")")
+                .collect(Collectors.joining("\n"));
+        var changeTypes = envelope.getDetectedChangeTypes() == null ? "unknown"
+                : envelope.getDetectedChangeTypes().stream()
+                           .map(Enum::name).collect(Collectors.joining(", "));
+
+        return """
+                QA task: produce a structured test plan for the following code change.
+                Do NOT write Gherkin yet — output a numbered list of test areas, \
+                test types, and key scenarios to cover.
+
+                PR ID         : %s
+                Risk Level    : %s
+                Change Types  : %s
+                Summary       : %s
+                Full regression: %s
+
+                Test requirements:
+                %s
+                """.formatted(
+                envelope.getPrId(),
+                envelope.getRiskLevel(),
+                changeTypes,
+                envelope.getChangesSummary(),
+                strategy.isFullRegressionRequired(),
+                reqs);
+    }
+
+    private String buildTestPlannerPrompt(String conductorPlan,
+                                          TestStrategy strategy,
+                                          ImpactEnvelope envelope) {
+        var externalCtx = (envelope.getPrContext() != null)
+                ? envelope.getPrContext().asPromptSection() : "";
+
+        return """
+                Convert the following test plan into a Gherkin feature file.
+
+                Output ONLY the Gherkin starting with "Feature:".
+                Include @tags on each scenario (@api, @ui, @mobile, @smoke, @regression).
+                Do not add any explanation or prose outside the Gherkin.
+
+                PR ID      : %s
+                Risk Level : %s
+                %s
+                === TEST PLAN (from Conductor) ===
+                %s
+                """.formatted(
+                envelope.getPrId(),
+                envelope.getRiskLevel(),
+                externalCtx.isBlank() ? "" : externalCtx + "\n",
+                conductorPlan);
+    }
+
+    // ─── Legacy API-client prompt builders (used by fallback path) ─────────────
 
     private String buildSystemPrompt(RepoContext context) {
         StringBuilder sb = new StringBuilder(GENERATION_PREAMBLE);
 
-        // Conductor agent from the target repo — primary role directive
         if (context.hasConductorAgent()) {
             sb.append("=== CONDUCTOR AGENT INSTRUCTIONS (from target repo .github/agents/) ===\n\n");
             sb.append(context.getConductorAgentContent()).append("\n\n");
-            log.debug("[BddGenerator] Conductor agent instructions injected into system prompt ({} chars)",
-                    context.getConductorAgentContent().length());
         } else {
-            // No conductor agent — use expert QA engineer baseline
             sb.append("You are an expert QA engineer specialising in writing Gherkin BDD scenarios.\n\n");
             sb.append("Your scenarios must be:\n");
             sb.append("- Written in clear, business-readable language\n");
             sb.append("- Covering happy path, error cases, and boundary conditions\n");
             sb.append("- Tagged appropriately (@api, @ui, @mobile, @smoke, @regression)\n");
             sb.append("- Specific to the product and changes described\n\n");
-            log.debug("[BddGenerator] No conductor agent found in target repo — using baseline QA engineer prompt");
         }
 
         if (context.hasProductExpert()) {
@@ -178,7 +257,6 @@ public class BddGenerator {
         if (context.getRepoAiqaContext() != null && !context.getRepoAiqaContext().isBlank()) {
             sb.append(context.aiqaContextSection()).append("\n");
         }
-        // Other agent instruction files (non-conductor) — appended as supplemental context
         if (context.hasAgentInstructions()) {
             context.getAgentInstructions().entrySet().stream()
                     .filter(e -> !e.getKey().toLowerCase().contains("conductor"))
@@ -190,34 +268,31 @@ public class BddGenerator {
             context.getSampleTests().forEach((name, src) ->
                     sb.append("-- ").append(name).append(" --\n").append(src).append("\n\n"));
         }
-
         return sb.toString();
     }
 
     private String buildUserPrompt(TestStrategy strategy, ImpactEnvelope envelope,
                                    RepoContext context) {
-        String reqs = strategy.getNewTestRequirements().stream()
+        var reqs = strategy.getNewTestRequirements().stream()
                 .map(r -> "  - " + r.getFeatureName() + " (" + r.getTestType() + ")")
                 .collect(Collectors.joining("\n"));
-
-        String changeTypes = envelope.getDetectedChangeTypes() == null ? "unknown"
+        var changeTypes = envelope.getDetectedChangeTypes() == null ? "unknown"
                 : envelope.getDetectedChangeTypes().stream()
                            .map(Enum::name).collect(Collectors.joining(", "));
-
-        String externalCtx = (envelope.getPrContext() != null)
+        var externalCtx = (envelope.getPrContext() != null)
                 ? envelope.getPrContext().asPromptSection() : "";
 
         return """
                 Generate a Gherkin feature file for the following code change.
-                
+
                 PR ID         : %s
                 Risk Level    : %s
                 Change Types  : %s
                 Summary       : %s
-                
+
                 Test requirements (what needs to be tested):
                 %s
-                
+
                 Full regression needed : %s
                 Expanded scope         : %s
                 %s
@@ -234,23 +309,40 @@ public class BddGenerator {
                 externalCtx.isBlank() ? "" : "\n" + externalCtx);
     }
 
-    /**
-     * Very lightweight Gherkin parser — converts the AI's response into
-     * {@link BddScenario.Scenario} objects. Each block starting with
-     * "Scenario:" or "Scenario Outline:" becomes one scenario.
-     */
+    // ─── Cache key builder ─────────────────────────────────────────────────────
+
+    private PromptResponseCache.CacheKey buildCacheKey(ImpactEnvelope envelope,
+                                                        TestStrategy strategy,
+                                                        RepoContext context) {
+        var changeTypes = envelope.getDetectedChangeTypes();
+        var changeType = (changeTypes == null || changeTypes.isEmpty())
+                ? "UNKNOWN" : changeTypes.get(0).name();
+
+        var components = envelope.getImpactedComponents();
+        var componentType = (components == null || components.isEmpty())
+                ? "UNKNOWN" : components.get(0).getType().name();
+
+        var repoName = (context != null && context.getBasePackage() != null)
+                ? context.getBasePackage() : "default";
+
+        return new PromptResponseCache.CacheKey(
+                changeType, componentType, envelope.getRiskLevel().name(), repoName);
+    }
+
+    // ─── Gherkin parser ────────────────────────────────────────────────────────
+
     private List<BddScenario.Scenario> parseGherkinToScenarios(String gherkin,
-                                                                 ImpactEnvelope envelope) {
+                                                                ImpactEnvelope envelope) {
         List<BddScenario.Scenario> result = new ArrayList<>();
-        String[] lines = gherkin.split("\n");
+        var lines = gherkin.split("\n");
 
         List<String> pendingTags = new ArrayList<>();
         BddScenario.Scenario.ScenarioBuilder current = null;
         List<String> given = null, when = null, then = null, and = null;
         String currentKeyword = null;
 
-        for (String rawLine : lines) {
-            String line = rawLine.strip();
+        for (var rawLine : lines) {
+            var line = rawLine.strip();
 
             if (line.startsWith("@")) {
                 Arrays.stream(line.split("\\s+")).forEach(pendingTags::add);
@@ -261,8 +353,8 @@ public class BddGenerator {
                 if (current != null) {
                     result.add(finalise(current, given, when, then, and));
                 }
-                String type  = line.startsWith("Scenario Outline:") ? "Scenario Outline" : "Scenario";
-                String title = line.substring(type.length() + 1).trim();
+                var type  = line.startsWith("Scenario Outline:") ? "Scenario Outline" : "Scenario";
+                var title = line.substring(type.length() + 1).trim();
                 current = BddScenario.Scenario.builder()
                         .scenarioId(UUID.randomUUID().toString())
                         .title(title)
@@ -282,7 +374,7 @@ public class BddGenerator {
             else if (line.startsWith("When "))   { currentKeyword = "when";  when.add(line.substring(5).trim()); }
             else if (line.startsWith("Then "))   { currentKeyword = "then";  then.add(line.substring(5).trim()); }
             else if (line.startsWith("And ") || line.startsWith("But ")) {
-                String step = line.substring(4).trim();
+                var step = line.substring(4).trim();
                 if      ("given".equals(currentKeyword)) given.add(step);
                 else if ("when".equals(currentKeyword))  when.add(step);
                 else if ("then".equals(currentKeyword))  then.add(step);
@@ -292,7 +384,7 @@ public class BddGenerator {
         if (current != null) result.add(finalise(current, given, when, then, and));
 
         if (result.isEmpty()) {
-            log.warn("[BddGenerator] Could not parse any scenarios from AI response — using single placeholder");
+            log.warn("[BddGenerator] Could not parse any scenarios from agent response — using placeholder");
             result.add(BddScenario.Scenario.builder()
                     .scenarioId(UUID.randomUUID().toString())
                     .title("AI-generated scenario for PR " + envelope.getPrId())
@@ -316,8 +408,8 @@ public class BddGenerator {
 
     private String inferTestType(List<String> tags, ImpactEnvelope envelope) {
         if (tags != null) {
-            for (String t : tags) {
-                String tl = t.toLowerCase();
+            for (var t : tags) {
+                var tl = t.toLowerCase();
                 if (tl.contains("mobile") || tl.contains("appium")) return "MOBILE";
                 if (tl.contains("ui") || tl.contains("web") || tl.contains("selenium")) return "UI";
             }
