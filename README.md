@@ -33,12 +33,12 @@ Git / Webhook
 └──────┬───────┘
        │ FeatureUpdatesQueue (Kafka)
        ▼
-┌───────────────────────────────────────────────┐
-│  impact-service  :8081   NO AI                │
-│  GitDiffParser → DependencyGraph              │
-│  ChangeTypeDetector → RiskScorer              │
+┌──────────────────────────────────────────────────────────┐
+│  impact-service  :8081   NO AI                           │
+│  GitDiffParser → DependencyGraph                         │
+│  ChangeTypeDetector → RiskScorer                         │
 │  IntegrationTestScopeClassifier → ImpactEnvelope         │
-└──────┬────────────────────────────────────────┘
+└──────┬───────────────────────────────────────────────────┘
        │ ImpactResultsQueue (Kafka)
        ▼
 ┌──────────────────────────────────────────────────────────────────┐
