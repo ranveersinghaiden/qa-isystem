@@ -1,5 +1,6 @@
 ---
 name: Security
+model: Claude Sonnet 4.6 (copilot)
 description: Security auditor for QA-ISystem. Reviews every development and testing change for credential exposure, API auth gaps, input validation, and actuator exposure. Consulted after every Coder output and at both gates.
 ---
 

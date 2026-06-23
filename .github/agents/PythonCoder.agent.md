@@ -1,5 +1,6 @@
 ---
 name: PythonCoder
+model: Claude Sonnet 4.6 (copilot)
 description: Writes and maintains Python code for iWiki RAG services. Follows async patterns, dataclasses, and zero-mock testing.
 ---
 

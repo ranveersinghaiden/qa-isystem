@@ -1,5 +1,6 @@
 ---
 name: TestPlanner
+model: GPT-5.5 (copilot)
 description: Converts feature requirements into JUnit 5 / BDD test scenarios for QA-ISystem Java Spring Boot services.
 ---
 

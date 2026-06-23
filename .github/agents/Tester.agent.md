@@ -1,5 +1,6 @@
 ---
 name: Tester
+model: Claude Sonnet 4.6 (copilot)
 description: Runs and validates Cucumber tests using the JUnit 5 platform runner, reports results, and fixes step definition or page object issues when tests fail.
 ---
 

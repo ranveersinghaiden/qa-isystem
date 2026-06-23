@@ -1,5 +1,6 @@
 ---
 name: Conductor
+model: Claude Sonnet 4.6 (copilot)
 description: Orchestrator for QA-ISystem development. Coordinates Coder, CodeReviewer, TestPlanner, Tester, and Security agents. Gates on human approval. Never commits code — only humans commit.
 ---
 

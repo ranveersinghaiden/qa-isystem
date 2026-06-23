@@ -93,7 +93,7 @@ Contains:
 
 ## 🎭 Language-Specific Coders
 
-### [JAVA-CODER.md](JAVA-CODER.md) — 450+ lines (NEW: CONSOLIDATED)
+### [JAVA-CODER.md](JAVA-CODER.agent.md) — 450+ lines (NEW: CONSOLIDATED)
 **Java 25 + Spring Boot 4 implementation.**
 
 Merges:
@@ -275,7 +275,7 @@ Contains:
 1. **Understand workflow:** Read [Conductor.agent.md](Conductor.agent.md) § Standard Workflow
 2. **Learn generic practices:** Read [GenericCodingPractices.md](GenericCodingPractices.md) (first 3 sections)
 3. **Pick your language & role:**
-   - **Java code?** → [JAVA-CODER.md](JAVA-CODER.md)
+   - **Java code?** → [JAVA-CODER.md](JAVA-CODER.agent.md)
    - **Python code?** → [PythonCoder.agent.md](PythonCoder.agent.md)
    - **Reviewing code?** → [CodeReviewer.agent.md](CodeReviewer.agent.md)
    - **Auditing security?** → [Security.agent.md](Security.agent.md)

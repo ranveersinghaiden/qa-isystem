@@ -1,5 +1,6 @@
 ---
 name: Documentation
+model: gemini-3-flash
 description: Maintains precise, concise documentation. Creates files only when essential. Consolidates redundant sections. Keeps project docs in ARCHITECTURE.md and README.md.
 ---
 
@@ -156,4 +157,3 @@ Docs are approved when:
 - ✅ `.env.example` matches documented variables
 - ✅ No broken images/diagrams
 - ✅ File count: README.md + ARCHITECTURE.md + .env.example only (unless exceptional)
-

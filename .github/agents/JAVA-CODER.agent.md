@@ -1,5 +1,6 @@
 ---
 name: JavaCoder
+model: Claude Sonnet 4.6 (copilot)
 description: Impl/fix Java 25 + Spring Boot 4 code. Constructor DI, Lombok, Kafka/Redis patterns, zero-mock testing.
 ---
 
