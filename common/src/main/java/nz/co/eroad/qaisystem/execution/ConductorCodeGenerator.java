@@ -2,13 +2,11 @@ package nz.co.eroad.qaisystem.execution;
 
 import nz.co.eroad.qaisystem.agent.ConductorAgentRunner;
 import nz.co.eroad.qaisystem.model.BddScenario;
-import nz.co.eroad.qaisystem.service.RepoContextService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.Path;
 import java.util.stream.Collectors;
 
 /**
@@ -16,12 +14,12 @@ import java.util.stream.Collectors;
  * <b>Conductor</b> agent via {@link ConductorAgentRunner}.
  *
  * <p>This replaces the previous template-based API/UI/Mobile generators. No AI API is
- * called directly and no other agent is invoked — the Conductor agent runs inside the
- * cloned target repository working directory and reads that repository's own
- * {@code .github/agents/} instructions to produce idiomatic test code.
+ * called directly and no other agent is invoked — the Conductor agent runs inside an
+ * isolated pooled git worktree of the target repository (supplied by the agent runner's
+ * {@code WorkspacePool}) and reads that repository's own {@code .github/agents/}
+ * instructions to produce idiomatic test code.
  *
- * <p>Only created when {@code aiqa.github.enabled=true} (it needs {@link RepoContextService}
- * to resolve the cloned repository path used as the subprocess working directory).
+ * <p>Only created when {@code aiqa.github.enabled=true}.
  */
 @Slf4j
 @Service
@@ -30,7 +28,6 @@ import java.util.stream.Collectors;
 public class ConductorCodeGenerator {
 
     private final ConductorAgentRunner conductorAgentRunner;
-    private final RepoContextService   repoContextService;
 
     /**
      * Delegates generation of one test-code file to the Conductor agent.
@@ -41,13 +38,12 @@ public class ConductorCodeGenerator {
      * @return the generated test-code source produced by the Conductor agent
      */
     public String generate(BddScenario.Scenario scenario, BddScenario parent, String testType) {
-        Path workingDir = repoContextService.getLocalRepoPath();
-        log.info("[ConductorCodeGenerator] Delegating {} test generation to Conductor for PR '{}' scenario='{}' workingDir='{}'",
-                testType, parent.getPrId(), scenario.getTitle(), workingDir);
+        log.info("[ConductorCodeGenerator] Delegating {} test generation to Conductor for PR '{}' scenario='{}'",
+                testType, parent.getPrId(), scenario.getTitle());
 
         String prompt = buildPrompt(scenario, parent, testType);
         try {
-            String code = conductorAgentRunner.delegateToConductor(prompt, workingDir);
+            String code = conductorAgentRunner.delegateToConductor(prompt);
             log.info("[ConductorCodeGenerator] Conductor returned {} chars of {} test code for PR '{}'",
                     code == null ? 0 : code.length(), testType, parent.getPrId());
             return code;

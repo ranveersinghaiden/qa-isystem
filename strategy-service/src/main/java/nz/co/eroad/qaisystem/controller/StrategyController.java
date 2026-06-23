@@ -102,15 +102,15 @@ public class StrategyController {
     public ResponseEntity<Map<String, Object>> approveBdd(
             @RequestBody BddScenario bdd, HttpServletRequest request) {
         if (!isAuthorized(request)) return unauthorized();
-        log.info("[StrategyController] BDD approved for PR '{}' → publishing to TestScriptsQueue",
+        log.info("[StrategyController] BDD approved for PR '{}' → fanning out scenarios to TestScriptsQueue",
                 bdd.getPrId());
-        testScriptsProducer.publishBddScenario(bdd);
+        int published = testScriptsProducer.publishScenarioRequests(bdd);
         return ResponseEntity.accepted().body(Map.of(
                 "status",     "CODEGEN_TRIGGERED",
                 "prId",       bdd.getPrId(),
                 "scenarioId", bdd.getScenarioId(),
-                "scenarios",  bdd.getScenarios() != null ? bdd.getScenarios().size() : 0,
-                "message",    "BDD approved — code generation pipeline started"));
+                "scenarios",  published,
+                "message",    "BDD approved — " + published + " scenario request(s) published for parallel code generation"));
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

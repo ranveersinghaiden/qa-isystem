@@ -120,12 +120,11 @@ public class BddGenerator {
      * {@code copilot} subprocess running in the cloned target repo directory.
      */
     private String generateGherkin(TestStrategy strategy, ImpactEnvelope envelope) {
-        Path workingDir = repoContextService.getLocalRepoPath();
         var conductorPrompt = buildConductorPrompt(strategy, envelope);
-        log.info("[BddGenerator] Delegating BDD generation to Conductor for PR '{}' workingDir='{}' (prompt {} chars)",
-                envelope.getPrId(), workingDir, conductorPrompt.length());
+        log.info("[BddGenerator] Delegating BDD generation to Conductor for PR '{}' (prompt {} chars)",
+                envelope.getPrId(), conductorPrompt.length());
         try {
-            var gherkin = conductorAgentRunner.delegateToConductor(conductorPrompt, workingDir);
+            var gherkin = conductorAgentRunner.delegateToConductor(conductorPrompt);
             log.info("[BddGenerator] Conductor produced {} chars of Gherkin for PR '{}'",
                     gherkin == null ? 0 : gherkin.length(), envelope.getPrId());
             return gherkin;

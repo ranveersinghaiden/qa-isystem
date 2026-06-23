@@ -1,0 +1,45 @@
+# ── KEDA ScaledObject — codegen-service ─────────────────────────────────────
+#
+# Scales codegen-service replicas based on consumer-group lag on
+# TestScriptsQueue (24 partitions → max 24 useful consumer instances).
+#
+# Each message = one fanned-out scenario (strategy-service fans a PR with N
+# scenarios into N messages, keyed by scenarioId for maximum partition spread).
+#
+# Scale-out rule:  when lag/replica > lagThreshold (5) → add replica
+# Wake from zero:  when total lag > activationLagThreshold (1) → min 1 replica
+#
+# Throughput formula (per instance AIQA_AGENT_MAX_CONCURRENT=3, codegen latency ~1.5 min):
+#   ≈ 3 / 1.5 = 2 scenarios/min/replica
+#   With 24 replicas: ≈ 48 scenarios/min  (vs ~0.3 scenarios/min previously)
+#
+# Apply:
+#   kubectl apply -f k8s/keda/codegen-scaledobject.yaml -n qa-isystem
+# ────────────────────────────────────────────────────────────────────────────
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: codegen-service-scaler
+  namespace: qa-isystem
+spec:
+  scaleTargetRef:
+    name: codegen-service
+
+  # Replica bounds
+  minReplicaCount: 1    # keep 1 warm replica; set to 0 to allow scale-to-zero
+  maxReplicaCount: 24   # capped at TestScriptsQueue partition count (24)
+
+  pollingInterval: 15
+  cooldownPeriod: 120
+
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: kafka:9092
+        consumerGroup: codegen-service-group
+        topic: TestScriptsQueue
+        lagThreshold: "5"
+        activationLagThreshold: "1"
+        offsetResetPolicy: latest
+      authenticationRef:
+        name: kafka-trigger-auth

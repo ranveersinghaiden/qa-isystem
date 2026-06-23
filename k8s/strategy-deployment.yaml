@@ -1,0 +1,143 @@
+# ── strategy-service Kubernetes Deployment ──────────────────────────────────
+#
+# KEDA scales replica count on ImpactResultsQueue consumer-group lag.
+# See k8s/keda/strategy-scaledobject.yaml.
+#
+# Required secrets (create before applying):
+#   kubectl create secret generic qa-isystem-env \
+#     --from-env-file=.env -n qa-isystem
+#
+# Required ConfigMap (or inline env overrides below):
+#   KAFKA_BOOTSTRAP_SERVERS, REDIS_HOST, REDIS_PORT, TARGET_REPO_URL, etc.
+#
+# Apply:
+#   kubectl apply -f k8s/strategy-deployment.yaml -n qa-isystem
+# ────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: strategy-service
+  namespace: qa-isystem
+  labels:
+    app: strategy-service
+    component: qa-pipeline
+spec:
+  # minReplicas driven by KEDA ScaledObject — this value is the initial target.
+  # KEDA will override it once the ScaledObject is active.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: strategy-service
+  template:
+    metadata:
+      labels:
+        app: strategy-service
+        component: qa-pipeline
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8082"
+    spec:
+      terminationGracePeriodSeconds: 120   # allow in-flight BDD agent to finish
+      containers:
+        - name: strategy-service
+          image: ghcr.io/${GHCR_ORG}/qa-isystem/strategy-service:${IMAGE_TAG:-latest}
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8082
+          env:
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:9092"
+            - name: REDIS_HOST
+              value: "redis"
+            - name: REDIS_PORT
+              value: "6379"
+            # ── Scaling knobs ────────────────────────────────────────────────
+            # Each replica runs this many concurrent copilot agents.
+            # Total throughput = replicas × AIQA_AGENT_MAX_CONCURRENT / agent_latency.
+            # Size to: floor(RAM_GB / 0.5) and ≤ cores × 1.5
+            - name: AIQA_AGENT_MAX_CONCURRENT
+              value: "3"
+            - name: AIQA_AGENT_ISOLATED_WORKSPACES
+              value: "true"
+            # ── Kafka poll safety ─────────────────────────────────────────────
+            # 1 record per poll: a long BDD agent run never breaches max.poll.interval.
+            - name: KAFKA_MAX_POLL_RECORDS
+              value: "1"
+            - name: KAFKA_MAX_POLL_INTERVAL_MS
+              value: "900000"
+            # ── Secrets (loaded from qa-isystem-env secret) ─────────────────
+            - name: TARGET_REPO_URL
+              valueFrom:
+                secretKeyRef:
+                  name: qa-isystem-env
+                  key: TARGET_REPO_URL
+                  optional: true
+            - name: TARGET_REPO_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: qa-isystem-env
+                  key: TARGET_REPO_TOKEN
+                  optional: true
+            - name: TARGET_REPO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: qa-isystem-env
+                  key: TARGET_REPO_USERNAME
+                  optional: true
+            - name: GITHUB_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: qa-isystem-env
+                  key: GITHUB_WEBHOOK_SECRET
+                  optional: true
+            - name: AIQA_ADMIN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: qa-isystem-env
+                  key: AIQA_ADMIN_KEY
+                  optional: true
+            - name: GITHUB_WEBHOOK_REQUIRE_SECRET
+              value: "true"
+          resources:
+            requests:
+              # Each copilot subprocess is ~300–500 MB RSS + JVM overhead.
+              # 3 concurrent agents × 500 MB + ~512 MB JVM ≈ 2 GB.
+              memory: "2Gi"
+              cpu: "500m"
+            limits:
+              memory: "3Gi"
+              cpu: "2000m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: strategy-service
+  namespace: qa-isystem
+  labels:
+    app: strategy-service
+spec:
+  selector:
+    app: strategy-service
+  ports:
+    - name: http
+      port: 8082
+      targetPort: 8082
+  type: ClusterIP

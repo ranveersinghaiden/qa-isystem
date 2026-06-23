@@ -114,6 +114,11 @@ services:
       # AI provider — Copilot CLI only; gh auth must be configured on the host
       GH_CLI_PATH: ${GH_CLI_PATH:-gh}
       COPILOT_CLI_MODEL: ${COPILOT_CLI_MODEL:-claude-sonnet-4-5}
+      # ── Agent scaling: vertical scale (increase on larger hosts) ───────────
+      # Each copilot agent ≈ 300–500 MB RSS. Safe ceiling: floor(RAM_GB / 0.5).
+      # Horizontal scale via: docker compose up -d --scale strategy-service=N
+      AIQA_AGENT_MAX_CONCURRENT: ${STRATEGY_AGENT_MAX_CONCURRENT:-3}
+      AIQA_AGENT_ISOLATED_WORKSPACES: "true"
     volumes:
       # Persist the cloned test repo between container restarts to avoid re-cloning every time
       - qa-repo-cache:/tmp/qa-context-repo
@@ -145,6 +150,11 @@ services:
       TARGET_REPO_USERNAME: ${TARGET_REPO_USERNAME:-}
       GH_CLI_PATH: ${GH_CLI_PATH:-gh}
       COPILOT_CLI_MODEL: ${COPILOT_CLI_MODEL:-claude-sonnet-4-5}
+      # ── Agent scaling ─────────────────────────────────────────────────────
+      # Horizontal: docker compose up -d --scale codegen-service=N
+      # (N × AIQA_AGENT_MAX_CONCURRENT must not exceed TestScriptsQueue partitions=24)
+      AIQA_AGENT_MAX_CONCURRENT: ${CODEGEN_AGENT_MAX_CONCURRENT:-3}
+      AIQA_AGENT_ISOLATED_WORKSPACES: "true"
     volumes:
       - qa-codegen-repo-cache:/tmp/qa-context-repo-codegen
     healthcheck:

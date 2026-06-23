@@ -5,6 +5,7 @@ import nz.co.eroad.qaisystem.model.ChatMessage;
 import nz.co.eroad.qaisystem.model.ConversationHistory;
 import nz.co.eroad.qaisystem.model.TestResult;
 import nz.co.eroad.qaisystem.model.TestScript;
+import nz.co.eroad.qaisystem.model.TestScriptRequest;
 import nz.co.eroad.qaisystem.service.ConversationStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +55,19 @@ public class CodegenService {
                 .attemptNumber(1)
                 .output(buildAggregateOutput(results))
                 .build();
+    }
+
+    /** Processes a single fanned-out scenario ({@link TestScriptRequest}, monolith mode). */
+    public TestResult generateAndExecuteOne(TestScriptRequest req) {
+        BddScenario parent = BddScenario.builder()
+                .prId(req.getPrId())
+                .prTitle(req.getPrTitle())
+                .scenarioId(req.getBddScenarioId())
+                .strategyId(req.getStrategyId())
+                .prContext(req.getPrContext())
+                .build();
+        TestScript script = generateScript(req.getScenario(), parent);
+        return stabilizationLoop.execute(script);
     }
 
     private TestScript generateScript(BddScenario.Scenario scenario, BddScenario parent) {

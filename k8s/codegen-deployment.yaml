@@ -1,0 +1,121 @@
+# ── codegen-service Kubernetes Deployment ───────────────────────────────────
+#
+# KEDA scales replica count on TestScriptsQueue consumer-group lag.
+# See k8s/keda/codegen-scaledobject.yaml.
+#
+# Each message = one BDD scenario; scenarios are fanned out by strategy-service
+# so this service processes them in parallel across threads and replicas.
+#
+# Apply:
+#   kubectl apply -f k8s/codegen-deployment.yaml -n qa-isystem
+# ────────────────────────────────────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: codegen-service
+  namespace: qa-isystem
+  labels:
+    app: codegen-service
+    component: qa-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: codegen-service
+  template:
+    metadata:
+      labels:
+        app: codegen-service
+        component: qa-pipeline
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8083"
+    spec:
+      terminationGracePeriodSeconds: 120   # allow in-flight Conductor run to finish
+      containers:
+        - name: codegen-service
+          image: ghcr.io/${GHCR_ORG}/qa-isystem/codegen-service:${IMAGE_TAG:-latest}
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8083
+          env:
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:9092"
+            - name: REDIS_HOST
+              value: "redis"
+            - name: REDIS_PORT
+              value: "6379"
+            # ── Scaling knobs ────────────────────────────────────────────────
+            # Each replica runs this many concurrent copilot agents.
+            # With 24 TestScriptsQueue partitions, up to 24 consumer threads
+            # across all replicas can process scenarios simultaneously.
+            - name: AIQA_AGENT_MAX_CONCURRENT
+              value: "3"
+            - name: AIQA_AGENT_ISOLATED_WORKSPACES
+              value: "true"
+            # ── Kafka poll safety ─────────────────────────────────────────────
+            - name: KAFKA_MAX_POLL_RECORDS
+              value: "1"
+            - name: KAFKA_MAX_POLL_INTERVAL_MS
+              value: "900000"
+            # ── Secrets ───────────────────────────────────────────────────────
+            - name: TARGET_REPO_URL
+              valueFrom:
+                secretKeyRef:
+                  name: qa-isystem-env
+                  key: TARGET_REPO_URL
+                  optional: true
+            - name: TARGET_REPO_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: qa-isystem-env
+                  key: TARGET_REPO_TOKEN
+                  optional: true
+            - name: TARGET_REPO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: qa-isystem-env
+                  key: TARGET_REPO_USERNAME
+                  optional: true
+          resources:
+            requests:
+              # 3 concurrent agents × 500 MB + ~512 MB JVM ≈ 2 GB.
+              memory: "2Gi"
+              cpu: "500m"
+            limits:
+              memory: "3Gi"
+              cpu: "2000m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: codegen-service
+  namespace: qa-isystem
+  labels:
+    app: codegen-service
+spec:
+  selector:
+    app: codegen-service
+  ports:
+    - name: http
+      port: 8083
+      targetPort: 8083
+  type: ClusterIP

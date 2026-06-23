@@ -45,7 +45,7 @@ public class ImpactResultsConsumer {
     @KafkaListener(
             topics      = "${kafka.topics.impact-results}",
             groupId     = "${spring.kafka.consumer.group-id}",
-            concurrency = "3"
+            concurrency = "${aiqa.agent.max-concurrent:3}"
     )
     public void consume(ConsumerRecord<String, String> record, Acknowledgment ack) {
         log.info("[ImpactResultsConsumer] key='{}' partition={} offset={}",

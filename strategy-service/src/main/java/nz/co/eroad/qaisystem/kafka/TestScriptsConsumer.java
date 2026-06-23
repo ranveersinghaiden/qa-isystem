@@ -1,8 +1,8 @@
 package nz.co.eroad.qaisystem.kafka;
 
 import nz.co.eroad.qaisystem.execution.CodegenService;
-import nz.co.eroad.qaisystem.model.BddScenario;
 import nz.co.eroad.qaisystem.model.TestResult;
+import nz.co.eroad.qaisystem.model.TestScriptRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,31 +29,30 @@ public class TestScriptsConsumer {
     @KafkaListener(
             topics      = "${kafka.topics.test-scripts}",
             groupId     = "${spring.kafka.consumer.group-id}",
-            concurrency = "3"
+            concurrency = "${aiqa.agent.max-concurrent:3}"
     )
     public void consume(ConsumerRecord<String, String> record,
                         Acknowledgment acknowledgment) {
 
-        log.info("[TestScriptsConsumer] Received BDD record key='{}' partition={} offset={}",
+        log.info("[TestScriptsConsumer] Received scenario request key='{}' partition={} offset={}",
                 record.key(), record.partition(), record.offset());
 
         try {
-            BddScenario scenario =
-                    objectMapper.readValue(record.value(), BddScenario.class);
+            TestScriptRequest req =
+                    objectMapper.readValue(record.value(), TestScriptRequest.class);
 
-            log.info("[TestScriptsConsumer] Routing BDD scenario '{}' to Codegen Service",
-                    scenario.getScenarioId());
+            log.info("[TestScriptsConsumer] Routing scenario '{}' (PR '{}') to Codegen Service",
+                    req.getScenarioId(), req.getPrId());
 
-            // Route to Execution Layer
-            TestResult result = codegenService.generateAndExecute(scenario);
+            TestResult result = codegenService.generateAndExecuteOne(req);
 
-            log.info("[TestScriptsConsumer] Execution complete for '{}' — passed={}",
-                    scenario.getScenarioId(), result.isPassed());
+            log.info("[TestScriptsConsumer] Scenario '{}' complete for PR '{}' — passed={}",
+                    req.getScenarioId(), req.getPrId(), result != null && result.isPassed());
 
             acknowledgment.acknowledge();
 
         } catch (Exception e) {
-            log.error("[TestScriptsConsumer] Error processing BDD record key='{}': {}",
+            log.error("[TestScriptsConsumer] Error processing scenario record key='{}': {}",
                     record.key(), e.getMessage(), e);
             acknowledgment.acknowledge();
         }

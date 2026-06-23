@@ -1,0 +1,25 @@
+# ── KEDA TriggerAuthentication — Kafka bootstrap servers ────────────────────
+#
+# Referenced by both strategy-service and codegen-service ScaledObjects.
+# Assumes the Kafka bootstrap address is stored in a Secret named
+# "kafka-connection" with key "bootstrapServers".
+#
+# Create the secret:
+#   kubectl create secret generic kafka-connection \
+#     --from-literal=bootstrapServers=kafka:9092 \
+#     -n qa-isystem
+#
+# Prerequisites:
+#   helm repo add kedacore https://kedacore.github.io/charts
+#   helm install keda kedacore/keda --namespace keda --create-namespace
+# ────────────────────────────────────────────────────────────────────────────
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: kafka-trigger-auth
+  namespace: qa-isystem
+spec:
+  secretTargetRef:
+    - parameter: bootstrapServers
+      name: kafka-connection
+      key: bootstrapServers

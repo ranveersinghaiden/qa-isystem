@@ -5,6 +5,7 @@ import nz.co.eroad.qaisystem.model.ChatMessage;
 import nz.co.eroad.qaisystem.model.ConversationHistory;
 import nz.co.eroad.qaisystem.model.TestResult;
 import nz.co.eroad.qaisystem.model.TestScript;
+import nz.co.eroad.qaisystem.model.TestScriptRequest;
 import nz.co.eroad.qaisystem.service.ConversationStore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,12 +17,13 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Orchestrates test-code generation for each BDD scenario by delegating to the
- * repository's Conductor agent (via {@link ConductorCodeGenerator}), then hands the
- * resulting script to the {@link StabilizationLoop} for execution.
+ * Generates and stabilises the test code for a <b>single</b> BDD scenario delivered as a
+ * {@link TestScriptRequest}. Scenarios are fanned out by strategy-service so they can be processed
+ * in parallel across consumer threads and horizontally-scaled instances.
  *
- * <p>No template generation and no AI API call happen here — the Conductor agent
- * gathers any repository context it needs by itself.
+ * <p>Generation is delegated to the repository's Conductor agent (via {@link ConductorCodeGenerator});
+ * no template generation and no AI API call happen here. A {@link CodegenProgressTracker} provides
+ * idempotency (dedup on redelivery) and per-PR completion reporting.
  */
 @Slf4j
 @Service
@@ -30,38 +32,55 @@ public class CodegenService {
 
     private static final String DEFAULT_PACKAGE_PREFIX = "nz.co.eroad.qaisystem.generated.tests.";
 
-    private final ConductorCodeGenerator conductorCodeGenerator;
-    private final StabilizationLoop      stabilizationLoop;
-    private final ConversationStore      conversationStore;
+    private final ConductorCodeGenerator  conductorCodeGenerator;
+    private final StabilizationLoop       stabilizationLoop;
+    private final ConversationStore       conversationStore;
+    private final CodegenProgressTracker  progressTracker;
 
-    public TestResult generateAndExecute(BddScenario scenario) {
-        log.info("[CodegenService] Processing scenario '{}' for PR '{}' — delegating test generation to Conductor agent",
-                scenario.getScenarioId(), scenario.getPrId());
+    /**
+     * Processes one fanned-out scenario: dedup → Conductor generation → stabilisation → test PR,
+     * then records PR-level completion.
+     *
+     * @return the {@link TestResult}, or {@code null} when the scenario was a duplicate and skipped
+     */
+    public TestResult generateAndExecuteOne(TestScriptRequest req) {
+        String scenarioId = req.getScenarioId();
 
-        List<TestResult> results = new ArrayList<>();
-        for (BddScenario.Scenario s : scenario.getScenarios()) {
-            TestScript script = generateScript(s, scenario);
-            results.add(stabilizationLoop.execute(script));
+        if (!progressTracker.claimScenario(scenarioId)) {
+            log.info("[CodegenService] Scenario '{}' (PR '{}') already processed — skipping duplicate",
+                    scenarioId, req.getPrId());
+            return null;
         }
 
-        boolean allPassed = results.stream().allMatch(TestResult::isPassed);
-        return TestResult.builder()
-                .resultId(UUID.randomUUID().toString())
-                .scriptId(scenario.getScenarioId())
-                .prId(scenario.getPrId())
-                .passed(allPassed)
-                .attemptNumber(1)
-                .output(buildAggregateOutput(results))
+        BddScenario.Scenario scenario = req.getScenario();
+        String type = scenario.getTestType() != null ? scenario.getTestType().toUpperCase() : "API";
+
+        log.info("[CodegenService] Generating {} test for PR '{}' scenario {}/{} '{}' — delegating to Conductor",
+                type, req.getPrId(), req.getScenarioIndex() + 1, req.getScenarioCount(), scenario.getTitle());
+
+        BddScenario parent = BddScenario.builder()
+                .prId(req.getPrId())
+                .prTitle(req.getPrTitle())
+                .scenarioId(req.getBddScenarioId())
+                .strategyId(req.getStrategyId())
+                .prContext(req.getPrContext())
                 .build();
+
+        TestScript script = generateScript(scenario, parent, type);
+        TestResult result = stabilizationLoop.execute(script);
+
+        int remaining = progressTracker.completeAndRemaining(req.getPrId(), req.getScenarioCount());
+        if (remaining <= 0) {
+            log.info("[CodegenService] PR '{}' codegen COMPLETE — all {} scenario(s) processed",
+                    req.getPrId(), req.getScenarioCount());
+        } else {
+            log.info("[CodegenService] PR '{}' progress — {} of {} scenario(s) remaining",
+                    req.getPrId(), remaining, req.getScenarioCount());
+        }
+        return result;
     }
 
-    private TestScript generateScript(BddScenario.Scenario scenario, BddScenario parent) {
-        String type = scenario.getTestType() != null
-                ? scenario.getTestType().toUpperCase() : "API";
-
-        log.debug("[CodegenService] Generating {} test for '{}' via Conductor agent",
-                type, scenario.getTitle());
-
+    private TestScript generateScript(BddScenario.Scenario scenario, BddScenario parent, String type) {
         String content = conductorCodeGenerator.generate(scenario, parent, type);
 
         // Save initial conversation so feedback-service has history context for test rejections
@@ -84,6 +103,7 @@ public class CodegenService {
                 .scriptId(UUID.randomUUID().toString())
                 .bddScenarioId(parent.getScenarioId())
                 .prId(parent.getPrId())
+                .prTitle(parent.getPrTitle())
                 .testType(TestScript.TestType.valueOf(type))
                 .scriptContent(content)
                 .fileName(toFileName(scenario.getTitle(), type))
@@ -109,9 +129,5 @@ public class CodegenService {
             default       -> List.of("restassured", "junit5", "assertj");
         };
     }
-
-    private String buildAggregateOutput(List<TestResult> results) {
-        long passed = results.stream().filter(TestResult::isPassed).count();
-        return String.format("%d/%d scenarios passed", passed, results.size());
-    }
 }
+

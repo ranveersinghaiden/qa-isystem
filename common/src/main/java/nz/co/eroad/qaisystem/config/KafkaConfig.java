@@ -42,6 +42,21 @@ public class KafkaConfig {
     @Value("${spring.kafka.listener.concurrency:3}")
     private int concurrency;
 
+    /**
+     * One record per poll keeps a long-running (1.5–3.5 min) agent call from blocking a whole
+     * batch and breaching {@code max.poll.interval.ms}, which would trigger consumer-group
+     * rebalances and duplicate processing.
+     */
+    @Value("${spring.kafka.consumer.max-poll-records:1}")
+    private int maxPollRecords;
+
+    /**
+     * Must exceed the worst-case agent run (timeout + stabilisation). Default 15 min &gt;
+     * the 5-min agent timeout so a slow Conductor run never causes a rebalance.
+     */
+    @Value("${spring.kafka.consumer.max-poll-interval-ms:900000}")
+    private int maxPollIntervalMs;
+
     @Value("${kafka.topics.feature-updates:FeatureUpdatesQueue}")
     private String featureUpdatesTopic;
 
@@ -57,6 +72,18 @@ public class KafkaConfig {
     @Value("${kafka.topics.feedback:FeedbackQueue}")
     private String feedbackTopic;
 
+    // ── Partition counts (sized for horizontal consumer scale-out) ────────────
+    @Value("${kafka.partitions.feature-updates:6}")
+    private int featureUpdatesPartitions;
+    @Value("${kafka.partitions.impact-results:12}")
+    private int impactResultsPartitions;
+    @Value("${kafka.partitions.test-scripts:24}")
+    private int testScriptsPartitions;
+    @Value("${kafka.partitions.test-results:6}")
+    private int testResultsPartitions;
+    @Value("${kafka.partitions.feedback:6}")
+    private int feedbackPartitions;
+
     // ── Consumer ─────────────────────────────────────────────────────────────
 
     @Bean
@@ -66,6 +93,8 @@ public class KafkaConfig {
         config.put(ConsumerConfig.GROUP_ID_CONFIG,           groupId);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,  autoOffsetReset);
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        config.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG,   maxPollRecords);
+        config.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollIntervalMs);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
                 StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
@@ -113,22 +142,22 @@ public class KafkaConfig {
     // ── Topic declarations ────────────────────────────────────────────────────
 
     @Bean public NewTopic featureUpdatesTopic() {
-        return TopicBuilder.name(featureUpdatesTopic).partitions(3).replicas(1).build();
+        return TopicBuilder.name(featureUpdatesTopic).partitions(featureUpdatesPartitions).replicas(1).build();
     }
 
     @Bean public NewTopic impactResultsTopic() {
-        return TopicBuilder.name(impactResultsTopic).partitions(3).replicas(1).build();
+        return TopicBuilder.name(impactResultsTopic).partitions(impactResultsPartitions).replicas(1).build();
     }
 
     @Bean public NewTopic testScriptsTopic() {
-        return TopicBuilder.name(testScriptsTopic).partitions(3).replicas(1).build();
+        return TopicBuilder.name(testScriptsTopic).partitions(testScriptsPartitions).replicas(1).build();
     }
 
     @Bean public NewTopic testResultsTopic() {
-        return TopicBuilder.name(testResultsTopic).partitions(3).replicas(1).build();
+        return TopicBuilder.name(testResultsTopic).partitions(testResultsPartitions).replicas(1).build();
     }
 
     @Bean public NewTopic feedbackTopic() {
-        return TopicBuilder.name(feedbackTopic).partitions(3).replicas(1).build();
+        return TopicBuilder.name(feedbackTopic).partitions(feedbackPartitions).replicas(1).build();
     }
 }

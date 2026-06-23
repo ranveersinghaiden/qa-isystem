@@ -69,9 +69,8 @@ public class PrFeedbackService {
      * interruption or subprocess failure so callers can fall back to template output.
      */
     private String delegateToConductor(String prompt) {
-        java.nio.file.Path workingDir = repoContextService.getLocalRepoPath();
         try {
-            return conductorAgentRunner.delegateToConductor(prompt, workingDir);
+            return conductorAgentRunner.delegateToConductor(prompt);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.warn("[PrFeedbackService] Interrupted during Conductor delegation: {}", e.getMessage());

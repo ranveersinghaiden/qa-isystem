@@ -49,6 +49,12 @@ aiqa:
     appium-url: ${APPIUM_URL:http://localhost:4723/wd/hub}
   github:
     enabled: true                 # enables GitHubService, RepoContextService
+  # ── Agent scaling (per-instance copilot concurrency + isolated worktrees) ────
+  agent:
+    max-concurrent: ${AIQA_AGENT_MAX_CONCURRENT:3}           # also Kafka listener concurrency
+    workspace-pool-size: ${AIQA_AGENT_WORKSPACE_POOL_SIZE:0} # 0 = match max-concurrent
+    isolated-workspaces: ${AIQA_AGENT_ISOLATED_WORKSPACES:true}
+    workspace-lease-timeout-seconds: ${AIQA_AGENT_WS_LEASE_TIMEOUT:600}
   codegen:
     enabled: false
   monitor:
@@ -180,7 +186,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
   endpoint:
     health:
       show-details: never

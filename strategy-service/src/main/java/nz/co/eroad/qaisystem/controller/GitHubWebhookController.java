@@ -111,7 +111,7 @@ public class GitHubWebhookController {
 
         if (record.getType() == PrType.BDD) {
             BddScenario scenario = record.getBddScenario();
-            testScriptsProducer.publishBddScenario(scenario);
+            testScriptsProducer.publishScenarioRequests(scenario);
             return ResponseEntity.ok(Map.of(
                     "status",       "CODEGEN_TRIGGERED",
                     "sourcePrId",   scenario.getPrId(),

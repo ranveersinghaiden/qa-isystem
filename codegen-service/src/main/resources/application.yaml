@@ -10,6 +10,10 @@ spring:
       group-id: codegen-service-group
       auto-offset-reset: earliest
       enable-auto-commit: false
+      # One scenario per poll: a long Conductor run never blocks a batch or breaches the
+      # poll interval (which would cause rebalances + duplicate processing).
+      max-poll-records: ${KAFKA_MAX_POLL_RECORDS:1}
+      max-poll-interval-ms: ${KAFKA_MAX_POLL_INTERVAL_MS:900000}
   data:
     redis:
       host: ${REDIS_HOST:localhost}   # default: local Docker Redis; override for production
@@ -20,6 +24,9 @@ kafka:
     test-scripts: TestScriptsQueue
     test-results: TestResultsQueue
     feedback: FeedbackQueue
+  # Partition counts must be >= the max number of parallel consumers (instances x concurrency).
+  partitions:
+    test-scripts: ${KAFKA_PARTITIONS_TEST_SCRIPTS:24}
 
 aiqa:
   base-url: ${API_BASE_URL:http://localhost:8080}
@@ -32,6 +39,12 @@ aiqa:
     appium-url: ${APPIUM_URL:http://localhost:4723/wd/hub}
   github:
     enabled: true                 # enables GitHubService, RepoContextService
+  # ── Agent scaling (per-instance copilot concurrency + isolated worktrees) ────
+  agent:
+    max-concurrent: ${AIQA_AGENT_MAX_CONCURRENT:3}       # also the Kafka listener concurrency
+    workspace-pool-size: ${AIQA_AGENT_WORKSPACE_POOL_SIZE:0}   # 0 = match max-concurrent
+    isolated-workspaces: ${AIQA_AGENT_ISOLATED_WORKSPACES:true}
+    workspace-lease-timeout-seconds: ${AIQA_AGENT_WS_LEASE_TIMEOUT:600}
   stabilization:
     max-retries: 3
     retry-delay-ms: 2000
@@ -78,7 +91,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
   endpoint:
     health:
       show-details: never
