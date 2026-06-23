@@ -780,8 +780,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1781836198.2806907,
-    "ast_hash": "ecc915aaa3eb45caa0debb9c10361fc7",
+    "mtime": 1782164950.4895885,
+    "ast_hash": "690196fa4d9a5c3c17dbd8a2730e0c79",
     "semantic_hash": ""
   },
   "codegen-service/README.md": {
@@ -917,6 +917,11 @@
   "scripts/create_test_payloads.py": {
     "mtime": 1781833996.6182892,
     "ast_hash": "965d777a6488ca34ebae29199c4182f3",
+    "semantic_hash": ""
+  },
+  "scripts/kill-services.sh": {
+    "mtime": 1782171720.2236984,
+    "ast_hash": "14022f70a01a7cb1c97dd387f9421eca",
     "semantic_hash": ""
   }
 }

@@ -42,7 +42,10 @@ aiqa:
     fallback-local-path: ""
     fallback-pull: false
     auth:
-      type: none
+      # Defaults to 'token' so TARGET_REPO_TOKEN is embedded in the HTTPS clone URL.
+      # Falls back to the plain URL automatically when the token is blank
+      # (public repos / SSH). Override with TARGET_REPO_AUTH_TYPE=none|ssh if needed.
+      type: ${TARGET_REPO_AUTH_TYPE:token}
       token: ${TARGET_REPO_TOKEN:}
       username: ${TARGET_REPO_USERNAME:}
     modules:
