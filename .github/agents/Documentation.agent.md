@@ -1,6 +1,6 @@
 ---
 name: Documentation
-model: gemini-3-flash
+model: Gemini 3 Flash (Preview) (copilot)
 description: Maintains precise, concise documentation. Creates files only when essential. Consolidates redundant sections. Keeps project docs in ARCHITECTURE.md and README.md.
 ---
 
