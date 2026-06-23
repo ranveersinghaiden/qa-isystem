@@ -6,7 +6,6 @@ import nz.co.eroad.qaisystem.model.ConversationHistory;
 import nz.co.eroad.qaisystem.model.TestResult;
 import nz.co.eroad.qaisystem.model.TestScript;
 import nz.co.eroad.qaisystem.service.ConversationStore;
-import nz.co.eroad.qaisystem.service.RepoContextService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,29 +16,27 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Routes BDD scenarios to the appropriate test generator (API / UI / Mobile),
- * enriched with context from the target test monorepo, then hands scripts to
- * the StabilizationLoop for execution.
+ * Orchestrates test-code generation for each BDD scenario by delegating to the
+ * repository's Conductor agent (via {@link ConductorCodeGenerator}), then hands the
+ * resulting script to the {@link StabilizationLoop} for execution.
+ *
+ * <p>No template generation and no AI API call happen here — the Conductor agent
+ * gathers any repository context it needs by itself.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CodegenService {
 
-    private final ApiTestRunner      apiTestRunner;
-    private final UITestRunner       uiTestRunner;
-    private final MobileTestRunner   mobileTestRunner;
-    private final StabilizationLoop  stabilizationLoop;
-    private final RepoContextService repoContextService;
-    private final ConversationStore  conversationStore;
+    private static final String DEFAULT_PACKAGE_PREFIX = "nz.co.eroad.qaisystem.generated.tests.";
+
+    private final ConductorCodeGenerator conductorCodeGenerator;
+    private final StabilizationLoop      stabilizationLoop;
+    private final ConversationStore      conversationStore;
 
     public TestResult generateAndExecute(BddScenario scenario) {
-        log.info("[CodegenService] Processing scenario '{}' for PR '{}' " +
-                "(repoContext API={} UI={} MOBILE={})",
-                scenario.getScenarioId(), scenario.getPrId(),
-                repoContextService.getContext("API").isContextAvailable(),
-                repoContextService.getContext("UI").isContextAvailable(),
-                repoContextService.getContext("MOBILE").isContextAvailable());
+        log.info("[CodegenService] Processing scenario '{}' for PR '{}' — delegating test generation to Conductor agent",
+                scenario.getScenarioId(), scenario.getPrId());
 
         List<TestResult> results = new ArrayList<>();
         for (BddScenario.Scenario s : scenario.getScenarios()) {
@@ -62,23 +59,10 @@ public class CodegenService {
         String type = scenario.getTestType() != null
                 ? scenario.getTestType().toUpperCase() : "API";
 
-        RepoContext context = repoContextService.getContext(type);
+        log.debug("[CodegenService] Generating {} test for '{}' via Conductor agent",
+                type, scenario.getTitle());
 
-        if (!context.isContextAvailable()) {
-            log.warn("[CodegenService] No in-service repo context for test type '{}' " +
-                    "(module scan disabled or repo unavailable) — generating with built-in " +
-                    "template defaults. Scenario: '{}'", type, scenario.getTitle());
-        }
-
-        log.debug("[CodegenService] Generating {} test for '{}' context={} conductorAgent={} agentInstructions={}",
-                type, scenario.getTitle(), context.isContextAvailable(),
-                context.hasConductorAgent(), context.hasAgentInstructions());
-
-        String content = switch (type) {
-            case "UI"     -> uiTestRunner.generateCode(scenario, parent, context);
-            case "MOBILE" -> mobileTestRunner.generateCode(scenario, parent, context);
-            default       -> apiTestRunner.generateCode(scenario, parent, context);
-        };
+        String content = conductorCodeGenerator.generate(scenario, parent, type);
 
         // Save initial conversation so feedback-service has history context for test rejections
         if (content != null && !content.isBlank()) {
@@ -94,8 +78,7 @@ public class CodegenService {
             }
         }
 
-        String targetPackage = context.effectivePackage(
-                "nz.co.eroad.qaisystem.generated.tests." + type.toLowerCase());
+        String targetPackage = DEFAULT_PACKAGE_PREFIX + type.toLowerCase();
 
         return TestScript.builder()
                 .scriptId(UUID.randomUUID().toString())
@@ -103,7 +86,7 @@ public class CodegenService {
                 .prId(parent.getPrId())
                 .testType(TestScript.TestType.valueOf(type))
                 .scriptContent(content)
-                .fileName(toFileName(scenario.getTitle(), type, context))
+                .fileName(toFileName(scenario.getTitle(), type))
                 .targetPackage(targetPackage)
                 .dependencies(resolveDependencies(type))
                 .status(TestScript.ScriptStatus.GENERATED)
@@ -112,14 +95,11 @@ public class CodegenService {
                 .build();
     }
 
-    private String toFileName(String title, String type, RepoContext context) {
+    private String toFileName(String title, String type) {
         String safe = title.replaceAll("[^A-Za-z0-9]", "_")
                            .replaceAll("_+", "_")
                            .replaceAll("^_|_$", "");
-        String convention = context.getTestNamingConvention();
-        return convention != null && convention.startsWith("Test")
-                ? "Test" + safe + ".java"
-                : safe + type.charAt(0) + type.substring(1).toLowerCase() + "Test.java";
+        return safe + type.charAt(0) + type.substring(1).toLowerCase() + "Test.java";
     }
 
     private List<String> resolveDependencies(String type) {

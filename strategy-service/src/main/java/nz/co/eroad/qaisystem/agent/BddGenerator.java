@@ -27,12 +27,12 @@ import java.util.stream.Collectors;
  * <ol>
  *   <li><b>Cache mode</b> (fastest) — returns a previously generated response when a
  *       matching {@link PromptResponseCache.CacheKey} exists in Redis.</li>
- *   <li><b>Agent pipeline mode</b> (primary) — delegates to the local {@code copilot} CLI
- *       via {@link CopilotAgentClient}. Phase 1: Conductor produces a test plan. Phase 2:
- *       TestPlanner converts the plan into Gherkin. Each agent sees only its own workspace
- *       instructions — no manual file loading required.</li>
- *   <li><b>AI client fallback</b> — falls back to {@link AiClient} (GitHub Models API) if
- *       the agent pipeline raises an exception.</li>
+ *   <li><b>Conductor agent mode</b> (only generation path) — delegates to the local
+ *       {@code copilot} CLI via {@link ConductorAgentRunner}, which launches a monitored
+ *       subprocess that runs the repository's <b>Conductor</b> agent in the cloned target
+ *       repo directory. The Conductor reads its own {@code .github/agents/} instructions
+ *       and orchestrates any internal sub-delegation itself. No AI API is called directly
+ *       and no other agent is ever invoked.</li>
  * </ol>
  */
 @Slf4j
@@ -40,18 +40,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BddGenerator {
 
-    private static final String GENERATION_PREAMBLE =
-            "You are a QA test generation system. Apply the following project-specific " +
-            "conductor instructions strictly within the scope of generating BDD scenarios " +
-            "and test code. Do not deviate from test generation tasks.\n\n";
-
     private final TestPrService          testPrService;
-    private final AiClient               aiClient;
     private final RepoContextService     repoContextService;
     private final PromptResponseCache    cache;
     private final AiCostMonitor          monitor;
     private final ConversationStore      conversationStore;
-    private final CopilotAgentClient     copilotAgentClient;
+    private final ConductorAgentRunner   conductorAgentRunner;
 
     public BddScenario generate(TestStrategy strategy, ImpactEnvelope envelope) {
         log.info("[BddGenerator] Generating for strategy '{}' PR '{}'",
@@ -72,7 +66,7 @@ public class BddGenerator {
             scenarios = parseGherkinToScenarios(cached.get(), envelope);
 
         } else {
-            String gherkin = generateGherkin(strategy, envelope, context);
+            String gherkin = generateGherkin(strategy, envelope);
             if (gherkin == null || gherkin.isBlank()) {
                 monitor.recordAiFailure();
                 throw new IllegalStateException(
@@ -122,62 +116,28 @@ public class BddGenerator {
     // ─── Generation orchestration ──────────────────────────────────────────────
 
     /**
-     * Primary path: two-phase copilot agent pipeline.
-     * Fallback: {@link AiClient} single-shot call.
+     * Single generation path: delegate to the repository's Conductor agent via a monitored
+     * {@code copilot} subprocess running in the cloned target repo directory.
      */
-    private String generateGherkin(TestStrategy strategy, ImpactEnvelope envelope,
-                                   RepoContext context) {
+    private String generateGherkin(TestStrategy strategy, ImpactEnvelope envelope) {
+        Path workingDir = repoContextService.getLocalRepoPath();
+        var conductorPrompt = buildConductorPrompt(strategy, envelope);
+        log.info("[BddGenerator] Delegating BDD generation to Conductor for PR '{}' workingDir='{}' (prompt {} chars)",
+                envelope.getPrId(), workingDir, conductorPrompt.length());
         try {
-            return runTwoPhaseAgentPipeline(strategy, envelope);
+            var gherkin = conductorAgentRunner.delegateToConductor(conductorPrompt, workingDir);
+            log.info("[BddGenerator] Conductor produced {} chars of Gherkin for PR '{}'",
+                    gherkin == null ? 0 : gherkin.length(), envelope.getPrId());
+            return gherkin;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException(
-                    "[BddGenerator] Interrupted during agent pipeline for PR '"
+                    "[BddGenerator] Interrupted during Conductor delegation for PR '"
                     + envelope.getPrId() + "'", e);
-        } catch (Exception e) {
-            log.warn("[BddGenerator] Agent pipeline failed for PR '{}' — falling back to AiClient: {}",
-                    envelope.getPrId(), e.getMessage());
-            if (!aiClient.isAvailable()) {
-                throw new IllegalStateException(
-                        "[BddGenerator] Agent pipeline failed and AiClient is not available. "
-                        + "PR: " + envelope.getPrId(), e);
-            }
-            var systemPrompt = buildSystemPrompt(context);
-            var userPrompt   = buildUserPrompt(strategy, envelope, context);
-            log.debug("[BddGenerator] AiClient fallback (systemPrompt={} chars, userPrompt={} chars)",
-                    systemPrompt.length(), userPrompt.length());
-            return aiClient.complete(systemPrompt, userPrompt);
         }
     }
 
-    /**
-     * Phase 1 → Conductor produces a structured test plan.
-     * Phase 2 → TestPlanner converts the plan into a Gherkin feature file.
-     * Each phase runs in the cloned target repo directory so the agent reads
-     * its own {@code .github/agents/} instructions naturally.
-     */
-    private String runTwoPhaseAgentPipeline(TestStrategy strategy, ImpactEnvelope envelope)
-            throws InterruptedException {
-        Path workingDir = repoContextService.getLocalRepoPath();
-        log.info("[BddGenerator] Starting two-phase agent pipeline for PR '{}' workingDir='{}'",
-                envelope.getPrId(), workingDir);
-
-        // Phase 1 — Conductor: decide what to test
-        var conductorPrompt = buildConductorPrompt(strategy, envelope);
-        log.debug("[BddGenerator] Phase 1 Conductor prompt ({} chars)", conductorPrompt.length());
-        var testPlan = copilotAgentClient.runAgent("Conductor", conductorPrompt, workingDir);
-        log.info("[BddGenerator] Phase 1 complete — Conductor produced {} chars", testPlan.length());
-
-        // Phase 2 — TestPlanner: write Gherkin from the test plan
-        var testPlannerPrompt = buildTestPlannerPrompt(testPlan, strategy, envelope);
-        log.debug("[BddGenerator] Phase 2 TestPlanner prompt ({} chars)", testPlannerPrompt.length());
-        var gherkin = copilotAgentClient.runAgent("TestPlanner", testPlannerPrompt, workingDir);
-        log.info("[BddGenerator] Phase 2 complete — TestPlanner produced {} chars", gherkin.length());
-
-        return gherkin;
-    }
-
-    // ─── Prompt builders ───────────────────────────────────────────────────────
+    // ─── Prompt builder ────────────────────────────────────────────────────────
 
     private String buildConductorPrompt(TestStrategy strategy, ImpactEnvelope envelope) {
         var reqs = strategy.getNewTestRequirements().stream()
@@ -186,126 +146,32 @@ public class BddGenerator {
         var changeTypes = envelope.getDetectedChangeTypes() == null ? "unknown"
                 : envelope.getDetectedChangeTypes().stream()
                            .map(Enum::name).collect(Collectors.joining(", "));
+        var externalCtx = (envelope.getPrContext() != null)
+                ? envelope.getPrContext().asPromptSection() : "";
 
         return """
-                QA task: produce a structured test plan for the following code change.
-                Do NOT write Gherkin yet — output a numbered list of test areas, \
-                test types, and key scenarios to cover.
+                QA task: produce a Gherkin feature file of BDD scenarios for the following code
+                change. Gather any context you need from this repository yourself.
 
-                PR ID         : %s
-                Risk Level    : %s
-                Change Types  : %s
-                Summary       : %s
+                Output ONLY the Gherkin starting with "Feature:". Tag each scenario
+                (@api, @ui, @mobile, @smoke, @regression). No prose outside the Gherkin.
+
+                PR ID          : %s
+                Risk Level     : %s
+                Change Types   : %s
+                Summary        : %s
                 Full regression: %s
 
                 Test requirements:
                 %s
+                %s
                 """.formatted(
                 envelope.getPrId(),
                 envelope.getRiskLevel(),
                 changeTypes,
                 envelope.getChangesSummary(),
                 strategy.isFullRegressionRequired(),
-                reqs);
-    }
-
-    private String buildTestPlannerPrompt(String conductorPlan,
-                                          TestStrategy strategy,
-                                          ImpactEnvelope envelope) {
-        var externalCtx = (envelope.getPrContext() != null)
-                ? envelope.getPrContext().asPromptSection() : "";
-
-        return """
-                Convert the following test plan into a Gherkin feature file.
-
-                Output ONLY the Gherkin starting with "Feature:".
-                Include @tags on each scenario (@api, @ui, @mobile, @smoke, @regression).
-                Do not add any explanation or prose outside the Gherkin.
-
-                PR ID      : %s
-                Risk Level : %s
-                %s
-                === TEST PLAN (from Conductor) ===
-                %s
-                """.formatted(
-                envelope.getPrId(),
-                envelope.getRiskLevel(),
-                externalCtx.isBlank() ? "" : externalCtx + "\n",
-                conductorPlan);
-    }
-
-    // ─── Legacy API-client prompt builders (used by fallback path) ─────────────
-
-    private String buildSystemPrompt(RepoContext context) {
-        StringBuilder sb = new StringBuilder(GENERATION_PREAMBLE);
-
-        if (context.hasConductorAgent()) {
-            sb.append("=== CONDUCTOR AGENT INSTRUCTIONS (from target repo .github/agents/) ===\n\n");
-            sb.append(context.getConductorAgentContent()).append("\n\n");
-        } else {
-            sb.append("You are an expert QA engineer specialising in writing Gherkin BDD scenarios.\n\n");
-            sb.append("Your scenarios must be:\n");
-            sb.append("- Written in clear, business-readable language\n");
-            sb.append("- Covering happy path, error cases, and boundary conditions\n");
-            sb.append("- Tagged appropriately (@api, @ui, @mobile, @smoke, @regression)\n");
-            sb.append("- Specific to the product and changes described\n\n");
-        }
-
-        if (context.hasProductExpert()) {
-            sb.append(context.productExpertSystemPrompt()).append("\n");
-        }
-        if (context.getRepoAiqaContext() != null && !context.getRepoAiqaContext().isBlank()) {
-            sb.append(context.aiqaContextSection()).append("\n");
-        }
-        if (context.hasAgentInstructions()) {
-            context.getAgentInstructions().entrySet().stream()
-                    .filter(e -> !e.getKey().toLowerCase().contains("conductor"))
-                    .forEach(e -> sb.append("-- ").append(e.getKey()).append(" --\n")
-                            .append(e.getValue()).append("\n\n"));
-        }
-        if (context.getSampleTests() != null && !context.getSampleTests().isEmpty()) {
-            sb.append("=== EXISTING TEST STYLE (follow these patterns) ===\n\n");
-            context.getSampleTests().forEach((name, src) ->
-                    sb.append("-- ").append(name).append(" --\n").append(src).append("\n\n"));
-        }
-        return sb.toString();
-    }
-
-    private String buildUserPrompt(TestStrategy strategy, ImpactEnvelope envelope,
-                                   RepoContext context) {
-        var reqs = strategy.getNewTestRequirements().stream()
-                .map(r -> "  - " + r.getFeatureName() + " (" + r.getTestType() + ")")
-                .collect(Collectors.joining("\n"));
-        var changeTypes = envelope.getDetectedChangeTypes() == null ? "unknown"
-                : envelope.getDetectedChangeTypes().stream()
-                           .map(Enum::name).collect(Collectors.joining(", "));
-        var externalCtx = (envelope.getPrContext() != null)
-                ? envelope.getPrContext().asPromptSection() : "";
-
-        return """
-                Generate a Gherkin feature file for the following code change.
-
-                PR ID         : %s
-                Risk Level    : %s
-                Change Types  : %s
-                Summary       : %s
-
-                Test requirements (what needs to be tested):
-                %s
-
-                Full regression needed : %s
-                Expanded scope         : %s
-                %s
-                Return ONLY the Gherkin feature file content starting with "Feature:".
-                Include @tags on each scenario. Do not add any explanation outside the Gherkin.
-                """.formatted(
-                envelope.getPrId(),
-                envelope.getRiskLevel(),
-                changeTypes,
-                envelope.getChangesSummary(),
                 reqs,
-                strategy.isFullRegressionRequired(),
-                strategy.isExpandedScope(),
                 externalCtx.isBlank() ? "" : "\n" + externalCtx);
     }
 

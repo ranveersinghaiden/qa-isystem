@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +61,7 @@ import java.util.UUID;
 public class PrFeedbackService {
 
     private final GitHubService        gitHubService;
-    private final AiClient             aiClient;
+    private final ConductorAgentRunner conductorAgentRunner;
     private final PrTracker            prTracker;
     private final RepoContextService   repoContextService;
     private final TargetRepoProperties repoProps;
@@ -68,6 +69,37 @@ public class PrFeedbackService {
 
     private static final String CONV_SUFFIX_BDD  = ":bdd";
     private static final String CONV_SUFFIX_TEST = ":test";
+
+    // ─── Conductor delegation helper ──────────────────────────────────────────
+
+    /**
+     * Delegates a prompt to the repository's Conductor agent via a monitored copilot
+     * subprocess running in the cloned target repo directory. Returns {@code null} on
+     * interruption or subprocess failure so callers can fall back to template output.
+     */
+    private String delegateToConductor(String prompt) {
+        Path workingDir = repoContextService.getLocalRepoPath();
+        try {
+            return conductorAgentRunner.delegateToConductor(prompt, workingDir);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("[PrFeedbackService] Interrupted during Conductor delegation: {}", e.getMessage());
+            return null;
+        } catch (Exception e) {
+            log.warn("[PrFeedbackService] Conductor delegation failed: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /** Renders prior conversation turns as a compact transcript to seed the Conductor prompt. */
+    private String renderHistory(ConversationHistory history) {
+        if (history == null || history.turns() == null || history.turns().isEmpty()) return "";
+        StringBuilder sb = new StringBuilder("=== PRIOR CONVERSATION (for context) ===\n");
+        for (ChatMessage m : history.turns()) {
+            sb.append(m.role()).append(": ").append(m.content()).append("\n");
+        }
+        return sb.append("=== END PRIOR CONVERSATION ===\n\n").toString();
+    }
 
     // ─── BDD rejection ────────────────────────────────────────────────────────
 
@@ -104,26 +136,21 @@ public class PrFeedbackService {
                 history.turns().size(), original.getPrId());
 
         String revisedGherkin;
-        if (aiClient.isAvailable()) {
-            String systemPrompt = buildBddSystemPrompt(context);
-            String userPrompt   = buildBddRefinementPrompt(original, feedback);
+        String userPrompt = buildBddRefinementPrompt(original, feedback);
+        String agentOutput = delegateToConductor(renderHistory(history) + userPrompt);
 
-            revisedGherkin = aiClient.completeWithHistory(systemPrompt, history.turns(), userPrompt);
-
-            if (revisedGherkin != null && !revisedGherkin.isBlank()) {
-                log.info("[PrFeedbackService] AI generated revised BDD for PR '{}'", original.getPrId());
-                // Save updated history
-                var updatedTurns = new ArrayList<>(history.turns());
-                updatedTurns.add(ChatMessage.user(userPrompt));
-                updatedTurns.add(ChatMessage.assistant(revisedGherkin));
-                conversationStore.save(original.getPrId() + CONV_SUFFIX_BDD,
-                        new ConversationHistory(original.getPrId(), List.copyOf(updatedTurns),
-                                history.totalTurns() + 1, Instant.now()));
-            } else {
-                // AI returned empty — fall back to template
-                revisedGherkin = buildFallbackGherkin(original, feedback);
-            }
+        if (agentOutput != null && !agentOutput.isBlank()) {
+            revisedGherkin = agentOutput;
+            log.info("[PrFeedbackService] Conductor generated revised BDD for PR '{}'", original.getPrId());
+            // Save updated history
+            var updatedTurns = new ArrayList<>(history.turns());
+            updatedTurns.add(ChatMessage.user(userPrompt));
+            updatedTurns.add(ChatMessage.assistant(revisedGherkin));
+            conversationStore.save(original.getPrId() + CONV_SUFFIX_BDD,
+                    new ConversationHistory(original.getPrId(), List.copyOf(updatedTurns),
+                            history.totalTurns() + 1, Instant.now()));
         } else {
+            // Conductor returned nothing — fall back to template
             revisedGherkin = buildFallbackGherkin(original, feedback);
         }
 
@@ -166,23 +193,18 @@ public class PrFeedbackService {
                 history.turns().size(), original.getPrId());
 
         String revisedCode;
-        if (aiClient.isAvailable()) {
-            String systemPrompt = buildTestSystemPrompt(testTypeName, context);
-            String userPrompt   = buildTestRefinementPrompt(original, feedback, testTypeName);
+        String userPrompt = buildTestRefinementPrompt(original, feedback, testTypeName);
+        String agentOutput = delegateToConductor(renderHistory(history) + userPrompt);
 
-            revisedCode = aiClient.completeWithHistory(systemPrompt, history.turns(), userPrompt);
-
-            if (revisedCode != null && !revisedCode.isBlank()) {
-                log.info("[PrFeedbackService] AI generated revised test code for '{}'", original.getFileName());
-                var updatedTurns = new ArrayList<>(history.turns());
-                updatedTurns.add(ChatMessage.user(userPrompt));
-                updatedTurns.add(ChatMessage.assistant(revisedCode));
-                conversationStore.save(original.getPrId() + CONV_SUFFIX_TEST,
-                        new ConversationHistory(original.getPrId(), List.copyOf(updatedTurns),
-                                history.totalTurns() + 1, Instant.now()));
-            } else {
-                revisedCode = buildFallbackTestCode(original, feedback);
-            }
+        if (agentOutput != null && !agentOutput.isBlank()) {
+            revisedCode = agentOutput;
+            log.info("[PrFeedbackService] Conductor generated revised test code for '{}'", original.getFileName());
+            var updatedTurns = new ArrayList<>(history.turns());
+            updatedTurns.add(ChatMessage.user(userPrompt));
+            updatedTurns.add(ChatMessage.assistant(revisedCode));
+            conversationStore.save(original.getPrId() + CONV_SUFFIX_TEST,
+                    new ConversationHistory(original.getPrId(), List.copyOf(updatedTurns),
+                            history.totalTurns() + 1, Instant.now()));
         } else {
             revisedCode = buildFallbackTestCode(original, feedback);
         }
@@ -199,11 +221,6 @@ public class PrFeedbackService {
      * the repository by opening a separate PR.
      */
     private void handleProductExpertUpdate(String feedback, String prId, RepoContext context) {
-        if (!aiClient.isAvailable()) {
-            log.debug("[PrFeedbackService] AI not available — skipping product expert analysis");
-            return;
-        }
-
         String classifyPrompt = """
                 Review the following PR feedback for QA test scenarios.
                 Determine if the reviewer is pointing out a gap in PRODUCT KNOWLEDGE (domain understanding, 
@@ -217,8 +234,7 @@ public class PrFeedbackService {
                 %s
                 """.formatted(feedback);
 
-        String classification = aiClient.complete(
-                "You are a QA architect analysing PR review feedback.", classifyPrompt);
+        String classification = delegateToConductor(classifyPrompt);
 
         if (classification == null || !classification.startsWith("KNOWLEDGE_GAP:")) {
             log.info("[PrFeedbackService] Feedback classified as style/structure — no product expert update needed");
@@ -257,11 +273,10 @@ public class PrFeedbackService {
                 Return ONLY the complete updated file content (markdown format).
                 """.formatted(expertFilePath, existingContent, missingKnowledge, feedback);
 
-        String updatedContent = aiClient.complete(
-                "You are a QA architect maintaining product expert knowledge files.", updatePrompt);
+        String updatedContent = delegateToConductor(updatePrompt);
 
         if (updatedContent == null || updatedContent.isBlank()) {
-            log.warn("[PrFeedbackService] AI returned empty product expert update — skipping");
+            log.warn("[PrFeedbackService] Conductor returned empty product expert update — skipping");
             return;
         }
 
@@ -318,23 +333,6 @@ public class PrFeedbackService {
 
     // ─── BDD prompt builders ──────────────────────────────────────────────────
 
-    private String buildBddSystemPrompt(RepoContext context) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("You are an expert QA engineer writing Gherkin BDD scenarios.\n\n");
-
-        if (context.getProductExpertSections() != null) {
-            context.getProductExpertSections().forEach((product, ctx) ->
-                    sb.append(ctx.asSystemPromptSection()).append("\n"));
-        }
-        if (context.getRepoAiqaContext() != null && !context.getRepoAiqaContext().isBlank()) {
-            sb.append("=== REPO QA CONTEXT ===\n").append(context.getRepoAiqaContext()).append("\n\n");
-        }
-        if (context.hasAgentInstructions()) {
-            context.getAgentInstructions().forEach((file, content) ->
-                    sb.append("--- ").append(file).append(" ---\n").append(content).append("\n\n"));
-        }
-        return sb.toString();
-    }
 
     /** Builds the user-turn prompt for a BDD refinement request. */
     private String buildBddRefinementPrompt(BddScenario original, String feedback) {
@@ -376,21 +374,6 @@ public class PrFeedbackService {
 
     // ─── Test code prompt builders ────────────────────────────────────────────
 
-    private String buildTestSystemPrompt(String testType, RepoContext context) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("You are an expert QA engineer writing ").append(testType).append(" test code.\n\n");
-
-        if (context.getProductExpertSections() != null) {
-            context.getProductExpertSections().forEach((product, ctx) ->
-                    sb.append(ctx.asSystemPromptSection()).append("\n"));
-        }
-        if (context.getRepoAiqaContext() != null && !context.getRepoAiqaContext().isBlank()) {
-            sb.append("=== REPO QA CONTEXT ===\n").append(context.getRepoAiqaContext()).append("\n\n");
-        }
-        sb.append(context.contextHeader());
-        sb.append(context.commonImportsBlock());
-        return sb.toString();
-    }
 
     /** Builds the user-turn prompt for a test code refinement request. */
     private String buildTestRefinementPrompt(TestScript original, String feedback, String testTypeName) {

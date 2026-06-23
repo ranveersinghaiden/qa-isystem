@@ -29,7 +29,7 @@ class StrategyAgentTest {
     /** Records whether generate() was called. */
     static class CapturingBddGenerator extends BddGenerator {
         boolean generateCalled = false;
-        CapturingBddGenerator() { super(null, null, null, null, null, null, null); }
+        CapturingBddGenerator() { super(null, null, null, null, null, null); }
         @Override public BddScenario generate(TestStrategy s, ImpactEnvelope e) {
             generateCalled = true;
             return BddScenario.builder().scenarioId("SC-test").prId(s.getPrId())

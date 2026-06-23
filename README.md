@@ -660,7 +660,7 @@ tail -f logs/*.log | while read line; do echo "[$(date '+%H:%M:%S')] $line"; don
 tail -f logs/strategy-service.log
 
 # Search for specific patterns
-grep -f logs/strategy-service.log -e "CopilotAgentClient" -e "BddGenerator" -e "agent=" -e "PR #" --line-buffered
+grep -f logs/strategy-service.log -e "ConductorAgentRunner" -e "BddGenerator" -e "agent=Conductor" -e "PR #" --line-buffered
 
 # Watch completion of a specific PR
 watch -n 1 "grep 'PR-XXXXXXXX' logs/strategy-service.log"
@@ -673,8 +673,8 @@ watch -n 1 "grep 'PR-XXXXXXXX' logs/strategy-service.log"
 | pr-service | `[PRService] Kafka published.*FeatureUpdatesQueue` | PR ingested, sent to impact analysis |
 | impact-service | `[ImpactService] ImpactEnvelope → published.*ImpactResultsQueue` | Impact analysis complete, sent to strategy |
 | strategy-service | `[StrategyAgent] decision=SKIP\|UPDATE_TESTS\|CREATE_TESTS` | Gating decision made |
-| strategy-service | `[BddGenerator].*CopilotAgentClient.*agent=X` | AI agent (Conductor/TestPlanner) starting |
-| strategy-service | `[CopilotAgentClient] [Conductor\|TestPlanner].*completed` | Agent finished, output captured |
+| strategy-service | `[BddGenerator].*Delegating BDD generation to Conductor` | Conductor agent subprocess starting |
+| strategy-service | `[ConductorAgentRunner] .*Conductor.*completed` | Conductor finished, Gherkin captured |
 | strategy-service | `[TestPrService] created.*qa/bdd.*PR #\d+` | BDD review PR created on GitHub |
 | strategy-service | `[AiCostMonitor].*skipped.*cache.*calls` | Cost gating metrics logged |
 | codegen-service | `[CodegenService].*test code generated.*scenarios=\d+` | Test code produced |
@@ -873,11 +873,10 @@ T+0s    → PR submitted
 T+5-10s → PR ingested by pr-service
 T+10-15s → impact-service analysis complete
 T+15-20s → StrategyAgent decision (SKIP/CREATE_TESTS)
-T+20-60s → BddGenerator running CopilotAgentClient
-          (Phase 1: Conductor → test plan, Phase 2: TestPlanner → Gherkin)
-          Watch: "[CopilotAgentClient] [Conductor] started"
-                 "[CopilotAgentClient] [TestPlanner] started"
-                 "[CopilotAgentClient] [TestPlanner] completed"
+T+20-60s → BddGenerator delegating to Conductor agent (single subprocess)
+          Watch: "[BddGenerator] Delegating BDD generation to Conductor"
+                 "[ConductorAgentRunner] Subprocess started (pid=...) agent='Conductor'"
+                 "[ConductorAgentRunner] agent='Conductor' ... completed"
 T+60-70s → GitHub PR created (BDD review PR)
 T+70-90s → Await BDD approval (manual: ./scripts/approve-bdd.sh --yes)
 T+90-120s → codegen-service processes BDD scenarios
