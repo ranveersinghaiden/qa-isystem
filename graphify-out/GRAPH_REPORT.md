@@ -1,16 +1,16 @@
 # Graph Report - QA-ISystem  (2026-06-23)
 
 ## Corpus Check
-- 159 files · ~128,178 words
+- 152 files · ~125,165 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2024 nodes · 3687 edges · 147 communities (126 shown, 21 thin omitted)
-- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 402 edges (avg confidence: 0.8)
+- 1938 nodes · 3425 edges · 138 communities (118 shown, 20 thin omitted)
+- Extraction: 91% EXTRACTED · 9% INFERRED · 0% AMBIGUOUS · INFERRED: 307 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a82d6523`
+- Built from commit: `4f6b56a3`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -81,25 +81,19 @@
 - [[_COMMUNITY_Community 64|Community 64]]
 - [[_COMMUNITY_Community 65|Community 65]]
 - [[_COMMUNITY_Community 66|Community 66]]
-- [[_COMMUNITY_Community 67|Community 67]]
 - [[_COMMUNITY_Community 68|Community 68]]
 - [[_COMMUNITY_Community 69|Community 69]]
 - [[_COMMUNITY_Community 70|Community 70]]
-- [[_COMMUNITY_Community 71|Community 71]]
 - [[_COMMUNITY_Community 72|Community 72]]
-- [[_COMMUNITY_Community 73|Community 73]]
 - [[_COMMUNITY_Community 74|Community 74]]
-- [[_COMMUNITY_Community 75|Community 75]]
 - [[_COMMUNITY_Community 76|Community 76]]
 - [[_COMMUNITY_Community 77|Community 77]]
 - [[_COMMUNITY_Community 78|Community 78]]
 - [[_COMMUNITY_Community 79|Community 79]]
-- [[_COMMUNITY_Community 80|Community 80]]
 - [[_COMMUNITY_Community 81|Community 81]]
 - [[_COMMUNITY_Community 82|Community 82]]
 - [[_COMMUNITY_Community 83|Community 83]]
 - [[_COMMUNITY_Community 84|Community 84]]
-- [[_COMMUNITY_Community 85|Community 85]]
 - [[_COMMUNITY_Community 86|Community 86]]
 - [[_COMMUNITY_Community 87|Community 87]]
 - [[_COMMUNITY_Community 88|Community 88]]
@@ -157,20 +151,17 @@
 - [[_COMMUNITY_Community 140|Community 140]]
 - [[_COMMUNITY_Community 141|Community 141]]
 - [[_COMMUNITY_Community 142|Community 142]]
-- [[_COMMUNITY_Community 144|Community 144]]
-- [[_COMMUNITY_Community 145|Community 145]]
-- [[_COMMUNITY_Community 146|Community 146]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `isEmpty()` - 72 edges
-2. `Stream` - 59 edges
+1. `isEmpty()` - 59 edges
+2. `Stream` - 49 edges
 3. `RepoContextService` - 28 edges
 4. `Agent Instructions — Consolidated & Complete` - 20 edges
-5. `String` - 18 edges
-6. `RiskScorerTest` - 18 edges
-7. `IntegrationTestScopeClassifierTest` - 18 edges
-8. `TestCoverageServiceTest` - 18 edges
-9. `QA-ISystem: Complete Architecture & Design Reference` - 18 edges
+5. `QA-ISystem: Complete Architecture & Design Reference` - 18 edges
+6. `String` - 18 edges
+7. `RiskScorerTest` - 18 edges
+8. `IntegrationTestScopeClassifierTest` - 18 edges
+9. `TestCoverageServiceTest` - 18 edges
 10. `GitHubService` - 17 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -178,17 +169,17 @@
   strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java → codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java
 - `StubAiClient` --implements--> `AiClient`  [EXTRACTED]
   pr-service/src/test/java/nz/co/eroad/qaisystem/service/ContextCompressionServiceTest.java → common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java
-- `CopilotCliClient` --implements--> `AiClient`  [EXTRACTED]
-  common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotCliClient.java → common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java
+- `CapturingBddGenerator` --inherits--> `BddGenerator`  [EXTRACTED]
+  strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java → strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/BddGenerator.java
+- `FixedCoverageAnalyzer` --inherits--> `E2ECoverageAnalyzer`  [EXTRACTED]
+  strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java → strategy-service/src/main/java/nz/co/eroad/qaisystem/service/E2ECoverageAnalyzer.java
 - `InMemoryPrTracker` --implements--> `PrTracker`  [EXTRACTED]
   common/src/main/java/nz/co/eroad/qaisystem/github/InMemoryPrTracker.java → common/src/main/java/nz/co/eroad/qaisystem/github/PrTracker.java
-- `RedisPrTracker` --implements--> `PrTracker`  [EXTRACTED]
-  common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java → common/src/main/java/nz/co/eroad/qaisystem/github/PrTracker.java
 
 ## Import Cycles
 - None detected.
 
-## Communities (147 total, 21 thin omitted)
+## Communities (138 total, 20 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.35
@@ -196,19 +187,19 @@ Nodes (11): add_error(), add_warning(), brew_install(), die(), error(), header()
 
 ### Community 1 - "Community 1"
 Cohesion: 0.08
-Nodes (28): StrategyAgent, CapturingBddGenerator, FixedCoverageAnalyzer, SilentTestPrService, StrategyAgentTest, CoverageReport, ImpactedComponent, ImpactEnvelope (+20 more)
+Nodes (30): StrategyAgent, CapturingBddGenerator, FixedCoverageAnalyzer, SilentTestPrService, StrategyAgentTest, BeforeEach, ChangeType, CoverageReport (+22 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.08
-Nodes (25): BddGenerator, CopilotAgentClient, CostReport, AiCostMonitor, CostController, ScenarioBuilder, Scheduled, BddScenario (+17 more)
+Cohesion: 0.11
+Nodes (19): BddGenerator, CacheKey, CostReport, AiCostMonitor, CostController, ScenarioBuilder, Scheduled, BddScenario (+11 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.14
 Nodes (14): 2 — Monitor Service Health, 5 — Inspect Redis State, 6 — Check GitHub API for Created PRs, 7 — Monitor Docker Container Performance, All services at once, Check cached BDD scenarios and test results, Example cost report output, Individual service status with pending work (+6 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.06
-Nodes (41): String, ConversationHistory, String, List, RepoContext, String, ComponentType, Auth (+33 more)
+Cohesion: 0.09
+Nodes (24): ConductorAgentRunner, AiProviderProperties, String, StringBuilder, String, List, RepoContext, String (+16 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.17
@@ -219,8 +210,8 @@ Cohesion: 0.44
 Nodes (9): die(), error(), header(), info(), kill_port(), port_busy(), success(), warn() (+1 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.06
-Nodes (34): CompressionProperties, CompressionConfig, ContextCompressionService, PRController, FixedPRService, PRControllerTest, FeatureUpdatesProducer, Bean (+26 more)
+Cohesion: 0.15
+Nodes (12): CompressionProperties, CompressionConfig, ContextCompressionService, FixedPRService, PRControllerTest, Bean, ObjectMapper, BeforeEach (+4 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.17
@@ -247,12 +238,12 @@ Cohesion: 0.10
 Nodes (21): ImpactController, RiskScorer, RiskScorerTest, ChangeType, GetMapping, List, Map, Object (+13 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.11
-Nodes (15): GitDiff, List, String, GitDiffParserTest, BeforeEach, DisplayName, Test, BeforeEach (+7 more)
+Cohesion: 0.23
+Nodes (7): BeforeEach, DisplayName, GitDiff, ImpactedComponent, String, Test, TestCoverageServiceTest
 
 ### Community 16 - "Community 16"
-Cohesion: 0.25
-Nodes (8): CopilotCliClient, ChatMessage, List, Map, Object, ObjectMapper, Override, String
+Cohesion: 0.08
+Nodes (21): AiClient, CopilotCliClient, CopilotClient, OpenAiClient, ChatMessage, List, String, ChatMessage (+13 more)
 
 ### Community 17 - "Community 17"
 Cohesion: 0.24
@@ -267,16 +258,16 @@ Cohesion: 0.16
 Nodes (17): DependencyGraph, ImpactEngine, GitDiff, ImpactedComponent, List, Map, String, ChangeType (+9 more)
 
 ### Community 20 - "Community 20"
-Cohesion: 0.24
-Nodes (9): BddScenario, List, GitHubPrException, TestPrService, String, StringBuilder, TestResult, TestScript (+1 more)
+Cohesion: 0.14
+Nodes (13): BddScenario, List, GitHubPrException, TestPrService, String, StringBuilder, TestResult, TestScript (+5 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.06
-Nodes (25): AiClient, CopilotClient, OpenAiClient, ChatMessage, List, String, ObjectMapper, Override (+17 more)
+Cohesion: 0.13
+Nodes (12): AiClient, List, PullRequest, String, BeforeEach, DisplayName, Override, String (+4 more)
 
 ### Community 22 - "Community 22"
-Cohesion: 0.12
-Nodes (17): ConversationHistory, Optional, String, ConversationHistory, Optional, Override, String, ConversationStore (+9 more)
+Cohesion: 0.11
+Nodes (16): ConversationHistory, Optional, String, ConversationHistory, Optional, Override, String, ConversationHistory (+8 more)
 
 ### Community 23 - "Community 23"
 Cohesion: 0.12
@@ -291,8 +282,8 @@ Cohesion: 0.17
 Nodes (12): AIImpactEvaluator, AIInsight, AIImpactProperties, HttpClient, ChangeType, GitDiff, ImpactedComponent, List (+4 more)
 
 ### Community 27 - "Community 27"
-Cohesion: 0.17
-Nodes (15): PRControllerAdvice, PRControllerAdviceTest, ExceptionHandler, IllegalArgumentException, MethodArgumentNotValidException, HttpMessageNotReadableException, Map, Object (+7 more)
+Cohesion: 0.06
+Nodes (34): PromptResponseCache, toHash(), CacheStats, GitDiff, List, String, PRControllerAdvice, PRControllerAdviceTest (+26 more)
 
 ### Community 28 - "Community 28"
 Cohesion: 0.08
@@ -315,24 +306,24 @@ Cohesion: 0.09
 Nodes (22): Before Coding, Conditional beans, Constructor DI only (Lombok), Dependency Injection (Spring 4), Error Handling (Java-Specific), Java 25 Patterns, Java-Specific Forbidden, JavaCoder (+14 more)
 
 ### Community 33 - "Community 33"
-Cohesion: 0.21
-Nodes (5): ObjectMapper, PostConstruct, String, GitHubService, TargetRepoProperties
+Cohesion: 0.06
+Nodes (36): ObjectMapper, PostConstruct, String, ChatMessage, String, ConversationHistory, PrFeedbackService, BddScenario (+28 more)
 
 ### Community 34 - "Community 34"
-Cohesion: 0.21
-Nodes (9): asSystemPromptSection(), PrFeedbackService, BddScenario, List, PrRecord, RepoContext, String, StringBuilder (+1 more)
+Cohesion: 0.24
+Nodes (9): ConversationHistory, String, CoverageReport, GitDiff, ImpactedComponent, List, String, empty() (+1 more)
 
 ### Community 35 - "Community 35"
-Cohesion: 0.19
-Nodes (11): ChangeTypeDetector, ChangeType, GitDiff, List, String, Pattern, List, PrContext (+3 more)
+Cohesion: 0.34
+Nodes (6): Pattern, List, PrContext, PullRequest, String, PrContextExtractor
 
 ### Community 36 - "Community 36"
-Cohesion: 0.23
-Nodes (9): GitHubPrResult, PrFeedbackService, BddScenario, List, PrRecord, RepoContext, String, StringBuilder (+1 more)
+Cohesion: 0.37
+Nodes (8): PRController, GetMapping, Map, Object, PostMapping, PullRequest, ResponseEntity, String
 
 ### Community 37 - "Community 37"
-Cohesion: 0.26
-Nodes (8): BddScenario, List, GitHubPrException, TestPrService, String, StringBuilder, TestResult, TestScript
+Cohesion: 0.29
+Nodes (6): CopilotAgentClient, AiProviderProperties, ObjectMapper, Path, String, StringBuilder
 
 ### Community 38 - "Community 38"
 Cohesion: 0.10
@@ -351,8 +342,8 @@ Cohesion: 0.21
 Nodes (9): Bean, ConcurrentKafkaListenerContainerFactory, KafkaConfig, ConsumerFactory, KafkaTemplate, ProducerFactory, String, KafkaAdmin (+1 more)
 
 ### Community 42 - "Community 42"
-Cohesion: 0.28
-Nodes (12): StrategyController, HttpServletRequest, BddScenario, GetMapping, List, Map, Object, PostMapping (+4 more)
+Cohesion: 0.14
+Nodes (19): BddScenario, Collection, Optional, PrRecord, String, TestScript, StrategyController, PrTracker (+11 more)
 
 ### Community 43 - "Community 43"
 Cohesion: 0.11
@@ -383,20 +374,20 @@ Cohesion: 0.12
 Nodes (16): 1. New Feature (data model, API, config), 2. Configuration Change, 3. Performance/Tuning, 4. Troubleshooting / Known Issues, Approval Criteria, Consolidation Checklist, Core Rules, Delegation Template (from Conductor) (+8 more)
 
 ### Community 50 - "Community 50"
-Cohesion: 0.29
-Nodes (3): List, String, RepoContext
+Cohesion: 0.40
+Nodes (3): PullRequest, String, PRService
 
 ### Community 51 - "Community 51"
-Cohesion: 0.12
-Nodes (16): BddScenario, Collection, Optional, Override, PrRecord, String, TestScript, ConversationHistory (+8 more)
+Cohesion: 0.25
+Nodes (8): BddScenario, Collection, Optional, Override, PrRecord, String, TestScript, RedisPrTracker
 
 ### Community 52 - "Community 52"
 Cohesion: 0.12
 Nodes (15): AI Last-Resort Evaluator, API Endpoints, ChangeTypeDetector, Configuration (`application.yaml`), DependencyGraph, Engine Components, GitDiffParser, impact-service (+7 more)
 
 ### Community 53 - "Community 53"
-Cohesion: 0.30
-Nodes (4): BeforeEach, DisplayName, Test, PRServiceTest
+Cohesion: 0.12
+Nodes (15): FeatureUpdatesProducer, CompletableFuture, PullRequest, SendResult, String, BeforeEach, CompletableFuture, DisplayName (+7 more)
 
 ### Community 54 - "Community 54"
 Cohesion: 0.13
@@ -407,24 +398,28 @@ Cohesion: 0.13
 Nodes (14): Agent Instructions — Consolidated & Complete, 📊 Consolidated Files Summary, ✅ Consolidation Status, 📊 File Cross-References, 📊 File Cross-References (What Uses What), 🚀 For First-Time Users, 🚀 For First-Time Users, 🔗 Project Documentation (+6 more)
 
 ### Community 56 - "Community 56"
-Cohesion: 0.29
-Nodes (8): BddScenario, List, RepoContext, String, CodegenService, Scenario, TestResult, TestScript
+Cohesion: 0.32
+Nodes (7): BddScenario, CodegenService, List, Scenario, String, TestResult, TestScript
 
 ### Community 57 - "Community 57"
 Cohesion: 0.29
-Nodes (5): BeforeEach, DisplayName, ApiTestRunnerTest, RepoContext, Test
+Nodes (7): ComponentType, E2ECoverageAnalyzer, CoverageReport, ImpactedComponent, ImpactEnvelope, List, String
 
 ### Community 58 - "Community 58"
 Cohesion: 0.26
 Nodes (11): AiCallGate, needsAi(), ruleHandled(), shouldCallAi(), skip(), GateDecision, ImpactedComponent, ImpactEnvelope (+3 more)
 
 ### Community 59 - "Community 59"
-Cohesion: 0.29
-Nodes (5): BeforeEach, DisplayName, ApiTestRunnerTest, RepoContext, Test
+Cohesion: 0.42
+Nodes (5): BddScenario, List, Scenario, String, ConductorCodeGenerator
+
+### Community 60 - "Community 60"
+Cohesion: 0.49
+Nodes (3): String, isEmpty(), PrContext
 
 ### Community 61 - "Community 61"
-Cohesion: 0.30
-Nodes (3): RepoContextTest, DisplayName, Test
+Cohesion: 0.11
+Nodes (13): List, String, RepoContext, RepoContextTest, BddScenario, CodegenService, List, Scenario (+5 more)
 
 ### Community 62 - "Community 62"
 Cohesion: 0.21
@@ -435,20 +430,16 @@ Cohesion: 0.14
 Nodes (13): All Tools Per Service, Checklist — Before Shipping a New Tool, `codegen-service` — `CodegenMcpTools`, Error Response Convention, `feedback-service` — `FeedbackMcpTools`, `impact-service` — `ImpactMcpTools`, `pr-service` — `PrMcpTools`, Scope: ALL generated code (shared across API / UI / Mobile test types) (+5 more)
 
 ### Community 64 - "Community 64"
-Cohesion: 0.34
-Nodes (4): StabilizationLoop, String, TestResult, TestScript
+Cohesion: 0.42
+Nodes (6): CoverageReport, GitDiff, ImpactedComponent, List, String, TestCoverageService
 
 ### Community 65 - "Community 65"
-Cohesion: 0.33
-Nodes (7): BddScenario, ApiTestRunner, List, RepoContext, Scenario, String, isEmpty()
+Cohesion: 0.39
+Nodes (5): ChangeTypeDetector, ChangeType, GitDiff, List, String
 
 ### Community 66 - "Community 66"
 Cohesion: 0.35
 Nodes (4): BeforeEach, DisplayName, Test, ProductsFieldDeserializerTest
-
-### Community 67 - "Community 67"
-Cohesion: 0.33
-Nodes (6): BddScenario, ApiTestRunner, List, RepoContext, Scenario, String
 
 ### Community 68 - "Community 68"
 Cohesion: 0.17
@@ -462,25 +453,13 @@ Nodes (7): Bean, ConcurrentKafkaListenerContainerFactory, KafkaConfig, ConsumerF
 Cohesion: 0.18
 Nodes (10): Presenting to Senior Leadership (10-15 Min Outline), QA-ISystem: Stop Trading Quality for Speed, Slide 1: The "QA Tax" on Innovation, Slide 2: Moving from "Passive" to "Autonomous", Slide 3: The Secret Sauce: Precision Reasoning, Slide 4: Real-World ROI (Cutting the Noise), Slide 5: Projected Outcome — QA Capacity Unlocked, Slide 6: Projected Outcome — Efficiency & Faster Releases (+2 more)
 
-### Community 71 - "Community 71"
-Cohesion: 0.31
-Nodes (6): BddScenario, MobileTestRunner, List, RepoContext, Scenario, String
-
 ### Community 72 - "Community 72"
 Cohesion: 0.18
 Nodes (10): `application.yaml` Configuration, Auto-Registered Endpoints, Maven Dependency, MCP Server Discovery — `.github/mcp.json`, Overview, Scope: ALL generated code (shared across API / UI / Mobile test types), Service → Tool Class Mapping, Spring AI MCP Server — Setup & Registration (+2 more)
 
-### Community 73 - "Community 73"
-Cohesion: 0.33
-Nodes (6): BddScenario, UITestRunner, List, RepoContext, Scenario, String
-
 ### Community 74 - "Community 74"
 Cohesion: 0.18
 Nodes (10): Awaitility for Async Tests, Forbidden Test Patterns, Hard Rule, Naming Convention, No Spring Context in Unit Tests, Scope: ALL generated test types (API / UI / Mobile), Test Double Pattern, Test Structure (+2 more)
-
-### Community 75 - "Community 75"
-Cohesion: 0.31
-Nodes (6): BddScenario, UITestRunner, List, RepoContext, Scenario, String
 
 ### Community 76 - "Community 76"
 Cohesion: 0.20
@@ -498,10 +477,6 @@ Nodes (10): 8 — Real-World Example: 3-PR Concurrent Test, Step 1: Generate tes
 Cohesion: 0.20
 Nodes (9): Bean Declaration Priority, `@ConditionalOnMissingBean` — Default Implementations, `@ConfigurationProperties`, Constructor Injection — Mandatory, `matchIfMissing` guide, Never Duplicate Beans, Optional Beans — `@ConditionalOnProperty`, Scope: ALL generated code (shared across API / UI / Mobile test types) (+1 more)
 
-### Community 80 - "Community 80"
-Cohesion: 0.33
-Nodes (6): BddScenario, MobileTestRunner, List, RepoContext, Scenario, String
-
 ### Community 81 - "Community 81"
 Cohesion: 0.22
 Nodes (9): [CodeReviewer.agent.md](CodeReviewer.agent.md) — 386 lines, [Documentation.agent.md](Documentation.agent.md) — 160 lines, [GenericCodingPractices.md](GenericCodingPractices.md) — 150 lines, [JavaCoder.agent.md](JavaCoder.agent.md) — 150 lines, 🔧 Language-Specific Coders, [PythonCoder.agent.md](PythonCoder.agent.md) — 150 lines, [Security.agent.md](Security.agent.md) — 177 lines, [Tester.agent.md](Tester.agent.md) — 72 lines (+1 more)
@@ -517,10 +492,6 @@ Nodes (6): List, Override, String, DeserializationContext, JsonParser, CommaSepa
 ### Community 84 - "Community 84"
 Cohesion: 0.22
 Nodes (8): Configuration, Feedback Flow, feedback-service, Kafka, Key Classes, No Mocking Policy, Revised PR Title Format, Shared from `common`
-
-### Community 85 - "Community 85"
-Cohesion: 0.36
-Nodes (4): BddScenarioStore, BddScenario, Optional, String
 
 ### Community 86 - "Community 86"
 Cohesion: 0.22
@@ -595,8 +566,8 @@ Cohesion: 0.33
 Nodes (5): Auto-Clarity, Boundaries, Intensity, Persistence, Rules
 
 ### Community 104 - "Community 104"
-Cohesion: 0.60
-Nodes (4): String, fileNames(), patternsMd(), productMd()
+Cohesion: 0.53
+Nodes (5): String, asSystemPromptSection(), fileNames(), patternsMd(), productMd()
 
 ### Community 105 - "Community 105"
 Cohesion: 0.34
@@ -628,7 +599,7 @@ Nodes (5): 5. pr-service — Phase 0: Ingestion, Context Extraction & Compressio
 
 ### Community 112 - "Community 112"
 Cohesion: 0.40
-Nodes (5): 8. codegen-service — Phase 5: Test Code Generation, GitHub PR title format, StabilizationLoop — Run, Fail, Fix, Test runners, What it does
+Nodes (5): 8. codegen-service — Phase 5: Test Code Generation, Conductor-delegated generation, GitHub PR title format, StabilizationLoop — Run, Fail, Fix, What it does
 
 ### Community 113 - "Community 113"
 Cohesion: 0.40
@@ -674,37 +645,25 @@ Nodes (4): 4 — Inspect Kafka Topics, Inspect pending messages, List all topics
 Cohesion: 0.50
 Nodes (4): CI/CD Pipelines, gh CLI on the deploy server, Production `.env` variables (on deploy server), Required secrets
 
-### Community 144 - "Community 144"
-Cohesion: 0.24
-Nodes (7): BddScenario, Collection, Optional, PrRecord, String, TestScript, PrTracker
-
-### Community 145 - "Community 145"
-Cohesion: 0.33
-Nodes (6): PromptResponseCache, toHash(), CacheStats, CacheKey, Optional, String
-
-### Community 146 - "Community 146"
-Cohesion: 0.60
-Nodes (5): ChatMessage, String, assistant(), system(), user()
-
 ## Knowledge Gaps
-- **706 isolated node(s):** `Scenario`, `RepoContext`, `Modules`, `Auth`, `String` (+701 more)
+- **685 isolated node(s):** `1. What Problem Does This System Solve?`, `2. System Overview`, `Why Kafka instead of direct HTTP calls?`, `Kafka topics`, `Key Kafka concepts used here` (+680 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **21 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **20 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `isEmpty()` connect `Community 65` to `Community 1`, `Community 2`, `Community 4`, `Community 7`, `Community 14`, `Community 15`, `Community 16`, `Community 19`, `Community 20`, `Community 21`, `Community 23`, `Community 26`, `Community 29`, `Community 33`, `Community 34`, `Community 35`, `Community 37`, `Community 47`, `Community 48`, `Community 50`, `Community 51`, `Community 53`, `Community 58`, `Community 60`, `Community 61`, `Community 66`, `Community 67`, `Community 71`, `Community 73`, `Community 75`, `Community 80`, `Community 83`, `Community 104`?**
-  _High betweenness centrality (0.143) - this node is a cross-community bridge._
-- **Why does `Stream` connect `Community 4` to `Community 1`, `Community 2`, `Community 14`, `Community 15`, `Community 19`, `Community 22`, `Community 26`, `Community 27`, `Community 35`, `Community 42`, `Community 47`, `Community 48`, `Community 50`, `Community 51`, `Community 56`, `Community 58`, `Community 65`, `Community 67`, `Community 71`, `Community 73`, `Community 75`, `Community 80`, `Community 83`?**
-  _High betweenness centrality (0.058) - this node is a cross-community bridge._
-- **Why does `TestPrService` connect `Community 20` to `Community 64`, `Community 1`, `Community 2`, `Community 105`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
-- **Are the 69 inferred relationships involving `isEmpty()` (e.g. with `.buildCacheKey()` and `.buildSystemPrompt()`) actually correct?**
-  _`isEmpty()` has 69 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 51 inferred relationships involving `Stream` (e.g. with `.buildConductorPrompt()` and `.buildSystemPrompt()`) actually correct?**
-  _`Stream` has 51 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `Scenario`, `RepoContext`, `Modules` to the rest of the system?**
-  _706 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `isEmpty()` connect `Community 60` to `Community 1`, `Community 2`, `Community 4`, `Community 14`, `Community 15`, `Community 16`, `Community 19`, `Community 20`, `Community 21`, `Community 23`, `Community 26`, `Community 27`, `Community 29`, `Community 33`, `Community 34`, `Community 35`, `Community 47`, `Community 48`, `Community 50`, `Community 51`, `Community 53`, `Community 57`, `Community 58`, `Community 61`, `Community 64`, `Community 65`, `Community 66`, `Community 83`, `Community 104`?**
+  _High betweenness centrality (0.119) - this node is a cross-community bridge._
+- **Why does `Stream` connect `Community 4` to `Community 64`, `Community 1`, `Community 2`, `Community 34`, `Community 58`, `Community 35`, `Community 42`, `Community 14`, `Community 47`, `Community 48`, `Community 19`, `Community 51`, `Community 83`, `Community 57`, `Community 26`, `Community 27`, `Community 61`?**
+  _High betweenness centrality (0.044) - this node is a cross-community bridge._
+- **Why does `TestPrService` connect `Community 20` to `Community 1`, `Community 2`, `Community 105`?**
+  _High betweenness centrality (0.032) - this node is a cross-community bridge._
+- **Are the 56 inferred relationships involving `isEmpty()` (e.g. with `.buildCacheKey()` and `.parseGherkinToScenarios()`) actually correct?**
+  _`isEmpty()` has 56 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 41 inferred relationships involving `Stream` (e.g. with `.buildConductorPrompt()` and `.parseGherkinToScenarios()`) actually correct?**
+  _`Stream` has 41 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `1. What Problem Does This System Solve?`, `2. System Overview`, `Why Kafka instead of direct HTTP calls?` to the rest of the system?**
+  _685 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.08038914490527393 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07740384615384616 - nodes in this community are weakly interconnected._
