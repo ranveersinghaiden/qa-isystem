@@ -73,6 +73,9 @@ aiqa:
     url: ${TARGET_REPO_URL:}             # e.g. https://github.com/your-org/your-test-repo
     branch: main
     local-path: /tmp/qa-context-repo
+    # When false (default) the service does NOT scan tests/api|ui|mobile for context;
+    # the target repo Conductor agent gathers context instead. Set true for legacy mode.
+    scan-modules: ${TARGET_REPO_SCAN_MODULES:false}
 
     # ── Fallback local path ─────────────────────────────────────────────────────
     # If the remote clone/pull fails (or no URL is set), this local directory is

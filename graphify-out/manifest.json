@@ -10,17 +10,17 @@
     "semantic_hash": ""
   },
   "codegen-service/src/main/java/nz/co/eroad/qaisystem/execution/ApiTestRunner.java": {
-    "mtime": 1781481812.5432138,
+    "mtime": 1782173552.584978,
     "ast_hash": "e63e5ee0c37c618e6a49d6beaeb69e83",
     "semantic_hash": ""
   },
   "codegen-service/src/main/java/nz/co/eroad/qaisystem/execution/CodegenService.java": {
-    "mtime": 1781491250.5848732,
+    "mtime": 1782173552.585453,
     "ast_hash": "1cea98b23828d1d4aa9779dfefbd67d2",
     "semantic_hash": ""
   },
   "codegen-service/src/main/java/nz/co/eroad/qaisystem/execution/MobileTestRunner.java": {
-    "mtime": 1781481819.8774507,
+    "mtime": 1782173552.5859537,
     "ast_hash": "7dc7d930c61eae2e21ef13963f11e13f",
     "semantic_hash": ""
   },
@@ -35,7 +35,7 @@
     "semantic_hash": ""
   },
   "codegen-service/src/main/java/nz/co/eroad/qaisystem/execution/UITestRunner.java": {
-    "mtime": 1781481816.0313632,
+    "mtime": 1782173552.586419,
     "ast_hash": "9ef9439d827dfeaafedebe9f3c96fe30",
     "semantic_hash": ""
   },
@@ -55,12 +55,12 @@
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java": {
-    "mtime": 1781491071.3810978,
+    "mtime": 1782173552.587661,
     "ast_hash": "e924fcf7b90677ab4f7e3f4130e3776a",
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotCliClient.java": {
-    "mtime": 1781492262.1700222,
+    "mtime": 1782173552.588047,
     "ast_hash": "bcdb815358ae17c66dbad940ae4a73a9",
     "semantic_hash": ""
   },
@@ -75,12 +75,12 @@
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/config/AiClientConfig.java": {
-    "mtime": 1781481172.7463915,
+    "mtime": 1782173552.588453,
     "ast_hash": "65e113fea21393a92b21fb67e064714d",
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java": {
-    "mtime": 1781829666.8887308,
+    "mtime": 1782173552.5888894,
     "ast_hash": "9a9c10cd89ce0e2dda51de54d4a63d00",
     "semantic_hash": ""
   },
@@ -105,7 +105,7 @@
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/execution/RepoContext.java": {
-    "mtime": 1781481200.8784819,
+    "mtime": 1782173552.589407,
     "ast_hash": "979dedf52357170116cdda285864c411",
     "semantic_hash": ""
   },
@@ -135,7 +135,7 @@
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/model/ChatMessage.java": {
-    "mtime": 1781491009.5718238,
+    "mtime": 1782173552.589736,
     "ast_hash": "96f7c8c6b2d93a27a2420e56e3ac9f4d",
     "semantic_hash": ""
   },
@@ -145,7 +145,7 @@
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/model/ConversationHistory.java": {
-    "mtime": 1781491018.0027587,
+    "mtime": 1782173552.5899897,
     "ast_hash": "7c565736590c1b8b87ab8def2f61a40f",
     "semantic_hash": ""
   },
@@ -210,27 +210,27 @@
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/service/ConversationStore.java": {
-    "mtime": 1781491026.0277088,
+    "mtime": 1782173552.5902598,
     "ast_hash": "69b91dc1366dafa89abaa8d10d6e2b56",
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/service/InMemoryConversationStore.java": {
-    "mtime": 1781491058.988162,
+    "mtime": 1782173552.5905254,
     "ast_hash": "11e6b1f91f43d2148ab65d3baef7e8a0",
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/service/RedisConversationStore.java": {
-    "mtime": 1781491051.919331,
+    "mtime": 1782173552.5908625,
     "ast_hash": "945c8fc127bc50c9fec0c468a1099aa0",
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/service/RepoContextService.java": {
-    "mtime": 1781825809.1246085,
+    "mtime": 1782173552.5913322,
     "ast_hash": "fc6c7df88f20accbabdac907349c94d2",
     "semantic_hash": ""
   },
   "feedback-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java": {
-    "mtime": 1781491290.9719002,
+    "mtime": 1782173552.5927622,
     "ast_hash": "d34fb3d89a145d6928d94f1a5575cddc",
     "semantic_hash": ""
   },
@@ -425,12 +425,12 @@
     "semantic_hash": ""
   },
   "scripts/setup.sh": {
-    "mtime": 1781753756.22171,
+    "mtime": 1782173552.6603312,
     "ast_hash": "4cc01fe496c0d6b41619ec70e1bf5ef2",
     "semantic_hash": ""
   },
   "scripts/start-local.sh": {
-    "mtime": 1781760601.1822102,
+    "mtime": 1782173552.6606593,
     "ast_hash": "bbdd21a4fea6cde46f36696dc98d3165",
     "semantic_hash": ""
   },
@@ -440,7 +440,7 @@
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/BddGenerator.java": {
-    "mtime": 1781826001.5183485,
+    "mtime": 1782173552.6613762,
     "ast_hash": "410aedf92134647d9ffba04a9be3de5e",
     "semantic_hash": ""
   },
@@ -470,17 +470,17 @@
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/execution/ApiTestRunner.java": {
-    "mtime": 1781481801.801573,
+    "mtime": 1782173552.6620204,
     "ast_hash": "9c554e34a03f40c2fe07684ae1cf6425",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/execution/CodegenService.java": {
-    "mtime": 1781854480.8766234,
+    "mtime": 1782173552.6623263,
     "ast_hash": "96c8132f228a8f75e8a8aba45f92eb7d",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/execution/MobileTestRunner.java": {
-    "mtime": 1781481809.0337298,
+    "mtime": 1782173552.6626666,
     "ast_hash": "7dc7d930c61eae2e21ef13963f11e13f",
     "semantic_hash": ""
   },
@@ -495,7 +495,7 @@
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/execution/UITestRunner.java": {
-    "mtime": 1781481805.599539,
+    "mtime": 1782173552.6630273,
     "ast_hash": "9ef9439d827dfeaafedebe9f3c96fe30",
     "semantic_hash": ""
   },
@@ -550,7 +550,7 @@
     "semantic_hash": ""
   },
   "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java": {
-    "mtime": 1781826047.8810966,
+    "mtime": 1782173552.663843,
     "ast_hash": "a687096245e93e298d10ba97fca65824",
     "semantic_hash": ""
   },
@@ -565,67 +565,67 @@
     "semantic_hash": ""
   },
   ".agents/skills/caveman/README.md": {
-    "mtime": 1781558999.496682,
+    "mtime": 1782173552.572542,
     "ast_hash": "72a5c06aa99126d55573e87721c37ab4",
     "semantic_hash": ""
   },
   ".agents/skills/caveman/SKILL.md": {
-    "mtime": 1781558999.4967813,
+    "mtime": 1782173552.572902,
     "ast_hash": "893def771b2c8653b3ee9ea781d6d614",
     "semantic_hash": ""
   },
   ".github/agents/CHECKLISTS.md": {
-    "mtime": 1781580559.7599614,
+    "mtime": 1782173552.5738516,
     "ast_hash": "eb678565761ce3880713430e88f7e811",
     "semantic_hash": ""
   },
   ".github/agents/CodeReviewer.agent.md": {
-    "mtime": 1781558452.3715158,
+    "mtime": 1782173552.5742123,
     "ast_hash": "1dc190c99fcbf16079438e07717e4ba3",
     "semantic_hash": ""
   },
   ".github/agents/Conductor.agent.md": {
-    "mtime": 1781751106.3103163,
+    "mtime": 1782173552.5747483,
     "ast_hash": "584206eeea097f513f7339a67d05c0de",
     "semantic_hash": ""
   },
   ".github/agents/Documentation.agent.md": {
-    "mtime": 1781579966.809421,
+    "mtime": 1782173552.5751789,
     "ast_hash": "83b55f21bf14c0a0e44daa9424049e89",
     "semantic_hash": ""
   },
   ".github/agents/GenericCodingPractices.md": {
-    "mtime": 1781581146.7203205,
+    "mtime": 1782173552.5757587,
     "ast_hash": "7728f92524c689dcdf2f89433ebc0d7d",
     "semantic_hash": ""
   },
   ".github/agents/JAVA-CODER.md": {
-    "mtime": 1781582067.81113,
+    "mtime": 1782173552.576117,
     "ast_hash": "b859377f3fa70d26d3843611b02063f2",
     "semantic_hash": ""
   },
   ".github/agents/MCP-SERVERS.md": {
-    "mtime": 1781582085.546069,
+    "mtime": 1782173552.5765092,
     "ast_hash": "b6f66051b7aae471ec8209c052b35790",
     "semantic_hash": ""
   },
   ".github/agents/PythonCoder.agent.md": {
-    "mtime": 1781581182.1333487,
+    "mtime": 1782173552.576896,
     "ast_hash": "53815780829f055048294b1574c24a0c",
     "semantic_hash": ""
   },
   ".github/agents/README.md": {
-    "mtime": 1781582152.0,
+    "mtime": 1782173552.5774243,
     "ast_hash": "d7b21c891022ef5e70be84c0b4729ae7",
     "semantic_hash": ""
   },
   ".github/agents/REFACTORING-SUMMARY.md": {
-    "mtime": 1781581249.0,
+    "mtime": 1782173552.5778997,
     "ast_hash": "5b3413d3966840863b372115ce550d98",
     "semantic_hash": ""
   },
   ".github/agents/SHARED-RULES.md": {
-    "mtime": 1781580522.6603494,
+    "mtime": 1782173552.578297,
     "ast_hash": "b7dca55be012f1e79ef6833af5db3617",
     "semantic_hash": ""
   },
@@ -635,7 +635,7 @@
     "semantic_hash": ""
   },
   ".github/agents/TESTING-STANDARDS.md": {
-    "mtime": 1781582107.6244056,
+    "mtime": 1782173552.578646,
     "ast_hash": "c3817bd173eedb0b2a838e2ba5666c18",
     "semantic_hash": ""
   },
@@ -650,52 +650,52 @@
     "semantic_hash": ""
   },
   ".github/copilot-instructions.md": {
-    "mtime": 1781581688.9911733,
+    "mtime": 1782173552.5790944,
     "ast_hash": "fc3c9c71ddb9d1ff646b418e514c4913",
     "semantic_hash": ""
   },
   ".github/instructions/java/coding-conventions.md": {
-    "mtime": 1780960596.0,
+    "mtime": 1782173552.5794284,
     "ast_hash": "f7fb9b1ba0192af2d92b30772897d760",
     "semantic_hash": ""
   },
   ".github/instructions/java/error-handling.md": {
-    "mtime": 1780960198.0,
+    "mtime": 1782173552.5797498,
     "ast_hash": "ae704dd85a25b96f968b00340bae1f53",
     "semantic_hash": ""
   },
   ".github/instructions/java/logging.md": {
-    "mtime": 1780960178.0,
+    "mtime": 1782173552.5800183,
     "ast_hash": "c8b83aef09a540c047a3cbe91731e2f9",
     "semantic_hash": ""
   },
   ".github/instructions/mcp/server-setup.md": {
-    "mtime": 1780960311.0,
+    "mtime": 1782173552.5802886,
     "ast_hash": "facd63808ecd9886c5572d43267717cc",
     "semantic_hash": ""
   },
   ".github/instructions/mcp/tool-authoring.md": {
-    "mtime": 1780960351.0,
+    "mtime": 1782173552.5805728,
     "ast_hash": "6c1b665d58baaf20a788aa2f9ddbce24",
     "semantic_hash": ""
   },
   ".github/instructions/spring/dependency-injection.md": {
-    "mtime": 1780960249.0,
+    "mtime": 1782173552.580883,
     "ast_hash": "2c27ae7eb0bf76b5df1a2d2697e4248a",
     "semantic_hash": ""
   },
   ".github/instructions/spring/kafka.md": {
-    "mtime": 1780960269.0,
+    "mtime": 1782173552.5811975,
     "ast_hash": "6416fa290703c876983ca008aafb33a7",
     "semantic_hash": ""
   },
   ".github/instructions/spring/redis.md": {
-    "mtime": 1780960287.0,
+    "mtime": 1782173552.5815563,
     "ast_hash": "3075a7f287831931178abedcea46f67b",
     "semantic_hash": ""
   },
   ".github/instructions/testing/zero-mock-policy.md": {
-    "mtime": 1780960224.0,
+    "mtime": 1782173552.5818844,
     "ast_hash": "d33645594d719844964142a45615b9d1",
     "semantic_hash": ""
   },
@@ -765,7 +765,7 @@
     "semantic_hash": ""
   },
   "Board-Presentation-QA-ISystem.md": {
-    "mtime": 1781414351.202222,
+    "mtime": 1782173552.582595,
     "ast_hash": "c74c12fda986e19ae0ff7409f603787b",
     "semantic_hash": ""
   },
@@ -775,23 +775,23 @@
     "semantic_hash": ""
   },
   "QA-ISystem-Architecture.md": {
-    "mtime": 1781829850.4295282,
+    "mtime": 1782173552.5834715,
     "ast_hash": "501adb1a6c9c0b20d015c4262582d9ae",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1782164950.4895885,
+    "mtime": 1782173552.5839849,
     "ast_hash": "690196fa4d9a5c3c17dbd8a2730e0c79",
     "semantic_hash": ""
   },
   "codegen-service/README.md": {
-    "mtime": 1781482110.5947423,
+    "mtime": 1782173552.584437,
     "ast_hash": "ec01ad89efbccad8410725b4d245a8ee",
     "semantic_hash": ""
   },
   "codegen-service/src/main/resources/application.yaml": {
-    "mtime": 1781491270.1702147,
-    "ast_hash": "486e69429379d57675e50a20e7bd68e8",
+    "mtime": 1782173552.5868783,
+    "ast_hash": "59875c5a0949b70ca072ec159f48d0bc",
     "semantic_hash": ""
   },
   "codegen-service/src/test/resources/application.yaml": {
@@ -800,12 +800,12 @@
     "semantic_hash": ""
   },
   "common/README.md": {
-    "mtime": 1781492489.9930031,
+    "mtime": 1782173552.587275,
     "ast_hash": "761c8b44043eb45a4aaf1760c0481840",
     "semantic_hash": ""
   },
   "docker-compose.prod.yml": {
-    "mtime": 1781481525.1954513,
+    "mtime": 1782173552.5917993,
     "ast_hash": "91ca15f89d9244d154a0fea9165b5961",
     "semantic_hash": ""
   },
@@ -815,13 +815,13 @@
     "semantic_hash": ""
   },
   "feedback-service/README.md": {
-    "mtime": 1781492512.066868,
+    "mtime": 1782173552.5922568,
     "ast_hash": "e539db0e9ae67391afede3d21abfce18",
     "semantic_hash": ""
   },
   "feedback-service/src/main/resources/application.yaml": {
-    "mtime": 1781491257.197933,
-    "ast_hash": "b352d44b618773be7f571d7743d522a1",
+    "mtime": 1782173552.5931287,
+    "ast_hash": "ee88ac3bbb281f4ad02a1729fff34fa7",
     "semantic_hash": ""
   },
   "feedback-service/src/test/resources/application.yaml": {
@@ -860,13 +860,13 @@
     "semantic_hash": ""
   },
   "strategy-service/README.md": {
-    "mtime": 1781482098.3368292,
+    "mtime": 1782173552.661007,
     "ast_hash": "510e73782355ca95a8583567c47a2423",
     "semantic_hash": ""
   },
   "strategy-service/src/main/resources/application.yaml": {
-    "mtime": 1781829674.5323849,
-    "ast_hash": "0816ed08fdd76f2fc9726c5bbf471db9",
+    "mtime": 1782173552.6634464,
+    "ast_hash": "8fbacb4d3d982bd751492d756bc1c8e0",
     "semantic_hash": ""
   },
   "strategy-service/src/main/resources/productExpert-templates/README.md": {
@@ -890,12 +890,12 @@
     "semantic_hash": ""
   },
   "scripts/_launch-strategy.sh": {
-    "mtime": 1781763973.9930625,
+    "mtime": 1782173552.6593204,
     "ast_hash": "7a99d5402c386967a243694587afce98",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java": {
-    "mtime": 1781834654.483185,
+    "mtime": 1782173552.6616907,
     "ast_hash": "0129aa90b71ed30f95b77468fb202e20",
     "semantic_hash": ""
   },
@@ -915,12 +915,12 @@
     "semantic_hash": ""
   },
   "scripts/create_test_payloads.py": {
-    "mtime": 1781833996.6182892,
+    "mtime": 1782173552.6595123,
     "ast_hash": "965d777a6488ca34ebae29199c4182f3",
     "semantic_hash": ""
   },
   "scripts/kill-services.sh": {
-    "mtime": 1782171720.2236984,
+    "mtime": 1782173552.6600423,
     "ast_hash": "14022f70a01a7cb1c97dd387f9421eca",
     "semantic_hash": ""
   }

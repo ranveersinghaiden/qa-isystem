@@ -118,9 +118,15 @@ public class RepoContextService {
                 (auth.getToken() != null ? auth.getToken().length() : 0));
         try {
             cloneOrPull();
-            refreshCache(Path.of(props.getLocalPath()));
-            log.info("[RepoContextService] Context loaded from remote — API={} UI={} MOBILE={}",
-                    contextSummary("API"), contextSummary("UI"), contextSummary("MOBILE"));
+            if (props.isScanModules()) {
+                refreshCache(Path.of(props.getLocalPath()));
+                log.info("[RepoContextService] Context loaded from remote — API={} UI={} MOBILE={}",
+                        contextSummary("API"), contextSummary("UI"), contextSummary("MOBILE"));
+            } else {
+                log.info("[RepoContextService] Module context scan DISABLED " +
+                        "(aiqa.target-repo.scan-modules=false) — repo cloned for agent pipeline; " +
+                        "delegating context gathering to the target repo Conductor agent.");
+            }
         } catch (Exception e) {
             log.error("[RepoContextService] Remote clone/pull failed: {}. Trying fallback...",
                     e.getMessage());
@@ -163,7 +169,7 @@ public class RepoContextService {
         }
 
         try {
-            refreshCache(fallbackPath);
+            refreshCacheIfEnabled(fallbackPath);
             log.info("[RepoContextService] Context loaded from fallback '{}' — " +
                             "API={} UI={} MOBILE={}",
                     fallbackPath, contextSummary("API"),
@@ -185,7 +191,7 @@ public class RepoContextService {
         try {
             if (props.isConfigured()) {
                 cloneOrPull();
-                refreshCache(Path.of(props.getLocalPath()));
+                refreshCacheIfEnabled(Path.of(props.getLocalPath()));
             } else {
                 initFromFallback();
             }
@@ -351,6 +357,21 @@ public class RepoContextService {
     }
 
     // ─── Context scanning ──────────────────────────────────────────────────────
+
+    /**
+     * Runs {@link #refreshCache(Path)} only when {@code aiqa.target-repo.scan-modules=true}.
+     * When module scanning is disabled the cache and coverage index are left empty and the
+     * target repo's Conductor agent is relied upon for context.
+     */
+    private void refreshCacheIfEnabled(Path basePath) {
+        if (!props.isScanModules()) {
+            log.info("[RepoContextService] Module context scan DISABLED " +
+                    "(aiqa.target-repo.scan-modules=false) for '{}' — " +
+                    "delegating context gathering to the target repo Conductor agent.", basePath);
+            return;
+        }
+        refreshCache(basePath);
+    }
 
     /**
      * Scans the test modules under {@code basePath} and rebuilds the in-memory

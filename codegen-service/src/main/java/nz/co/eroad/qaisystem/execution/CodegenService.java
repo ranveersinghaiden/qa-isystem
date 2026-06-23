@@ -65,11 +65,9 @@ public class CodegenService {
         RepoContext context = repoContextService.getContext(type);
 
         if (!context.isContextAvailable()) {
-            throw new IllegalStateException(
-                    "[CodegenService] No repo context available for test type '" + type + "'. " +
-                    "Configure aiqa.target-repo.url or aiqa.target-repo.fallback-local-path " +
-                    "to enable test code generation. " +
-                    "Scenario: '" + scenario.getTitle() + "'");
+            log.warn("[CodegenService] No in-service repo context for test type '{}' " +
+                    "(module scan disabled or repo unavailable) — generating with built-in " +
+                    "template defaults. Scenario: '{}'", type, scenario.getTitle());
         }
 
         log.debug("[CodegenService] Generating {} test for '{}' context={} conductorAgent={} agentInstructions={}",
@@ -96,7 +94,8 @@ public class CodegenService {
             }
         }
 
-        String targetPackage = context.getBasePackage();
+        String targetPackage = context.effectivePackage(
+                "nz.co.eroad.qaisystem.generated.tests." + type.toLowerCase());
 
         return TestScript.builder()
                 .scriptId(UUID.randomUUID().toString())
