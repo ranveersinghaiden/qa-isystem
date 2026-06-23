@@ -69,6 +69,18 @@ public class WorkspacePool {
             return;
         }
 
+        // Contract check: the target repo must own its Conductor agent definition.
+        // QA-ISystem is a pure orchestrator and never adds files to the target repo.
+        Path conductorMd = basePath.resolve(".github").resolve("agents").resolve("Conductor.md");
+        if (!Files.exists(conductorMd)) {
+            throw new IllegalStateException(
+                    LOG_PREFIX + " TARGET REPO CONTRACT VIOLATION: " +
+                    "base clone '" + basePath + "' has no .github/agents/Conductor.md. " +
+                    "QA-ISystem cannot start without a Conductor agent in the target repository. " +
+                    "Add .github/agents/Conductor.md to the target repo and re-deploy.");
+        }
+        log.info("{} Conductor agent confirmed in target repo at '{}'", LOG_PREFIX, conductorMd);
+
         int size = scaling.effectiveWorkspacePoolSize();
         String baseName = basePath.getFileName().toString();
         Path parent = basePath.getParent();

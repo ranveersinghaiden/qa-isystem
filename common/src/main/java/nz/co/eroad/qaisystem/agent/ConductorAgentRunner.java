@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Semaphore;
@@ -23,7 +24,12 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Launches a {@code copilot} subprocess that always delegates the task to the
- * repository's Conductor agent, monitored from this Java process.
+ * target repository's own Conductor agent, monitored from this Java process.
+ *
+ * <p>QA-ISystem is a pure orchestrator. It never modifies the target repo's agent
+ * definitions and never injects files into it. The target repo <strong>must</strong>
+ * contain {@code .github/agents/Conductor.md} — if it does not, every delegation
+ * attempt will fail fast with a clear error message telling the operator what to add.
  *
  * <p>The Conductor agent is the single entry point for all BDD scenario and test
  * code generation. No other agent is ever invoked directly from Java.
@@ -118,6 +124,8 @@ public class ConductorAgentRunner {
             semaphore.release();
             throw e;
         }
+
+        validateConductorAgent(workspace);
 
         log.info("{} Slot acquired (remaining={}) workspace='{}' - launching agent='{}'",
                 LOG_PREFIX, semaphore.availablePermits(), workspace, CONDUCTOR_AGENT);
@@ -270,5 +278,30 @@ public class ConductorAgentRunner {
     public int availableSlots() {
         return semaphore.availablePermits();
     }
-}
 
+    // ─── Target repo contract validation ────────────────────────────────────────
+
+    /**
+     * Asserts that the target repo workspace contains a Conductor agent definition at
+     * {@code .github/agents/Conductor.md}.
+     *
+     * <p>QA-ISystem is a pure orchestrator and <em>never</em> modifies or adds files to
+     * the target repo. The Conductor agent is the target repo's own responsibility. If it
+     * is missing, the operator must add it before QA-ISystem can generate BDD or test code
+     * for that repository.
+     *
+     * @throws IllegalStateException if the agent definition file is absent
+     */
+    private void validateConductorAgent(Path workspace) {
+        Path agentMd = workspace.resolve(".github").resolve("agents")
+                                .resolve(CONDUCTOR_AGENT + ".md");
+        if (!Files.exists(agentMd)) {
+            throw new IllegalStateException(
+                    LOG_PREFIX + " Target repo workspace '" + workspace
+                    + "' is missing .github/agents/" + CONDUCTOR_AGENT + ".md. "
+                    + "QA-ISystem never adds agents to target repos — add a Conductor agent "
+                    + "to the target repository and re-deploy.");
+        }
+        log.debug("{} Conductor agent confirmed at '{}'", LOG_PREFIX, agentMd);
+    }
+}

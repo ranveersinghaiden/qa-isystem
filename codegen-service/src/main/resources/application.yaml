@@ -76,6 +76,13 @@ aiqa:
       gh-cli-path: ${GH_CLI_PATH:gh}
       model:       ${COPILOT_CLI_MODEL:claude-sonnet-4-5}
       timeout-seconds: ${COPILOT_CLI_TIMEOUT:120}
+    copilot-agent:
+      copilot-cli-path: ${COPILOT_CLI_PATH:copilot}
+      max-concurrent-agents: ${COPILOT_MAX_CONCURRENT:3}
+      agent-timeout-seconds: ${COPILOT_AGENT_TIMEOUT:300}
+      max-output-chars: ${COPILOT_MAX_OUTPUT_CHARS:200000}
+      working-dir: ${COPILOT_AGENT_WORKING_DIR:}
+      max-autopilot-continues: ${COPILOT_MAX_AUTOPILOT_CONTINUES:5}
   conversation:
     ttl-days: ${AIQA_CONV_TTL_DAYS:30}
     max-history-chars: ${AIQA_CONV_MAX_CHARS:65536}
