@@ -2,7 +2,7 @@
 
 **Port:** `8083`  
 **Phase:** 5-6 — Code Generation and Test Stabilisation  
-**Role:** Consumes `BddScenario` from `TestScriptsQueue`, generates executable test code (API/UI/Mobile), runs a bounded stabilisation loop to fix compilation/runtime failures, then creates the final test code PR on GitHub.
+**Role:** Consumes `BddScenario` from `TestScriptsQueue`, delegates executable test-code generation (API/UI/Mobile) to the target repository's **Conductor** agent, runs a bounded stabilisation loop to fix compilation/runtime failures, then creates the final test code PR on GitHub.
 
 ## Kafka
 
@@ -19,21 +19,21 @@ Consumer group: `codegen-service-group`
 |-------|----------------|
 | `CodegenServiceApplication` | Spring Boot entry point — scans `nz.co.eroad.qaisystem` |
 | `TestScriptsConsumer` | Kafka consumer — routes to `CodegenService` |
-| `CodegenService` | Routes BDD scenarios to correct test runner based on type. Throws `IllegalStateException` when `RepoContext.contextAvailable` is `false` — no template fallback. |
-| `ApiTestRunner` | Generates RestAssured + JUnit 5 test code |
-| `UITestRunner` | Generates Selenium test code |
-| `MobileTestRunner` | Generates Appium test code |
+| `CodegenService` | For each scenario delegates test-code generation to the Conductor agent via `ConductorCodeGenerator`. No template generation, no AI API call, no `tests/api\|ui\|mobile` context scan. |
+| `ConductorCodeGenerator` *(common)* | Builds the per-scenario prompt and delegates to the Conductor agent via `ConductorAgentRunner`, running in the cloned target repo directory |
 | `StabilizationLoop` | Bounded retry-and-fix loop (max 3 attempts) |
 | `TestExecutionEngine` | Compiles and runs generated Java via `javax.tools.JavaCompiler` + JUnit Platform |
 | `TestPrService` | Creates final test code PR on GitHub via `GitHubService` (from common). Title: `✅ [AI-QA] {prTitle}` (passing) or `⚠️ [NEEDS REVIEW] {prTitle}` (abandoned). `prTitle` sourced from `BddScenario.prTitle` → `PullRequest.title`. |
 
 ## Shared from `common`
 
-`GitHubService`, `AiClient`, `CopilotCliClient`, `PrTracker`, `RepoContextService`, `RepoContext`, `TargetRepoProperties`, `ProductExpertContext`, all models.
+`GitHubService`, `ConductorAgentRunner`, `ConductorCodeGenerator`, `PrTracker`, `RepoContextService`, `RepoContext`, `TargetRepoProperties`, `ProductExpertContext`, all models.
 
 ## AI Provider
 
-Copilot CLI only (`CopilotCliClient` via `gh api` subprocess). Run `gh auth login` once — no token env var required. `aiqa.ai.provider` is hardcoded to `copilot-cli`.
+Test-code generation is delegated to the repository's **Conductor** agent via a monitored
+`copilot` subprocess (`ConductorAgentRunner`). Run `gh auth login` once. No other agent is
+invoked and no AI API is called directly.
 
 ## Configuration
 
@@ -45,5 +45,6 @@ aiqa.codegen.enabled: true  # This service always runs codegen
 
 ## Tests
 
-`ApiTestRunnerTest` — 7 tests covering code generation from BDD scenarios.
+`StrategyAgentTest` and shared `common` tests cover the pipeline. Test-code generation itself is
+delegated to the Conductor agent at runtime (no template-runner unit tests).
 

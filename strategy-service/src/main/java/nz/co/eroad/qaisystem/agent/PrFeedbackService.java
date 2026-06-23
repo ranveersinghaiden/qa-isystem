@@ -58,10 +58,29 @@ import java.util.UUID;
 public class PrFeedbackService {
 
     private final GitHubService        gitHubService;
-    private final AiClient             aiClient;
+    private final ConductorAgentRunner conductorAgentRunner;
     private final PrTracker            prTracker;
     private final RepoContextService   repoContextService;
     private final TargetRepoProperties repoProps;
+
+    /**
+     * Delegates a prompt to the repository's Conductor agent via a monitored copilot
+     * subprocess running in the cloned target repo directory. Returns {@code null} on
+     * interruption or subprocess failure so callers can fall back to template output.
+     */
+    private String delegateToConductor(String prompt) {
+        java.nio.file.Path workingDir = repoContextService.getLocalRepoPath();
+        try {
+            return conductorAgentRunner.delegateToConductor(prompt, workingDir);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("[PrFeedbackService] Interrupted during Conductor delegation: {}", e.getMessage());
+            return null;
+        } catch (Exception e) {
+            log.warn("[PrFeedbackService] Conductor delegation failed: {}", e.getMessage());
+            return null;
+        }
+    }
 
     // ─── BDD rejection ────────────────────────────────────────────────────────
 
@@ -140,12 +159,7 @@ public class PrFeedbackService {
      * the repository by opening a separate PR.
      */
     private void handleProductExpertUpdate(String feedback, String prId, RepoContext context) {
-        if (!aiClient.isAvailable()) {
-            log.debug("[PrFeedbackService] AI not available — skipping product expert analysis");
-            return;
-        }
-
-        // Ask the AI whether the feedback indicates a knowledge gap
+        // Ask the Conductor agent whether the feedback indicates a knowledge gap
         String classifyPrompt = """
                 Review the following PR feedback for QA test scenarios.
                 Determine if the reviewer is pointing out a gap in PRODUCT KNOWLEDGE (domain understanding, 
@@ -159,8 +173,7 @@ public class PrFeedbackService {
                 %s
                 """.formatted(feedback);
 
-        String classification = aiClient.complete(
-                "You are a QA architect analysing PR review feedback.", classifyPrompt);
+        String classification = delegateToConductor(classifyPrompt);
 
         if (classification == null || !classification.startsWith("KNOWLEDGE_GAP:")) {
             log.info("[PrFeedbackService] Feedback classified as style/structure — no product expert update needed");
@@ -203,8 +216,7 @@ public class PrFeedbackService {
                 Return ONLY the complete updated file content (markdown format).
                 """.formatted(expertFilePath, existingContent, missingKnowledge, feedback);
 
-        String updatedContent = aiClient.complete(
-                "You are a QA architect maintaining product expert knowledge files.", updatePrompt);
+        String updatedContent = delegateToConductor(updatePrompt);
 
         if (updatedContent == null || updatedContent.isBlank()) {
             log.warn("[PrFeedbackService] AI returned empty product expert update — skipping");
@@ -266,29 +278,27 @@ public class PrFeedbackService {
     // ─── BDD re-generation ────────────────────────────────────────────────────
 
     private String regenerateBdd(BddScenario original, String feedback, RepoContext context) {
-        if (aiClient.isAvailable()) {
-            String systemPrompt = buildBddSystemPrompt(context);
-            String userPrompt = """
-                    You previously generated BDD scenarios that were REJECTED by a human reviewer.
-                    
-                    Original feature title: %s
-                    Original description: %s
-                    
-                    Reviewer feedback:
-                    %s
-                    
-                    Please generate improved Gherkin BDD scenarios addressing all the feedback.
-                    Return ONLY the Gherkin content starting with "Feature:".
-                    """.formatted(
-                    original.getFeatureTitle(),
-                    original.getFeatureDescription(),
-                    feedback);
+        String userPrompt = """
+                You previously generated BDD scenarios that were REJECTED by a human reviewer.
 
-            String revised = aiClient.complete(systemPrompt, userPrompt);
-            if (revised != null && !revised.isBlank()) {
-                log.info("[PrFeedbackService] AI generated revised BDD for PR '{}'", original.getPrId());
-                return revised;
-            }
+                Original feature title: %s
+                Original description: %s
+
+                Reviewer feedback:
+                %s
+
+                Please generate improved Gherkin BDD scenarios addressing all the feedback,
+                following this repository's QA conventions.
+                Return ONLY the Gherkin content starting with "Feature:".
+                """.formatted(
+                original.getFeatureTitle(),
+                original.getFeatureDescription(),
+                feedback);
+
+        String revised = delegateToConductor(userPrompt);
+        if (revised != null && !revised.isBlank()) {
+            log.info("[PrFeedbackService] Conductor generated revised BDD for PR '{}'", original.getPrId());
+            return revised;
         }
 
         // Fallback: add feedback as a comment to the original Gherkin
@@ -299,23 +309,6 @@ public class PrFeedbackService {
                buildGherkinFromScenario(original);
     }
 
-    private String buildBddSystemPrompt(RepoContext context) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("You are an expert QA engineer writing Gherkin BDD scenarios.\n\n");
-
-        if (context.getProductExpertSections() != null) {
-            context.getProductExpertSections().forEach((product, ctx) ->
-                    sb.append(ctx.asSystemPromptSection()).append("\n"));
-        }
-        if (context.getRepoAiqaContext() != null && !context.getRepoAiqaContext().isBlank()) {
-            sb.append("=== REPO QA CONTEXT ===\n").append(context.getRepoAiqaContext()).append("\n\n");
-        }
-        if (context.hasAgentInstructions()) {
-            context.getAgentInstructions().forEach((file, content) ->
-                    sb.append("--- ").append(file).append(" ---\n").append(content).append("\n\n"));
-        }
-        return sb.toString();
-    }
 
     private String buildGherkinFromScenario(BddScenario scenario) {
         StringBuilder sb = new StringBuilder("Feature: ").append(scenario.getFeatureTitle()).append("\n\n");
@@ -334,31 +327,29 @@ public class PrFeedbackService {
 
     private String regenerateTestCode(TestScript original, String feedback, RepoContext context) {
         String testTypeName = original.getTestType() != null ? original.getTestType().name() : "API";
-        if (aiClient.isAvailable()) {
-            String systemPrompt = buildTestSystemPrompt(testTypeName, context);
-            String userPrompt = """
-                    You previously generated %s test code that was REJECTED by a human reviewer.
-                    
-                    Original file: %s
-                    Original code:
-                    ```java
-                    %s
-                    ```
-                    
-                    Reviewer feedback:
-                    %s
-                    
-                    Please generate improved test code addressing all the feedback.
-                    Return ONLY the Java code (no markdown code fences, no explanation).
-                    """.formatted(
-                    testTypeName, original.getFileName(),
-                    original.getScriptContent(), feedback);
+        String userPrompt = """
+                You previously generated %s test code that was REJECTED by a human reviewer.
 
-            String revised = aiClient.complete(systemPrompt, userPrompt);
-            if (revised != null && !revised.isBlank()) {
-                log.info("[PrFeedbackService] AI generated revised test code for '{}'", original.getFileName());
-                return revised;
-            }
+                Original file: %s
+                Original code:
+                ```java
+                %s
+                ```
+
+                Reviewer feedback:
+                %s
+
+                Please generate improved test code addressing all the feedback,
+                following this repository's test conventions.
+                Return ONLY the Java code (no markdown code fences, no explanation).
+                """.formatted(
+                testTypeName, original.getFileName(),
+                original.getScriptContent(), feedback);
+
+        String revised = delegateToConductor(userPrompt);
+        if (revised != null && !revised.isBlank()) {
+            log.info("[PrFeedbackService] Conductor generated revised test code for '{}'", original.getFileName());
+            return revised;
         }
 
         // Fallback: embed feedback as comments in the original code
@@ -367,21 +358,6 @@ public class PrFeedbackService {
                "\n" + original.getScriptContent();
     }
 
-    private String buildTestSystemPrompt(String testType, RepoContext context) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("You are an expert QA engineer writing ").append(testType).append(" test code.\n\n");
-
-        if (context.getProductExpertSections() != null) {
-            context.getProductExpertSections().forEach((product, ctx) ->
-                    sb.append(ctx.asSystemPromptSection()).append("\n"));
-        }
-        if (context.getRepoAiqaContext() != null && !context.getRepoAiqaContext().isBlank()) {
-            sb.append("=== REPO QA CONTEXT ===\n").append(context.getRepoAiqaContext()).append("\n\n");
-        }
-        sb.append(context.contextHeader());
-        sb.append(context.commonImportsBlock());
-        return sb.toString();
-    }
 
     // ─── Revised PR creation ──────────────────────────────────────────────────
 

@@ -51,6 +51,21 @@ public class TargetRepoProperties {
     private boolean fallbackPull = false;
 
     /**
+     * When {@code true}, scan the per-module test directories (API / UI / MOBILE) to
+     * build {@link Modules} context — package, common imports, base test class, sample
+     * tests and the integration/E2E coverage index.
+     *
+     * <p>Default {@code false}: the target test repo's <b>Conductor agent</b>
+     * (invoked via the copilot agent pipeline that runs inside the cloned repo) is
+     * responsible for understanding repo conventions, so the service skips its own
+     * module scan. The repo is still cloned/pulled so the agent has a working directory;
+     * only the API/UI/MOBILE context extraction is skipped.
+     *
+     * <p>Set {@code true} to restore legacy in-service context gathering.
+     */
+    private boolean scanModules = false;
+
+    /**
      * Relative paths inside the monorepo for each test module.
      * Adjust these to match your repository layout.
      */

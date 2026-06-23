@@ -73,6 +73,9 @@ aiqa:
     url: ${TARGET_REPO_URL:}             # e.g. https://github.com/your-org/your-test-repo
     branch: main
     local-path: /tmp/qa-context-repo
+    # When false (default) the service does NOT scan tests/api|ui|mobile for context;
+    # the target repo Conductor agent gathers context instead. Set true for legacy mode.
+    scan-modules: ${TARGET_REPO_SCAN_MODULES:false}
 
     # ── Fallback local path ─────────────────────────────────────────────────────
     # If the remote clone/pull fails (or no URL is set), this local directory is
@@ -122,7 +125,10 @@ aiqa:
       #         API always requires a token, so PR creation is disabled when
       #         type=ssh unless TARGET_REPO_TOKEN is also set.
       #
-      type: none
+      # Defaults to 'token' so TARGET_REPO_TOKEN is embedded in the HTTPS clone URL.
+      # Falls back to the plain URL automatically when the token is blank
+      # (public repos / SSH). Override with TARGET_REPO_AUTH_TYPE=none|ssh if needed.
+      type: ${TARGET_REPO_AUTH_TYPE:token}
       token: ${TARGET_REPO_TOKEN:}
       username: ${TARGET_REPO_USERNAME:}
 

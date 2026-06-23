@@ -86,15 +86,15 @@ TEST REJECTED → PrFeedbackService.handleTestRejection() [virtual thread]
 | Class | Responsibility |
 |-------|----------------|
 | `StrategyAgent` | Decides SKIP/UPDATE_TESTS/CREATE_TESTS using E2E coverage + risk rules (see [decision logic](#strategy-decision-logic)). Builds `TestStrategy` with test types, scenario hints, confidence score, priority (P0–P3). |
-| `BddGenerator` | Builds system prompt: static safety preamble + **conductor agent** instructions (`.github/agents/*.md` file containing "conductor") as primary role directive, then productExpert context, `.aiqa/context.md`, sample tests → calls `AiClient.complete()`. Throws `IllegalStateException` on empty/unavailable response — no template fallback. Adds `@api/@ui/@mobile`, `@pr-{prId}`, `@auto-generated`, `@smoke` (HIGH/CRITICAL risk). |
-| `PrFeedbackService` | Handles BDD + TEST rejections. Fetches GitHub review comments → AI classifies (`KNOWLEDGE_GAP`/`STYLE_ONLY`) → if gap: updates `productExpert/` + creates knowledge-update PR → re-generates with feedback → creates revised PR. Runs on virtual thread. |
+| `BddGenerator` | Delegates Gherkin generation to the target repository's **Conductor** agent via `ConductorAgentRunner` (monitored `copilot` subprocess running in the cloned repo dir). No AI API call, no `TestPlanner` phase, no template fallback — throws `IllegalStateException` on empty Conductor output. Adds `@api/@ui/@mobile`, `@pr-{prId}`, `@auto-generated`, `@smoke` (HIGH/CRITICAL risk). |
+| `PrFeedbackService` | Handles BDD + TEST rejections. Fetches GitHub review comments → Conductor classifies (`KNOWLEDGE_GAP`/`STYLE_ONLY`) → if gap: updates `productExpert/` + creates knowledge-update PR → re-generates via Conductor with feedback + prior conversation → creates revised PR. Runs on virtual thread. |
 
 ### Execution Layer
 
 | Class | Responsibility |
 |-------|----------------|
-| `CodegenService` | Routes `BddScenario` to correct runner by `testType` (API/UI/MOBILE). Loads `RepoContext` for each type before routing. |
-| `ApiTestRunner` / `UITestRunner` / `MobileTestRunner` | Pure code generation. Uses `RepoContext` for actual package name, common imports, base class, naming convention. Generates RestAssured/Selenium/Appium + JUnit 5. |
+| `CodegenService` *(monolith mode only — `aiqa.codegen.enabled=true`)* | For each scenario delegates test-code generation to the Conductor agent via `ConductorCodeGenerator`. No per-type runner, no `RepoContext` scan. |
+| `ConductorCodeGenerator` *(common)* | Builds the per-scenario prompt and delegates to the Conductor agent via `ConductorAgentRunner`, running in the cloned target repo directory. |
 | `TestExecutionEngine` | Compiles generated Java via `javax.tools.JavaCompiler`, runs via JUnit Platform Launcher in a temp dir. Returns `TestResult` with pass/fail counts + diagnostics. Requires JDK at runtime (use `eclipse-temurin:25-jdk`). |
 | `StabilizationLoop` | `for attempt 1..3: compile → run → if fail: applyFix() → retry`. Fix strategy: attempt 1 = add timeout/retry headers; attempt 2 = wrap in retry block; attempt 3 = minimal smoke test. Creates final PR regardless of outcome (⚠️ NEEDS REVIEW on abandon). |
 
