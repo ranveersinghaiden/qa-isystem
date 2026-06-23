@@ -10,8 +10,8 @@
     "semantic_hash": ""
   },
   "codegen-service/src/main/java/nz/co/eroad/qaisystem/execution/CodegenService.java": {
-    "mtime": 1782196090.5630767,
-    "ast_hash": "b939ab6769be82faaa3ee531db326e5c",
+    "mtime": 1782206426.8065526,
+    "ast_hash": "31ad9d4b057864ecf78931ab2797d1c1",
     "semantic_hash": ""
   },
   "codegen-service/src/main/java/nz/co/eroad/qaisystem/execution/StabilizationLoop.java": {
@@ -25,8 +25,8 @@
     "semantic_hash": ""
   },
   "codegen-service/src/main/java/nz/co/eroad/qaisystem/kafka/TestScriptsConsumer.java": {
-    "mtime": 1779675411.4746082,
-    "ast_hash": "71e6bcc8fc244749222e8771e641665b",
+    "mtime": 1782206456.5429301,
+    "ast_hash": "fa4dc284398fcd313e229d14aa1d59b5",
     "semantic_hash": ""
   },
   "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java": {
@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/config/KafkaConfig.java": {
-    "mtime": 1780877478.848808,
-    "ast_hash": "7814145d8b90a10b3ccc80dfdc1aeb6f",
+    "mtime": 1782206212.9272194,
+    "ast_hash": "f940a9afa9e917585667571cf925283b",
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/config/TargetRepoProperties.java": {
@@ -210,8 +210,8 @@
     "semantic_hash": ""
   },
   "feedback-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java": {
-    "mtime": 1782196387.8326406,
-    "ast_hash": "1aa926114ba84bd669addf1838713c3a",
+    "mtime": 1782206127.010361,
+    "ast_hash": "b0b74c3226987fbaaa63c3a70f829c96",
     "semantic_hash": ""
   },
   "feedback-service/src/main/java/nz/co/eroad/qaisystem/feedback/FeedbackServiceApplication.java": {
@@ -420,13 +420,13 @@
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/BddGenerator.java": {
-    "mtime": 1782196212.134117,
-    "ast_hash": "fd908022905fb2d3aafab3b670030175",
+    "mtime": 1782206105.1437376,
+    "ast_hash": "1026b188d1f5ba1d40674a523a260115",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java": {
-    "mtime": 1782197663.5200453,
-    "ast_hash": "3190a680f92898a80df9e05ad01a5237",
+    "mtime": 1782206133.5881479,
+    "ast_hash": "cb1b9b86dd5c2b20ba3a298e70f6ac89",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/StrategyAgent.java": {
@@ -440,18 +440,18 @@
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/controller/GitHubWebhookController.java": {
-    "mtime": 1781130968.350246,
-    "ast_hash": "539c751c06c662ca7808e236b8148366",
+    "mtime": 1782206314.9360065,
+    "ast_hash": "009812e8544c6c47cd8681e980195085",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/controller/StrategyController.java": {
-    "mtime": 1781131005.5737693,
-    "ast_hash": "4418756f42247c36a268afee1a0344af",
+    "mtime": 1782206301.2372298,
+    "ast_hash": "85d405a3e025241cbdf5f89fd1068a42",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/execution/CodegenService.java": {
-    "mtime": 1782196128.2552402,
-    "ast_hash": "09bbf8450cb3688ee2e3cc023da3a986",
+    "mtime": 1782206516.1867335,
+    "ast_hash": "07d020306db85f6e8da2b6df19bbb96e",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/execution/StabilizationLoop.java": {
@@ -480,18 +480,18 @@
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/ImpactResultsConsumer.java": {
-    "mtime": 1781213836.6006346,
-    "ast_hash": "7d766fd82dc1fbe09583d14852b947ae",
+    "mtime": 1782206334.9201357,
+    "ast_hash": "a0fe94ff3bf01ade74b86312b29d0da1",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/TestScriptsConsumer.java": {
-    "mtime": 1780891483.933933,
-    "ast_hash": "0cc6e802943b892c74a0157cc3c310af",
+    "mtime": 1782206536.7002823,
+    "ast_hash": "0a4e40daa1fbb8cd7febbfcf4a01fc5b",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/TestScriptsProducer.java": {
-    "mtime": 1779675411.4770103,
-    "ast_hash": "30f03917a14b790e742cea236ed36c18",
+    "mtime": 1782206275.847532,
+    "ast_hash": "739c61b4cbd87f92194a9ac300147286",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/monitor/AiCostMonitor.java": {
@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "codegen-service/src/main/resources/application.yaml": {
-    "mtime": 1782174076.3752518,
-    "ast_hash": "61d5a106799bcc0cf744f9b913bc198f",
+    "mtime": 1782206599.7550626,
+    "ast_hash": "a95c3f428ac232b794b35b985a5da522",
     "semantic_hash": ""
   },
   "codegen-service/src/test/resources/application.yaml": {
@@ -765,8 +765,8 @@
     "semantic_hash": ""
   },
   "docker-compose.prod.yml": {
-    "mtime": 1782173552.5917993,
-    "ast_hash": "91ca15f89d9244d154a0fea9165b5961",
+    "mtime": 1782207348.140776,
+    "ast_hash": "1c6d8656440e731358409f040f5dd1b4",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -825,8 +825,8 @@
     "semantic_hash": ""
   },
   "strategy-service/src/main/resources/application.yaml": {
-    "mtime": 1782174080.9731205,
-    "ast_hash": "e12c1aafb1a0674a12753d059095565b",
+    "mtime": 1782207197.9222655,
+    "ast_hash": "ded3406eab174f06259ac4ed2122a091",
     "semantic_hash": ""
   },
   "strategy-service/src/main/resources/productExpert-templates/README.md": {
@@ -880,13 +880,73 @@
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java": {
-    "mtime": 1782198175.4531715,
-    "ast_hash": "aef518a1d161bc81e2e621ad2e3d154b",
+    "mtime": 1782206045.7618961,
+    "ast_hash": "9f77dca52aa12e70b333cf1e061f53c8",
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/execution/ConductorCodeGenerator.java": {
-    "mtime": 1782196015.7023134,
-    "ast_hash": "da8049d43416e46dbedde5dcc56c4233",
+    "mtime": 1782206093.9480877,
+    "ast_hash": "5ab43a341395ad5b5617d6c836395b30",
+    "semantic_hash": ""
+  },
+  "codegen-service/src/main/java/nz/co/eroad/qaisystem/execution/CodegenProgressTracker.java": {
+    "mtime": 1782206362.6505866,
+    "ast_hash": "abcda27d08e07f8599b83da16ca0c0a9",
+    "semantic_hash": ""
+  },
+  "codegen-service/src/main/java/nz/co/eroad/qaisystem/execution/InMemoryCodegenProgressTracker.java": {
+    "mtime": 1782206387.7979808,
+    "ast_hash": "581a1c46aef58f1ffb0db6dae726ab05",
+    "semantic_hash": ""
+  },
+  "codegen-service/src/main/java/nz/co/eroad/qaisystem/execution/RedisCodegenProgressTracker.java": {
+    "mtime": 1782206374.7556345,
+    "ast_hash": "8ce4c09836bf624e606be1684f7acb84",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/config/AgentScalingProperties.java": {
+    "mtime": 1782205636.4908938,
+    "ast_hash": "fb794a167126b901e0f04b331ac8345e",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/execution/WorkspacePool.java": {
+    "mtime": 1782205695.426489,
+    "ast_hash": "fc5e8f239f65bb06825014145ca9b464",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/model/TestScriptRequest.java": {
+    "mtime": 1782205649.8973198,
+    "ast_hash": "ef435f7b37045317321d79ec53682605",
+    "semantic_hash": ""
+  },
+  "k8s/README.md": {
+    "mtime": 1782207312.189327,
+    "ast_hash": "3edd44ccdc8e95e9c574a15070b6b2fc",
+    "semantic_hash": ""
+  },
+  "k8s/codegen-deployment.yaml": {
+    "mtime": 1782207257.6920493,
+    "ast_hash": "f5b97045e0b354ff722587661c970bb2",
+    "semantic_hash": ""
+  },
+  "k8s/keda/codegen-scaledobject.yaml": {
+    "mtime": 1782207290.8060732,
+    "ast_hash": "00fa62da11e3e8de86edc5bb15f6d848",
+    "semantic_hash": ""
+  },
+  "k8s/keda/kafka-trigger-auth.yaml": {
+    "mtime": 1782207265.777137,
+    "ast_hash": "1824237618a94a78157aca93055a64f8",
+    "semantic_hash": ""
+  },
+  "k8s/keda/strategy-scaledobject.yaml": {
+    "mtime": 1782207281.3318355,
+    "ast_hash": "86715a4b3ff691770bc589ef50d47901",
+    "semantic_hash": ""
+  },
+  "k8s/strategy-deployment.yaml": {
+    "mtime": 1782207240.8015234,
+    "ast_hash": "b68920ba0235de8feac4f0ffed0ed387",
     "semantic_hash": ""
   }
 }
