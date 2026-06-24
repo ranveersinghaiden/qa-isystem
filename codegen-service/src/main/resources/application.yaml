@@ -83,6 +83,19 @@ aiqa:
       max-output-chars: ${COPILOT_MAX_OUTPUT_CHARS:200000}
       working-dir: ${COPILOT_AGENT_WORKING_DIR:}
       max-autopilot-continues: ${COPILOT_MAX_AUTOPILOT_CONTINUES:5}
+    # ── Headroom token-compression proxy ─────────────────────────────────────────
+    # Headroom intercepts copilot's outbound LLM calls and compresses tool outputs,
+    # file reads, and agent context before they reach the upstream model.
+    # Expected savings: 40-95% on code/log content read by the Conductor agent.
+    #
+    # One-time setup (on host before starting containers):
+    #   headroom device add copilot
+    # Then mount ~/.headroom into the container (see docker-compose.prod.yml).
+    headroom:
+      enabled: ${HEADROOM_ENABLED:false}
+      port: ${HEADROOM_PORT:8787}
+      github-username: ${HEADROOM_GITHUB_USERNAME:}
+      startup-wait-seconds: ${HEADROOM_STARTUP_WAIT_SECONDS:15}
   conversation:
     ttl-days: ${AIQA_CONV_TTL_DAYS:30}
     max-history-chars: ${AIQA_CONV_MAX_CHARS:65536}

@@ -32,6 +32,9 @@ public class AiProviderProperties {
     /** GitHub Copilot API backend settings. */
     private CopilotConfig copilot = new CopilotConfig();
 
+    /** Headroom token-compression proxy settings. */
+    private HeadroomConfig headroom = new HeadroomConfig();
+
     @Data
     public static class CopilotCliConfig {
         /** Path to the gh CLI executable. Default: {@code gh} (must be on PATH). */
@@ -84,5 +87,61 @@ public class AiProviderProperties {
         private String baseUrl = "https://api.githubcopilot.com";
         /** Model name, e.g. {@code gpt-4o} or {@code claude-3.5-sonnet}. */
         private String model = "gpt-4o";
+    }
+
+    /**
+     * Headroom token-compression proxy settings.
+     *
+     * <p>When {@code enabled=true} the headroom proxy must already be running (started by
+     * {@code docker-entrypoint.sh}).  {@link nz.co.eroad.qaisystem.agent.ConductorAgentRunner}
+     * injects {@code COPILOT_PROVIDER_*} env vars into each copilot subprocess so the
+     * Copilot CLI routes its outbound LLM calls through the headroom proxy for context
+     * compression before they reach the upstream model.
+     *
+     * <p>Headroom requires a one-time device registration ({@code headroom device add copilot})
+     * performed on the host.  Mount {@code ~/.headroom} into the container so the credentials
+     * are available at runtime.  The proxy URL is user-specific:
+     * {@code http://127.0.0.1:{port}/p/{githubUsername}/v1}.
+     *
+     * <p>When {@code enabled=false} (the default) no proxy is started and copilot calls the
+     * LLM API directly — behaviour is identical to the pre-headroom setup.
+     */
+    @Data
+    public static class HeadroomConfig {
+        /**
+         * Enable headroom token compression.
+         * Set via {@code HEADROOM_ENABLED=true} in the container environment.
+         */
+        private boolean enabled = false;
+
+        /**
+         * Port the headroom proxy listens on (started by {@code docker-entrypoint.sh}).
+         * Must match {@code HEADROOM_PORT} used in the entrypoint script.
+         */
+        private int port = 8787;
+
+        /**
+         * GitHub username used in the user-specific proxy path.
+         * Headroom's copilot device creates a route at
+         * {@code http://127.0.0.1:{port}/p/{githubUsername}/v1}.
+         * Set via {@code HEADROOM_GITHUB_USERNAME} in the container environment.
+         */
+        private String githubUsername = "";
+
+        /**
+         * Seconds the entrypoint script waits for the proxy to respond on {@code /health}
+         * before starting the Java process.  Informational — actual wait logic is in
+         * {@code docker-entrypoint.sh}.
+         */
+        private int startupWaitSeconds = 15;
+
+        /**
+         * Builds the {@code COPILOT_PROVIDER_BASE_URL} value from port and username.
+         * Returns {@code null} when {@code githubUsername} is blank (proxy not usable).
+         */
+        public String providerBaseUrl() {
+            if (githubUsername == null || githubUsername.isBlank()) return null;
+            return "http://127.0.0.1:" + port + "/p/" + githubUsername + "/v1";
+        }
     }
 }

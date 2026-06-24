@@ -119,9 +119,19 @@ services:
       # Horizontal scale via: docker compose up -d --scale strategy-service=N
       AIQA_AGENT_MAX_CONCURRENT: ${STRATEGY_AGENT_MAX_CONCURRENT:-3}
       AIQA_AGENT_ISOLATED_WORKSPACES: "true"
+      # ── Headroom token compression ─────────────────────────────────────────
+      # One-time host setup: headroom device add copilot
+      # Then mount ~/.headroom below so device credentials are available.
+      HEADROOM_ENABLED: ${HEADROOM_ENABLED:-false}
+      HEADROOM_PORT: ${HEADROOM_PORT:-8787}
+      HEADROOM_GITHUB_USERNAME: ${HEADROOM_GITHUB_USERNAME:-}
+      HEADROOM_STARTUP_WAIT_SECONDS: ${HEADROOM_STARTUP_WAIT_SECONDS:-15}
     volumes:
       # Persist the cloned test repo between container restarts to avoid re-cloning every time
       - qa-repo-cache:/tmp/qa-context-repo
+      # Headroom device credentials (created by: headroom device add copilot on host).
+      # Only needed when HEADROOM_ENABLED=true; harmless when disabled.
+      - ${HEADROOM_CREDENTIALS_PATH:-~/.headroom}:/home/spring/.headroom:ro
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8082/api/strategy/status"]
       interval: 30s
@@ -155,8 +165,15 @@ services:
       # (N × AIQA_AGENT_MAX_CONCURRENT must not exceed TestScriptsQueue partitions=24)
       AIQA_AGENT_MAX_CONCURRENT: ${CODEGEN_AGENT_MAX_CONCURRENT:-3}
       AIQA_AGENT_ISOLATED_WORKSPACES: "true"
+      # ── Headroom token compression ─────────────────────────────────────────
+      HEADROOM_ENABLED: ${HEADROOM_ENABLED:-false}
+      HEADROOM_PORT: ${HEADROOM_PORT:-8787}
+      HEADROOM_GITHUB_USERNAME: ${HEADROOM_GITHUB_USERNAME:-}
+      HEADROOM_STARTUP_WAIT_SECONDS: ${HEADROOM_STARTUP_WAIT_SECONDS:-15}
     volumes:
       - qa-codegen-repo-cache:/tmp/qa-context-repo-codegen
+      # Headroom device credentials (created by: headroom device add copilot on host).
+      - ${HEADROOM_CREDENTIALS_PATH:-~/.headroom}:/home/spring/.headroom:ro
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8083/actuator/health"]
       interval: 30s

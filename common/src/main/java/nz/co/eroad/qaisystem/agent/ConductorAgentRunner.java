@@ -58,6 +58,8 @@ public class ConductorAgentRunner {
     private final int            agentTimeoutSeconds;
     private final int            maxOutputChars;
     private final int            maxAutopilotContinues;
+    private final boolean        headroomEnabled;
+    private final String         headroomProviderBaseUrl;  // null when disabled or username blank
     private final Semaphore      semaphore;
     private final ObjectMapper   objectMapper;
     private final WorkspacePool  workspacePool;
@@ -73,6 +75,8 @@ public class ConductorAgentRunner {
         this.agentTimeoutSeconds   = cfg.getAgentTimeoutSeconds();
         this.maxOutputChars        = cfg.getMaxOutputChars();
         this.maxAutopilotContinues = cfg.getMaxAutopilotContinues();
+        this.headroomEnabled          = props.getHeadroom().isEnabled();
+        this.headroomProviderBaseUrl  = props.getHeadroom().providerBaseUrl();
         this.workspacePool         = workspacePool;
         this.objectMapper          = objectMapper;
 
@@ -98,8 +102,11 @@ public class ConductorAgentRunner {
             this.latencyTimer = null;
         }
 
-        log.info("{} Initialised - copilotCliPath='{}' maxConcurrent={} timeoutSec={} maxContinues={} metrics={}",
+        log.info("{} Initialised - copilotCliPath='{}' maxConcurrent={} timeoutSec={} maxContinues={} headroom={} metrics={}",
                 LOG_PREFIX, copilotCliPath, permits, agentTimeoutSeconds, maxAutopilotContinues,
+                headroomEnabled && headroomProviderBaseUrl != null
+                        ? "enabled(providerBaseUrl=" + headroomProviderBaseUrl + ")"
+                        : headroomEnabled ? "enabled(WARNING: github-username not set)" : "disabled",
                 registry != null);
     }
 
@@ -165,6 +172,26 @@ public class ConductorAgentRunner {
         var pb = new ProcessBuilder(command);
         pb.directory(workingDir.toFile());
         pb.redirectErrorStream(false);
+
+        // Route copilot's outbound LLM calls through the headroom proxy for context
+        // compression.  The Copilot CLI reads COPILOT_PROVIDER_* env vars to override
+        // its default GitHub Copilot API endpoint.
+        //
+        // COPILOT_PROVIDER_BASE_URL is user-specific: http://127.0.0.1:{port}/p/{username}/v1
+        // Headroom registers this route when `headroom device add copilot` is run once on
+        // the host; credentials are persisted in ~/.headroom (mounted into the container).
+        if (headroomEnabled && headroomProviderBaseUrl != null) {
+            pb.environment().put("COPILOT_PROVIDER_TYPE",     "openai");
+            pb.environment().put("COPILOT_PROVIDER_BASE_URL", headroomProviderBaseUrl);
+            pb.environment().put("COPILOT_PROVIDER_WIRE_API", "completions");
+            pb.environment().put("COPILOT_AUTH_MODE",         "github-oauth");
+            log.debug("{} Headroom compression active — COPILOT_PROVIDER_BASE_URL='{}'",
+                    LOG_PREFIX, headroomProviderBaseUrl);
+        } else if (headroomEnabled) {
+            log.warn("{} Headroom enabled but aiqa.ai.headroom.github-username is blank — " +
+                     "copilot will call the LLM API directly. Set HEADROOM_GITHUB_USERNAME.",
+                    LOG_PREFIX);
+        }
 
         Process process;
         try {
