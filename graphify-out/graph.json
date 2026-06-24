@@ -4,6 +4,226 @@
   "graph": {},
   "nodes": [
     {
+      "label": "copilot-instructions.md",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "github_copilot_instructions",
+      "community": 44,
+      "norm_label": "copilot-instructions.md"
+    },
+    {
+      "label": "GitHub Copilot \u2014 Workspace Instructions for QA-ISystem",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem",
+      "community": 44,
+      "norm_label": "github copilot \u2014 workspace instructions for qa-isystem"
+    },
+    {
+      "label": "\ud83d\uddff Communication Style \u2014 Caveman Mode (always on)",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L7",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_communication_style_caveman_mode_always_on",
+      "community": 44,
+      "norm_label": "\ud83d\uddff communication style \u2014 caveman mode (always on)"
+    },
+    {
+      "label": "Project Overview",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L22",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_project_overview",
+      "community": 44,
+      "norm_label": "project overview"
+    },
+    {
+      "label": "Module ports",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L37",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_module_ports",
+      "community": 44,
+      "norm_label": "module ports"
+    },
+    {
+      "label": "Non-Negotiable Rules",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L50",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_non_negotiable_rules",
+      "community": 44,
+      "norm_label": "non-negotiable rules"
+    },
+    {
+      "label": "1 \u00b7 Java style",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L52",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_1_java_style",
+      "community": 44,
+      "norm_label": "1 \u00b7 java style"
+    },
+    {
+      "label": "2 \u00b7 Spring injection",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L59",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_2_spring_injection",
+      "community": 44,
+      "norm_label": "2 \u00b7 spring injection"
+    },
+    {
+      "label": "3 \u00b7 Logging",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L64",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_3_logging",
+      "community": 44,
+      "norm_label": "3 \u00b7 logging"
+    },
+    {
+      "label": "4 \u00b7 Error handling",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L70",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_4_error_handling",
+      "community": 44,
+      "norm_label": "4 \u00b7 error handling"
+    },
+    {
+      "label": "5 \u00b7 Testing \u2014 **zero Mockito policy**",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L75",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_5_testing_zero_mockito_policy",
+      "community": 44,
+      "norm_label": "5 \u00b7 testing \u2014 **zero mockito policy**"
+    },
+    {
+      "label": "6 \u00b7 Conditional beans",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L82",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_6_conditional_beans",
+      "community": 44,
+      "norm_label": "6 \u00b7 conditional beans"
+    },
+    {
+      "label": "7 \u00b7 Kafka",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L86",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_7_kafka",
+      "community": 44,
+      "norm_label": "7 \u00b7 kafka"
+    },
+    {
+      "label": "8 \u00b7 Redis",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L92",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_8_redis",
+      "community": 44,
+      "norm_label": "8 \u00b7 redis"
+    },
+    {
+      "label": "9 \u00b7 Spring Boot MCP Server",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L97",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_9_spring_boot_mcp_server",
+      "community": 44,
+      "norm_label": "9 \u00b7 spring boot mcp server"
+    },
+    {
+      "label": "10 \u00b7 No secrets in code",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L103",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_10_no_secrets_in_code",
+      "community": 44,
+      "norm_label": "10 \u00b7 no secrets in code"
+    },
+    {
+      "label": "File locations",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L110",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_file_locations",
+      "community": 44,
+      "norm_label": "file locations"
+    },
+    {
+      "label": "Commit message format",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L124",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_commit_message_format",
+      "community": 44,
+      "norm_label": "commit message format"
+    },
+    {
+      "label": "What Copilot must NOT do",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L137",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_what_copilot_must_not_do",
+      "community": 44,
+      "norm_label": "what copilot must not do"
+    },
+    {
+      "label": "RTK (Rust Token Killer) - Token-Optimized Commands",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L148",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_rtk_rust_token_killer_token_optimized_commands",
+      "community": 44,
+      "norm_label": "rtk (rust token killer) - token-optimized commands"
+    },
+    {
+      "label": "Key Commands",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L154",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_key_commands",
+      "community": 44,
+      "norm_label": "key commands"
+    },
+    {
+      "label": "Rules",
+      "file_type": "document",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L184",
+      "_origin": "ast",
+      "id": "github_copilot_instructions_rules",
+      "community": 44,
+      "norm_label": "rules"
+    },
+    {
       "label": "docker-entrypoint.sh",
       "file_type": "code",
       "source_file": "codegen-service/docker-entrypoint.sh",
@@ -13,9 +233,9 @@
         "kind": "file"
       },
       "_origin": "ast",
-      "id": "codegen_service_docker_entrypoint",
       "community": 50,
-      "norm_label": "docker-entrypoint.sh"
+      "norm_label": "docker-entrypoint.sh",
+      "id": "codegen_service_docker_entrypoint"
     },
     {
       "label": "docker-entrypoint.sh script",
@@ -27,9 +247,9 @@
         "kind": "bash_entrypoint"
       },
       "_origin": "ast",
-      "id": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_codegen_service_docker_entrypoint_sh__entry",
       "community": 50,
-      "norm_label": "docker-entrypoint.sh script"
+      "norm_label": "docker-entrypoint.sh script",
+      "id": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_codegen_service_docker_entrypoint_sh__entry"
     },
     {
       "label": "ConductorAgentRunner.java",
@@ -37,9 +257,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "agent_conductoragentrunner",
       "community": 98,
-      "norm_label": "conductoragentrunner.java"
+      "norm_label": "conductoragentrunner.java",
+      "id": "agent_conductoragentrunner"
     },
     {
       "label": "ConductorAgentRunner",
@@ -47,9 +267,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L44",
       "_origin": "ast",
-      "id": "agent_conductoragentrunner_conductoragentrunner",
       "community": 98,
-      "norm_label": "conductoragentrunner"
+      "norm_label": "conductoragentrunner",
+      "id": "agent_conductoragentrunner_conductoragentrunner"
     },
     {
       "label": ".ConductorAgentRunner()",
@@ -57,9 +277,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L68",
       "_origin": "ast",
-      "id": "agent_conductoragentrunner_conductoragentrunner_conductoragentrunner",
       "community": 98,
-      "norm_label": ".conductoragentrunner()"
+      "norm_label": ".conductoragentrunner()",
+      "id": "agent_conductoragentrunner_conductoragentrunner_conductoragentrunner"
     },
     {
       "label": "AiProviderProperties",
@@ -67,9 +287,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L68",
       "_origin": "ast",
-      "id": "aiproviderproperties",
       "community": 98,
-      "norm_label": "aiproviderproperties"
+      "norm_label": "aiproviderproperties",
+      "id": "aiproviderproperties"
     },
     {
       "label": "AgentScalingProperties",
@@ -77,9 +297,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L68",
       "_origin": "ast",
-      "id": "agentscalingproperties",
       "community": 98,
-      "norm_label": "agentscalingproperties"
+      "norm_label": "agentscalingproperties",
+      "id": "agentscalingproperties"
     },
     {
       "label": "WorkspacePool",
@@ -87,9 +307,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L68",
       "_origin": "ast",
-      "id": "workspacepool",
       "community": 98,
-      "norm_label": "workspacepool"
+      "norm_label": "workspacepool",
+      "id": "workspacepool"
     },
     {
       "label": "ObjectMapper",
@@ -97,9 +317,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L68",
       "_origin": "ast",
-      "id": "objectmapper",
       "community": 98,
-      "norm_label": "objectmapper"
+      "norm_label": "objectmapper",
+      "id": "objectmapper"
     },
     {
       "label": "ObjectProvider",
@@ -107,9 +327,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L68",
       "_origin": "ast",
-      "id": "objectprovider",
       "community": 98,
-      "norm_label": "objectprovider"
+      "norm_label": "objectprovider",
+      "id": "objectprovider"
     },
     {
       "label": "MeterRegistry",
@@ -117,9 +337,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L68",
       "_origin": "ast",
-      "id": "meterregistry",
       "community": 98,
-      "norm_label": "meterregistry"
+      "norm_label": "meterregistry",
+      "id": "meterregistry"
     },
     {
       "label": ".delegateToConductor()",
@@ -127,9 +347,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L122",
       "_origin": "ast",
-      "id": "agent_conductoragentrunner_conductoragentrunner_delegatetoconductor",
       "community": 98,
-      "norm_label": ".delegatetoconductor()"
+      "norm_label": ".delegatetoconductor()",
+      "id": "agent_conductoragentrunner_conductoragentrunner_delegatetoconductor"
     },
     {
       "label": "String",
@@ -137,9 +357,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L122",
       "_origin": "ast",
-      "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_conductoragentrunner_java_string",
       "community": 98,
-      "norm_label": "string"
+      "norm_label": "string",
+      "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_conductoragentrunner_java_string"
     },
     {
       "label": ".timed()",
@@ -147,9 +367,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L149",
       "_origin": "ast",
-      "id": "agent_conductoragentrunner_conductoragentrunner_timed",
       "community": 98,
-      "norm_label": ".timed()"
+      "norm_label": ".timed()",
+      "id": "agent_conductoragentrunner_conductoragentrunner_timed"
     },
     {
       "label": "Path",
@@ -157,9 +377,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L149",
       "_origin": "ast",
-      "id": "path",
       "community": 98,
-      "norm_label": "path"
+      "norm_label": "path",
+      "id": "path"
     },
     {
       "label": ".runConductorProcess()",
@@ -167,9 +387,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L161",
       "_origin": "ast",
-      "id": "agent_conductoragentrunner_conductoragentrunner_runconductorprocess",
       "community": 98,
-      "norm_label": ".runconductorprocess()"
+      "norm_label": ".runconductorprocess()",
+      "id": "agent_conductoragentrunner_conductoragentrunner_runconductorprocess"
     },
     {
       "label": ".extractChunkText()",
@@ -177,9 +397,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L276",
       "_origin": "ast",
-      "id": "agent_conductoragentrunner_conductoragentrunner_extractchunktext",
       "community": 98,
-      "norm_label": ".extractchunktext()"
+      "norm_label": ".extractchunktext()",
+      "id": "agent_conductoragentrunner_conductoragentrunner_extractchunktext"
     },
     {
       "label": "StringBuilder",
@@ -187,9 +407,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L276",
       "_origin": "ast",
-      "id": "stringbuilder",
       "community": 98,
-      "norm_label": "stringbuilder"
+      "norm_label": "stringbuilder",
+      "id": "stringbuilder"
     },
     {
       "label": ".appendChunk()",
@@ -197,9 +417,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L297",
       "_origin": "ast",
-      "id": "agent_conductoragentrunner_conductoragentrunner_appendchunk",
       "community": 98,
-      "norm_label": ".appendchunk()"
+      "norm_label": ".appendchunk()",
+      "id": "agent_conductoragentrunner_conductoragentrunner_appendchunk"
     },
     {
       "label": ".availableSlots()",
@@ -207,9 +427,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L305",
       "_origin": "ast",
-      "id": "agent_conductoragentrunner_conductoragentrunner_availableslots",
       "community": 98,
-      "norm_label": ".availableslots()"
+      "norm_label": ".availableslots()",
+      "id": "agent_conductoragentrunner_conductoragentrunner_availableslots"
     },
     {
       "label": ".validateConductorAgent()",
@@ -217,9 +437,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L322",
       "_origin": "ast",
-      "id": "agent_conductoragentrunner_conductoragentrunner_validateconductoragent",
       "community": 98,
-      "norm_label": ".validateconductoragent()"
+      "norm_label": ".validateconductoragent()",
+      "id": "agent_conductoragentrunner_conductoragentrunner_validateconductoragent"
     },
     {
       "label": "AiProviderProperties.java",
@@ -227,9 +447,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "config_aiproviderproperties",
       "community": 98,
-      "norm_label": "aiproviderproperties.java"
+      "norm_label": "aiproviderproperties.java",
+      "id": "config_aiproviderproperties"
     },
     {
       "label": "AiProviderProperties",
@@ -237,9 +457,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L16",
       "_origin": "ast",
-      "id": "config_aiproviderproperties_aiproviderproperties",
       "community": 98,
-      "norm_label": "aiproviderproperties"
+      "norm_label": "aiproviderproperties",
+      "id": "config_aiproviderproperties_aiproviderproperties"
     },
     {
       "label": "CopilotCliConfig",
@@ -247,9 +467,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L38",
       "_origin": "ast",
-      "id": "config_aiproviderproperties_copilotcliconfig",
       "community": 98,
-      "norm_label": "copilotcliconfig"
+      "norm_label": "copilotcliconfig",
+      "id": "config_aiproviderproperties_copilotcliconfig"
     },
     {
       "label": "CopilotAgentConfig",
@@ -257,9 +477,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L48",
       "_origin": "ast",
-      "id": "config_aiproviderproperties_copilotagentconfig",
       "community": 98,
-      "norm_label": "copilotagentconfig"
+      "norm_label": "copilotagentconfig",
+      "id": "config_aiproviderproperties_copilotagentconfig"
     },
     {
       "label": "OpenAiConfig",
@@ -267,9 +487,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L70",
       "_origin": "ast",
-      "id": "config_aiproviderproperties_openaiconfig",
       "community": 98,
-      "norm_label": "openaiconfig"
+      "norm_label": "openaiconfig",
+      "id": "config_aiproviderproperties_openaiconfig"
     },
     {
       "label": "CopilotConfig",
@@ -277,9 +497,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L81",
       "_origin": "ast",
-      "id": "config_aiproviderproperties_copilotconfig",
       "community": 98,
-      "norm_label": "copilotconfig"
+      "norm_label": "copilotconfig",
+      "id": "config_aiproviderproperties_copilotconfig"
     },
     {
       "label": "HeadroomConfig",
@@ -287,9 +507,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L109",
       "_origin": "ast",
-      "id": "config_aiproviderproperties_headroomconfig",
       "community": 98,
-      "norm_label": "headroomconfig"
+      "norm_label": "headroomconfig",
+      "id": "config_aiproviderproperties_headroomconfig"
     },
     {
       "label": ".providerBaseUrl()",
@@ -297,9 +517,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L142",
       "_origin": "ast",
-      "id": "config_aiproviderproperties_headroomconfig_providerbaseurl",
       "community": 98,
-      "norm_label": ".providerbaseurl()"
+      "norm_label": ".providerbaseurl()",
+      "id": "config_aiproviderproperties_headroomconfig_providerbaseurl"
     },
     {
       "label": "String",
@@ -307,9 +527,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L142",
       "_origin": "ast",
-      "id": "common_src_main_java_nz_co_eroad_qaisystem_config_aiproviderproperties_java_string",
       "community": 98,
-      "norm_label": "string"
+      "norm_label": "string",
+      "id": "common_src_main_java_nz_co_eroad_qaisystem_config_aiproviderproperties_java_string"
     },
     {
       "label": "docker-entrypoint.sh",
@@ -321,9 +541,9 @@
         "kind": "file"
       },
       "_origin": "ast",
-      "id": "strategy_service_docker_entrypoint",
       "community": 51,
-      "norm_label": "docker-entrypoint.sh"
+      "norm_label": "docker-entrypoint.sh",
+      "id": "strategy_service_docker_entrypoint"
     },
     {
       "label": "docker-entrypoint.sh script",
@@ -335,9 +555,9 @@
         "kind": "bash_entrypoint"
       },
       "_origin": "ast",
-      "id": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_strategy_service_docker_entrypoint_sh__entry",
       "community": 51,
-      "norm_label": "docker-entrypoint.sh script"
+      "norm_label": "docker-entrypoint.sh script",
+      "id": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_strategy_service_docker_entrypoint_sh__entry"
     },
     {
       "label": "CodeReviewer.agent.md",
@@ -3405,7 +3625,7 @@
       "source_file": "feedback-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L222",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".handleproductexpertupdate()",
       "id": "feedback_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_agent_prfeedbackservice_prfeedbackservice_handleproductexpertupdate"
     },
@@ -3815,7 +4035,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": "prfeedbackservice.java",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_agent_prfeedbackservice"
     },
@@ -3825,7 +4045,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L55",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": "prfeedbackservice",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_agent_prfeedbackservice_prfeedbackservice"
     },
@@ -3835,7 +4055,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L71",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": ".delegatetoconductor()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_agent_prfeedbackservice_prfeedbackservice_delegatetoconductor"
     },
@@ -3845,7 +4065,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L71",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": "string",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_string"
     },
@@ -3855,7 +4075,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L92",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": ".handlebddrejection()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_agent_prfeedbackservice_prfeedbackservice_handlebddrejection"
     },
@@ -3865,7 +4085,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L92",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": "prrecord",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_prrecord"
     },
@@ -3875,7 +4095,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L127",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": ".handletestrejection()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_agent_prfeedbackservice_prfeedbackservice_handletestrejection"
     },
@@ -3885,7 +4105,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L160",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": ".handleproductexpertupdate()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_agent_prfeedbackservice_prfeedbackservice_handleproductexpertupdate"
     },
@@ -3895,7 +4115,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L160",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": "repocontext",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_repocontext"
     },
@@ -3905,7 +4125,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L279",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": ".regeneratebdd()",
       "id": "agent_prfeedbackservice_prfeedbackservice_regeneratebdd"
     },
@@ -3915,7 +4135,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L279",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": "bddscenario",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_bddscenario"
     },
@@ -3925,7 +4145,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L312",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": ".buildgherkinfromscenario()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_agent_prfeedbackservice_prfeedbackservice_buildgherkinfromscenario"
     },
@@ -3935,7 +4155,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L327",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": ".regeneratetestcode()",
       "id": "agent_prfeedbackservice_prfeedbackservice_regeneratetestcode"
     },
@@ -3945,7 +4165,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L327",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": "testscript",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_testscript"
     },
@@ -3955,7 +4175,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L363",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": ".createrevisedbddpr()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_agent_prfeedbackservice_prfeedbackservice_createrevisedbddpr"
     },
@@ -3965,7 +4185,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L408",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": ".createrevisedtestpr()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_agent_prfeedbackservice_prfeedbackservice_createrevisedtestpr"
     },
@@ -3975,7 +4195,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L456",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": ".appendsteps()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_agent_prfeedbackservice_prfeedbackservice_appendsteps"
     },
@@ -3985,7 +4205,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L456",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": "stringbuilder",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_stringbuilder"
     },
@@ -3995,7 +4215,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L456",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": "list",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_list"
     },
@@ -4005,7 +4225,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java",
       "source_location": "L463",
       "_origin": "ast",
-      "community": 33,
+      "community": 57,
       "norm_label": ".deriveproductfromprid()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_agent_prfeedbackservice_java_agent_prfeedbackservice_prfeedbackservice_deriveproductfromprid"
     },
@@ -4485,7 +4705,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/ImpactResultsConsumer.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 4,
+      "community": 17,
       "norm_label": "impactresultsconsumer.java",
       "id": "kafka_impactresultsconsumer"
     },
@@ -4495,7 +4715,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/ImpactResultsConsumer.java",
       "source_location": "L31",
       "_origin": "ast",
-      "community": 4,
+      "community": 17,
       "norm_label": "impactresultsconsumer",
       "id": "kafka_impactresultsconsumer_impactresultsconsumer"
     },
@@ -4505,7 +4725,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/ImpactResultsConsumer.java",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 4,
+      "community": 17,
       "norm_label": ".consume()",
       "id": "kafka_impactresultsconsumer_impactresultsconsumer_consume"
     },
@@ -4515,7 +4735,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/ImpactResultsConsumer.java",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 4,
+      "community": 17,
       "norm_label": "consumerrecord",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_kafka_impactresultsconsumer_java_consumerrecord"
     },
@@ -4525,7 +4745,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/ImpactResultsConsumer.java",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 4,
+      "community": 17,
       "norm_label": "string",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_kafka_impactresultsconsumer_java_string"
     },
@@ -4535,7 +4755,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/ImpactResultsConsumer.java",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 4,
+      "community": 17,
       "norm_label": "acknowledgment",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_kafka_impactresultsconsumer_java_acknowledgment"
     },
@@ -4545,7 +4765,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/ImpactResultsConsumer.java",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 4,
+      "community": 17,
       "norm_label": "kafkalistener",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_kafka_impactresultsconsumer_java_kafkalistener"
     },
@@ -7385,7 +7605,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/service/RepoContextService.java",
       "source_location": "L847",
       "_origin": "ast",
-      "community": 27,
+      "community": 10,
       "norm_label": "set",
       "id": "set"
     },
@@ -7889,7 +8109,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": "testprservice.java",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice"
     },
@@ -7899,7 +8119,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L40",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": "testprservice",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice"
     },
@@ -7909,7 +8129,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L61",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": ".createbddpr()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_createbddpr"
     },
@@ -7919,7 +8139,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L61",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": "bddscenario",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_bddscenario"
     },
@@ -7929,7 +8149,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L61",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": "string",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_string"
     },
@@ -7939,7 +8159,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L104",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": ".createfinaltestpr()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_createfinaltestpr"
     },
@@ -7949,7 +8169,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L104",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": "testscript",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_testscript"
     },
@@ -7959,7 +8179,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L104",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": "testresult",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_testresult"
     },
@@ -7969,7 +8189,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L143",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": ".requireconfigured()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_requireconfigured"
     },
@@ -7979,7 +8199,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L154",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": ".buildfeaturefilecontent()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_buildfeaturefilecontent"
     },
@@ -7989,7 +8209,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L173",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": ".appendsteps()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_appendsteps"
     },
@@ -7999,7 +8219,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L173",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": "stringbuilder",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_stringbuilder"
     },
@@ -8009,7 +8229,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L173",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": "list",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_list"
     },
@@ -8019,7 +8239,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L180",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": ".buildbddprbody()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_buildbddprbody"
     },
@@ -8029,7 +8249,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L204",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": ".buildbddprtitle()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_buildbddprtitle"
     },
@@ -8039,7 +8259,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L211",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": ".buildtestprtitle()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_buildtestprtitle"
     },
@@ -8049,7 +8269,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L221",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": ".buildtestprbody()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_buildtestprbody"
     },
@@ -8059,7 +8279,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L255",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": "githubprexception",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_githubprexception"
     },
@@ -8069,7 +8289,7 @@
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": "runtimeexception",
       "id": "runtimeexception"
     },
@@ -8079,7 +8299,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L256",
       "_origin": "ast",
-      "community": 33,
+      "community": 60,
       "norm_label": ".githubprexception()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_githubprexception_githubprexception"
     },
@@ -8089,7 +8309,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "aiclient.java",
       "id": "agent_aiclient"
     },
@@ -8099,7 +8319,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "aiclient",
       "id": "agent_aiclient_aiclient"
     },
@@ -8109,7 +8329,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": ".complete()",
       "id": "agent_aiclient_aiclient_complete"
     },
@@ -8119,7 +8339,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "string",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_aiclient_java_string"
     },
@@ -8129,7 +8349,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L53",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": ".completewithhistory()",
       "id": "agent_aiclient_aiclient_completewithhistory"
     },
@@ -8139,7 +8359,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L53",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "list",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_aiclient_java_list"
     },
@@ -8149,7 +8369,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L53",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "chatmessage",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_aiclient_java_chatmessage"
     },
@@ -8159,7 +8379,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L63",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": ".isavailable()",
       "id": "agent_aiclient_aiclient_isavailable"
     },
@@ -8329,7 +8549,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "copilotclient.java",
       "id": "agent_copilotclient"
     },
@@ -8339,7 +8559,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "copilotclient",
       "id": "agent_copilotclient_copilotclient"
     },
@@ -8349,7 +8569,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": ".copilotclient()",
       "id": "agent_copilotclient_copilotclient_copilotclient"
     },
@@ -8359,7 +8579,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "string",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_copilotclient_java_string"
     },
@@ -8369,7 +8589,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "objectmapper",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_copilotclient_java_objectmapper"
     },
@@ -8379,7 +8599,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L58",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": ".isavailable()",
       "id": "agent_copilotclient_copilotclient_isavailable"
     },
@@ -8389,7 +8609,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L58",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "override",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_copilotclient_java_override"
     },
@@ -8399,7 +8619,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L63",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": ".complete()",
       "id": "agent_copilotclient_copilotclient_complete"
     },
@@ -8409,7 +8629,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "openaiclient.java",
       "id": "agent_openaiclient"
     },
@@ -8419,7 +8639,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "openaiclient",
       "id": "agent_openaiclient_openaiclient"
     },
@@ -8429,7 +8649,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": ".openaiclient()",
       "id": "agent_openaiclient_openaiclient_openaiclient"
     },
@@ -8439,7 +8659,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "string",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_openaiclient_java_string"
     },
@@ -8449,7 +8669,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "objectmapper",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_openaiclient_java_objectmapper"
     },
@@ -8459,7 +8679,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L68",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": ".logstate()",
       "id": "agent_openaiclient_openaiclient_logstate"
     },
@@ -8469,7 +8689,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L68",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "postconstruct",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_openaiclient_java_postconstruct"
     },
@@ -8479,7 +8699,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L80",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": ".isavailable()",
       "id": "agent_openaiclient_openaiclient_isavailable"
     },
@@ -8489,7 +8709,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L80",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": "override",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_openaiclient_java_override"
     },
@@ -8499,7 +8719,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L90",
       "_origin": "ast",
-      "community": 21,
+      "community": 16,
       "norm_label": ".complete()",
       "id": "agent_openaiclient_openaiclient_complete"
     },
@@ -8879,7 +9099,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": "githubservice.java",
       "id": "github_githubservice"
     },
@@ -8889,7 +9109,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L49",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": "githubservice",
       "id": "github_githubservice_githubservice"
     },
@@ -8899,7 +9119,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L69",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".githubservice()",
       "id": "github_githubservice_githubservice_githubservice"
     },
@@ -8909,7 +9129,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L69",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": "targetrepoproperties",
       "id": "targetrepoproperties"
     },
@@ -8919,7 +9139,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L69",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": "objectmapper",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_github_githubservice_java_objectmapper"
     },
@@ -8929,7 +9149,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L113",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".validateconfiguration()",
       "id": "github_githubservice_githubservice_validateconfiguration"
     },
@@ -8939,7 +9159,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L113",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": "postconstruct",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_github_githubservice_java_postconstruct"
     },
@@ -8949,7 +9169,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L170",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".isconfigured()",
       "id": "github_githubservice_githubservice_isconfigured"
     },
@@ -8959,7 +9179,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L178",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".repoweburl()",
       "id": "github_githubservice_githubservice_repoweburl"
     },
@@ -8969,7 +9189,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L178",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": "string",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_github_githubservice_java_string"
     },
@@ -8979,7 +9199,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L187",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".createbranch()",
       "id": "github_githubservice_githubservice_createbranch"
     },
@@ -8989,7 +9209,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L231",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".createfile()",
       "id": "github_githubservice_githubservice_createfile"
     },
@@ -8999,7 +9219,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L266",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".createpullrequest()",
       "id": "github_githubservice_githubservice_createpullrequest"
     },
@@ -9019,7 +9239,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L307",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".getprallcomments()",
       "id": "github_githubservice_githubservice_getprallcomments"
     },
@@ -9029,7 +9249,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L386",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".getfilecontent()",
       "id": "github_githubservice_githubservice_getfilecontent"
     },
@@ -9039,7 +9259,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L418",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".updatefile()",
       "id": "github_githubservice_githubservice_updatefile"
     },
@@ -9049,7 +9269,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L449",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".getfilesha()",
       "id": "github_githubservice_githubservice_getfilesha"
     },
@@ -9059,7 +9279,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L478",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".resolvetoken()",
       "id": "github_githubservice_githubservice_resolvetoken"
     },
@@ -9069,7 +9289,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L506",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".resolvefromcredentialhelper()",
       "id": "github_githubservice_githubservice_resolvefromcredentialhelper"
     },
@@ -9079,7 +9299,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L563",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".getbranchsha()",
       "id": "github_githubservice_githubservice_getbranchsha"
     },
@@ -9089,7 +9309,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L587",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".tokensource()",
       "id": "github_githubservice_githubservice_tokensource"
     },
@@ -9099,7 +9319,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L598",
       "_origin": "ast",
-      "community": 33,
+      "community": 7,
       "norm_label": ".parseownerrepo()",
       "id": "github_githubservice_githubservice_parseownerrepo"
     },
@@ -9599,7 +9819,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/model/ChatMessage.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 33,
+      "community": 83,
       "norm_label": "chatmessage.java",
       "id": "model_chatmessage"
     },
@@ -9609,7 +9829,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/model/ChatMessage.java",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 33,
+      "community": 83,
       "norm_label": "system()",
       "id": "model_chatmessage_system"
     },
@@ -9619,7 +9839,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/model/ChatMessage.java",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 33,
+      "community": 83,
       "norm_label": "string",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_model_chatmessage_java_string"
     },
@@ -9629,7 +9849,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/model/ChatMessage.java",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 33,
+      "community": 83,
       "norm_label": "chatmessage",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_model_chatmessage_java_chatmessage"
     },
@@ -9639,7 +9859,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/model/ChatMessage.java",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 33,
+      "community": 83,
       "norm_label": "user()",
       "id": "model_chatmessage_user"
     },
@@ -9649,7 +9869,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/model/ChatMessage.java",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 33,
+      "community": 83,
       "norm_label": "assistant()",
       "id": "model_chatmessage_assistant"
     },
@@ -10129,7 +10349,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": "gitdiffparser.java",
       "id": "parser_gitdiffparser"
     },
@@ -10139,7 +10359,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": "gitdiffparser",
       "id": "parser_gitdiffparser_gitdiffparser"
     },
@@ -10149,7 +10369,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": ".parse()",
       "id": "parser_gitdiffparser_gitdiffparser_parse"
     },
@@ -10159,7 +10379,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": "string",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_parser_gitdiffparser_java_string"
     },
@@ -10169,7 +10389,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": "list",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_parser_gitdiffparser_java_list"
     },
@@ -10179,7 +10399,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": "gitdiff",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_parser_gitdiffparser_java_gitdiff"
     },
@@ -10189,7 +10409,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L136",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": ".finalise()",
       "id": "parser_gitdiffparser_gitdiffparser_finalise"
     },
@@ -10199,7 +10419,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L141",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": ".extractextension()",
       "id": "parser_gitdiffparser_gitdiffparser_extractextension"
     },
@@ -10209,7 +10429,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L146",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": ".istestfile()",
       "id": "parser_gitdiffparser_gitdiffparser_istestfile"
     },
@@ -12109,7 +12329,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": "gitdiffparsertest.java",
       "id": "engine_gitdiffparsertest"
     },
@@ -12119,7 +12339,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": "gitdiffparsertest",
       "id": "engine_gitdiffparsertest_gitdiffparsertest"
     },
@@ -12129,7 +12349,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": ".setup()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_setup"
     },
@@ -12139,7 +12359,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": "beforeeach",
       "id": "impact_service_src_test_java_nz_co_eroad_qaisystem_engine_gitdiffparsertest_java_beforeeach"
     },
@@ -12149,7 +12369,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L39",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": ".parse_modifiedfile()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_parse_modifiedfile"
     },
@@ -12159,7 +12379,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L39",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": "test",
       "id": "impact_service_src_test_java_nz_co_eroad_qaisystem_engine_gitdiffparsertest_java_test"
     },
@@ -12169,7 +12389,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L39",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": "displayname",
       "id": "impact_service_src_test_java_nz_co_eroad_qaisystem_engine_gitdiffparsertest_java_displayname"
     },
@@ -12179,7 +12399,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L49",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": ".parse_newfile()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_parse_newfile"
     },
@@ -12189,7 +12409,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L57",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": ".parse_testfile()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_parse_testfile"
     },
@@ -12199,7 +12419,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L62",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": ".parse_null_empty()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_parse_null_empty"
     },
@@ -12209,7 +12429,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L65",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": ".parse_blank_empty()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_parse_blank_empty"
     },
@@ -12219,7 +12439,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L68",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": ".parse_extension()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_parse_extension"
     },
@@ -12229,7 +12449,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L73",
       "_origin": "ast",
-      "community": 27,
+      "community": 15,
       "norm_label": ".parse_multiplefiles()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_parse_multiplefiles"
     },
@@ -13979,7 +14199,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": "prcontrollertest.java",
       "id": "controller_prcontrollertest"
     },
@@ -13989,7 +14209,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": "prcontrollertest",
       "id": "controller_prcontrollertest_prcontrollertest"
     },
@@ -13999,7 +14219,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": "fixedprservice",
       "id": "controller_prcontrollertest_fixedprservice"
     },
@@ -14009,7 +14229,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L32",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": ".fixedprservice()",
       "id": "controller_prcontrollertest_fixedprservice_fixedprservice"
     },
@@ -14019,7 +14239,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L32",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": "pullrequest",
       "id": "pr_service_src_test_java_nz_co_eroad_qaisystem_controller_prcontrollertest_java_pullrequest"
     },
@@ -14029,7 +14249,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": ".processpullrequest()",
       "id": "controller_prcontrollertest_fixedprservice_processpullrequest"
     },
@@ -14039,7 +14259,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": "override",
       "id": "pr_service_src_test_java_nz_co_eroad_qaisystem_controller_prcontrollertest_java_override"
     },
@@ -14049,7 +14269,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": ".createsamplepullrequest()",
       "id": "controller_prcontrollertest_fixedprservice_createsamplepullrequest"
     },
@@ -14059,7 +14279,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L40",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": ".setup()",
       "id": "controller_prcontrollertest_prcontrollertest_setup"
     },
@@ -14069,7 +14289,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L40",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": "beforeeach",
       "id": "pr_service_src_test_java_nz_co_eroad_qaisystem_controller_prcontrollertest_java_beforeeach"
     },
@@ -14079,7 +14299,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L58",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": ".pr()",
       "id": "controller_prcontrollertest_prcontrollertest_pr"
     },
@@ -14089,7 +14309,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L66",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": ".health()",
       "id": "controller_prcontrollertest_prcontrollertest_health"
     },
@@ -14099,7 +14319,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L66",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": "test",
       "id": "pr_service_src_test_java_nz_co_eroad_qaisystem_controller_prcontrollertest_java_test"
     },
@@ -14109,7 +14329,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L66",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": "displayname",
       "id": "pr_service_src_test_java_nz_co_eroad_qaisystem_controller_prcontrollertest_java_displayname"
     },
@@ -14119,7 +14339,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L74",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": ".webhook()",
       "id": "controller_prcontrollertest_prcontrollertest_webhook"
     },
@@ -14129,7 +14349,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L85",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": ".submit()",
       "id": "controller_prcontrollertest_prcontrollertest_submit"
     },
@@ -14139,7 +14359,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/controller/PRControllerTest.java",
       "source_location": "L95",
       "_origin": "ast",
-      "community": 7,
+      "community": 53,
       "norm_label": ".demo()",
       "id": "controller_prcontrollertest_prcontrollertest_demo"
     },
@@ -14379,7 +14599,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L17",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "prservicetest",
       "id": "service_prservicetest_prservicetest"
     },
@@ -14469,7 +14689,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".setup()",
       "id": "service_prservicetest_prservicetest_setup"
     },
@@ -14479,7 +14699,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "beforeeach",
       "id": "pr_service_src_test_java_nz_co_eroad_qaisystem_service_prservicetest_java_beforeeach"
     },
@@ -14489,7 +14709,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L42",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".assignsprid()",
       "id": "service_prservicetest_prservicetest_assignsprid"
     },
@@ -14499,7 +14719,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L42",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "test",
       "id": "pr_service_src_test_java_nz_co_eroad_qaisystem_service_prservicetest_java_test"
     },
@@ -14509,7 +14729,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L42",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "displayname",
       "id": "pr_service_src_test_java_nz_co_eroad_qaisystem_service_prservicetest_java_displayname"
     },
@@ -14519,7 +14739,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L48",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".deterministicprid()",
       "id": "service_prservicetest_prservicetest_deterministicprid"
     },
@@ -14529,7 +14749,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L62",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".differentbranchgivesdifferentid()",
       "id": "service_prservicetest_prservicetest_differentbranchgivesdifferentid"
     },
@@ -14539,7 +14759,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L72",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".preservesprid()",
       "id": "service_prservicetest_prservicetest_preservesprid"
     },
@@ -14549,7 +14769,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L78",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".defaultstargetbranch()",
       "id": "service_prservicetest_prservicetest_defaultstargetbranch"
     },
@@ -14559,7 +14779,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L83",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".defaultsstatusopen()",
       "id": "service_prservicetest_prservicetest_defaultsstatusopen"
     },
@@ -14569,7 +14789,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L88",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".throwsblanktitle()",
       "id": "service_prservicetest_prservicetest_throwsblanktitle"
     },
@@ -14579,7 +14799,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L96",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".throwsmissingauthor()",
       "id": "service_prservicetest_prservicetest_throwsmissingauthor"
     },
@@ -14589,7 +14809,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L103",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".throwsmissingrepo()",
       "id": "service_prservicetest_prservicetest_throwsmissingrepo"
     },
@@ -14599,7 +14819,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L110",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".parsesrawdiffcontent()",
       "id": "service_prservicetest_prservicetest_parsesrawdiffcontent"
     },
@@ -14609,7 +14829,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L126",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".sampleprvalid()",
       "id": "service_prservicetest_prservicetest_sampleprvalid"
     },
@@ -15579,7 +15799,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 75,
       "norm_label": "promptresponsecache.java",
       "id": "cache_promptresponsecache"
     },
@@ -15589,7 +15809,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L19",
       "_origin": "ast",
-      "community": 27,
+      "community": 75,
       "norm_label": "promptresponsecache",
       "id": "cache_promptresponsecache_promptresponsecache"
     },
@@ -15599,7 +15819,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 27,
+      "community": 75,
       "norm_label": "tohash()",
       "id": "cache_promptresponsecache_tohash"
     },
@@ -15609,7 +15829,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 27,
+      "community": 75,
       "norm_label": "string",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_cache_promptresponsecache_java_string"
     },
@@ -15619,7 +15839,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L64",
       "_origin": "ast",
-      "community": 27,
+      "community": 75,
       "norm_label": ".get()",
       "id": "cache_promptresponsecache_promptresponsecache_get"
     },
@@ -15629,7 +15849,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L64",
       "_origin": "ast",
-      "community": 27,
+      "community": 75,
       "norm_label": "cachekey",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_cache_promptresponsecache_java_cachekey"
     },
@@ -15639,7 +15859,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L64",
       "_origin": "ast",
-      "community": 27,
+      "community": 75,
       "norm_label": "optional",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_cache_promptresponsecache_java_optional"
     },
@@ -15649,7 +15869,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L77",
       "_origin": "ast",
-      "community": 27,
+      "community": 75,
       "norm_label": ".put()",
       "id": "cache_promptresponsecache_promptresponsecache_put"
     },
@@ -15659,7 +15879,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L88",
       "_origin": "ast",
-      "community": 27,
+      "community": 75,
       "norm_label": ".getstats()",
       "id": "cache_promptresponsecache_promptresponsecache_getstats"
     },
@@ -15669,7 +15889,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L88",
       "_origin": "ast",
-      "community": 27,
+      "community": 75,
       "norm_label": "cachestats",
       "id": "cachestats"
     },
@@ -16559,7 +16779,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": "testprservice.java",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice"
     },
@@ -16569,7 +16789,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L40",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": "testprservice",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice"
     },
@@ -16579,7 +16799,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L61",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": ".createbddpr()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_createbddpr"
     },
@@ -16589,7 +16809,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L61",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": "bddscenario",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_bddscenario"
     },
@@ -16599,7 +16819,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L61",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": "string",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_string"
     },
@@ -16609,7 +16829,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L104",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": ".createfinaltestpr()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_createfinaltestpr"
     },
@@ -16619,7 +16839,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L104",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": "testscript",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_testscript"
     },
@@ -16629,7 +16849,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L104",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": "testresult",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_testresult"
     },
@@ -16639,7 +16859,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L143",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": ".requireconfigured()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_requireconfigured"
     },
@@ -16649,7 +16869,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L158",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": ".buildbddprtitle()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_buildbddprtitle"
     },
@@ -16659,7 +16879,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L165",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": ".buildfeaturefilecontent()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_buildfeaturefilecontent"
     },
@@ -16669,7 +16889,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L184",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": ".appendsteps()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_appendsteps"
     },
@@ -16679,7 +16899,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L184",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": "stringbuilder",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_stringbuilder"
     },
@@ -16689,7 +16909,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L184",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": "list",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_list"
     },
@@ -16699,7 +16919,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L191",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": ".buildbddprbody()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_buildbddprbody"
     },
@@ -16709,7 +16929,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L211",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": ".buildtestprtitle()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_buildtestprtitle"
     },
@@ -16719,7 +16939,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L221",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": ".buildtestprbody()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_buildtestprbody"
     },
@@ -16729,7 +16949,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L255",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": "githubprexception",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_githubprexception"
     },
@@ -16739,7 +16959,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L256",
       "_origin": "ast",
-      "community": 33,
+      "community": 64,
       "norm_label": ".githubprexception()",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_githubprexception_githubprexception"
     },
@@ -18564,196 +18784,6 @@
       "id": "agents_testing_standards_validation_checklist"
     },
     {
-      "label": "copilot-instructions.md",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "copilot-instructions.md",
-      "id": "github_copilot_instructions"
-    },
-    {
-      "label": "GitHub Copilot \u2014 Workspace Instructions for QA-ISystem",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "github copilot \u2014 workspace instructions for qa-isystem",
-      "id": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem"
-    },
-    {
-      "label": "\ud83d\uddff Communication Style \u2014 Caveman Mode (always on)",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L7",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "\ud83d\uddff communication style \u2014 caveman mode (always on)",
-      "id": "github_copilot_instructions_communication_style_caveman_mode_always_on"
-    },
-    {
-      "label": "Project Overview",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L22",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "project overview",
-      "id": "github_copilot_instructions_project_overview"
-    },
-    {
-      "label": "Module ports",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L37",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "module ports",
-      "id": "github_copilot_instructions_module_ports"
-    },
-    {
-      "label": "Non-Negotiable Rules",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L50",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "non-negotiable rules",
-      "id": "github_copilot_instructions_non_negotiable_rules"
-    },
-    {
-      "label": "1 \u00b7 Java style",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L52",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "1 \u00b7 java style",
-      "id": "github_copilot_instructions_1_java_style"
-    },
-    {
-      "label": "2 \u00b7 Spring injection",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L59",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "2 \u00b7 spring injection",
-      "id": "github_copilot_instructions_2_spring_injection"
-    },
-    {
-      "label": "3 \u00b7 Logging",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L64",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "3 \u00b7 logging",
-      "id": "github_copilot_instructions_3_logging"
-    },
-    {
-      "label": "4 \u00b7 Error handling",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L70",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "4 \u00b7 error handling",
-      "id": "github_copilot_instructions_4_error_handling"
-    },
-    {
-      "label": "5 \u00b7 Testing \u2014 **zero Mockito policy**",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L75",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "5 \u00b7 testing \u2014 **zero mockito policy**",
-      "id": "github_copilot_instructions_5_testing_zero_mockito_policy"
-    },
-    {
-      "label": "6 \u00b7 Conditional beans",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L82",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "6 \u00b7 conditional beans",
-      "id": "github_copilot_instructions_6_conditional_beans"
-    },
-    {
-      "label": "7 \u00b7 Kafka",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L86",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "7 \u00b7 kafka",
-      "id": "github_copilot_instructions_7_kafka"
-    },
-    {
-      "label": "8 \u00b7 Redis",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L92",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "8 \u00b7 redis",
-      "id": "github_copilot_instructions_8_redis"
-    },
-    {
-      "label": "9 \u00b7 Spring Boot MCP Server",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L97",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "9 \u00b7 spring boot mcp server",
-      "id": "github_copilot_instructions_9_spring_boot_mcp_server"
-    },
-    {
-      "label": "10 \u00b7 No secrets in code",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L103",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "10 \u00b7 no secrets in code",
-      "id": "github_copilot_instructions_10_no_secrets_in_code"
-    },
-    {
-      "label": "File locations",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L110",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "file locations",
-      "id": "github_copilot_instructions_file_locations"
-    },
-    {
-      "label": "Commit message format",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L124",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "commit message format",
-      "id": "github_copilot_instructions_commit_message_format"
-    },
-    {
-      "label": "What Copilot must NOT do",
-      "file_type": "document",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L137",
-      "_origin": "ast",
-      "community": 44,
-      "norm_label": "what copilot must not do",
-      "id": "github_copilot_instructions_what_copilot_must_not_do"
-    },
-    {
       "label": "coding-conventions.md",
       "file_type": "document",
       "source_file": ".github/instructions/java/coding-conventions.md",
@@ -20458,12 +20488,222 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L1",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions",
+      "target": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L148",
+      "weight": 1.0,
+      "source": "github_copilot_instructions",
+      "target": "github_copilot_instructions_rtk_rust_token_killer_token_optimized_commands",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L124",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem",
+      "target": "github_copilot_instructions_commit_message_format"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L7",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem",
+      "target": "github_copilot_instructions_communication_style_caveman_mode_always_on"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L110",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem",
+      "target": "github_copilot_instructions_file_locations"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L50",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem",
+      "target": "github_copilot_instructions_non_negotiable_rules"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L22",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem",
+      "target": "github_copilot_instructions_project_overview"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L137",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem",
+      "target": "github_copilot_instructions_what_copilot_must_not_do"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L37",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_project_overview",
+      "target": "github_copilot_instructions_module_ports"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L103",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_non_negotiable_rules",
+      "target": "github_copilot_instructions_10_no_secrets_in_code"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L52",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_non_negotiable_rules",
+      "target": "github_copilot_instructions_1_java_style"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L59",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_non_negotiable_rules",
+      "target": "github_copilot_instructions_2_spring_injection"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L64",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_non_negotiable_rules",
+      "target": "github_copilot_instructions_3_logging"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L70",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_non_negotiable_rules",
+      "target": "github_copilot_instructions_4_error_handling"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L75",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_non_negotiable_rules",
+      "target": "github_copilot_instructions_5_testing_zero_mockito_policy"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L82",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_non_negotiable_rules",
+      "target": "github_copilot_instructions_6_conditional_beans"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L86",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_non_negotiable_rules",
+      "target": "github_copilot_instructions_7_kafka"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L92",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_non_negotiable_rules",
+      "target": "github_copilot_instructions_8_redis"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L97",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "github_copilot_instructions_non_negotiable_rules",
+      "target": "github_copilot_instructions_9_spring_boot_mcp_server"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L154",
+      "weight": 1.0,
+      "source": "github_copilot_instructions_rtk_rust_token_killer_token_optimized_commands",
+      "target": "github_copilot_instructions_key_commands",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".github/copilot-instructions.md",
+      "source_location": "L184",
+      "weight": 1.0,
+      "source": "github_copilot_instructions_rtk_rust_token_killer_token_optimized_commands",
+      "target": "github_copilot_instructions_rules",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "codegen-service/docker-entrypoint.sh",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "codegen_service_docker_entrypoint",
-      "target": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_codegen_service_docker_entrypoint_sh__entry",
-      "confidence_score": 1.0
+      "target": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_codegen_service_docker_entrypoint_sh__entry"
     },
     {
       "relation": "contains",
@@ -20537,9 +20777,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java",
       "source_location": "L20",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agent_conductoragentrunner",
-      "target": "path",
-      "confidence_score": 1.0
+      "target": "path"
     },
     {
       "relation": "imports",
@@ -20826,9 +21066,9 @@
       "source_location": "L122",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "agent_conductoragentrunner_conductoragentrunner_delegatetoconductor",
-      "target": "common_src_main_java_nz_co_eroad_qaisystem_agent_conductoragentrunner_java_string",
-      "confidence_score": 1.0
+      "target": "common_src_main_java_nz_co_eroad_qaisystem_agent_conductoragentrunner_java_string"
     },
     {
       "relation": "calls",
@@ -20859,9 +21099,9 @@
       "source_location": "L297",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "agent_conductoragentrunner_conductoragentrunner_appendchunk",
-      "target": "common_src_main_java_nz_co_eroad_qaisystem_agent_conductoragentrunner_java_string",
-      "confidence_score": 1.0
+      "target": "common_src_main_java_nz_co_eroad_qaisystem_agent_conductoragentrunner_java_string"
     },
     {
       "relation": "references",
@@ -20870,9 +21110,9 @@
       "source_location": "L276",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "agent_conductoragentrunner_conductoragentrunner_extractchunktext",
-      "target": "common_src_main_java_nz_co_eroad_qaisystem_agent_conductoragentrunner_java_string",
-      "confidence_score": 1.0
+      "target": "common_src_main_java_nz_co_eroad_qaisystem_agent_conductoragentrunner_java_string"
     },
     {
       "relation": "references",
@@ -20881,9 +21121,9 @@
       "source_location": "L161",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "agent_conductoragentrunner_conductoragentrunner_runconductorprocess",
-      "target": "common_src_main_java_nz_co_eroad_qaisystem_agent_conductoragentrunner_java_string",
-      "confidence_score": 1.0
+      "target": "common_src_main_java_nz_co_eroad_qaisystem_agent_conductoragentrunner_java_string"
     },
     {
       "relation": "references",
@@ -20892,9 +21132,9 @@
       "source_location": "L149",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "agent_conductoragentrunner_conductoragentrunner_timed",
-      "target": "common_src_main_java_nz_co_eroad_qaisystem_agent_conductoragentrunner_java_string",
-      "confidence_score": 1.0
+      "target": "common_src_main_java_nz_co_eroad_qaisystem_agent_conductoragentrunner_java_string"
     },
     {
       "relation": "calls",
@@ -20914,9 +21154,9 @@
       "source_location": "L149",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "agent_conductoragentrunner_conductoragentrunner_timed",
-      "target": "path",
-      "confidence_score": 1.0
+      "target": "path"
     },
     {
       "relation": "calls",
@@ -20936,9 +21176,9 @@
       "source_location": "L161",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "agent_conductoragentrunner_conductoragentrunner_runconductorprocess",
-      "target": "path",
-      "confidence_score": 1.0
+      "target": "path"
     },
     {
       "relation": "references",
@@ -20947,9 +21187,9 @@
       "source_location": "L322",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "agent_conductoragentrunner_conductoragentrunner_validateconductoragent",
-      "target": "path",
-      "confidence_score": 1.0
+      "target": "path"
     },
     {
       "relation": "calls",
@@ -21041,9 +21281,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L109",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "config_aiproviderproperties",
-      "target": "config_aiproviderproperties_headroomconfig",
-      "confidence_score": 1.0
+      "target": "config_aiproviderproperties_headroomconfig"
     },
     {
       "relation": "contains",
@@ -21061,9 +21301,9 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/config/AiProviderProperties.java",
       "source_location": "L142",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "config_aiproviderproperties_headroomconfig",
-      "target": "config_aiproviderproperties_headroomconfig_providerbaseurl",
-      "confidence_score": 1.0
+      "target": "config_aiproviderproperties_headroomconfig_providerbaseurl"
     },
     {
       "relation": "references",
@@ -21072,9 +21312,9 @@
       "source_location": "L142",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "config_aiproviderproperties_headroomconfig_providerbaseurl",
-      "target": "common_src_main_java_nz_co_eroad_qaisystem_config_aiproviderproperties_java_string",
-      "confidence_score": 1.0
+      "target": "common_src_main_java_nz_co_eroad_qaisystem_config_aiproviderproperties_java_string"
     },
     {
       "relation": "contains",
@@ -21082,9 +21322,9 @@
       "source_file": "strategy-service/docker-entrypoint.sh",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "strategy_service_docker_entrypoint",
-      "target": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_strategy_service_docker_entrypoint_sh__entry",
-      "confidence_score": 1.0
+      "target": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_strategy_service_docker_entrypoint_sh__entry"
     },
     {
       "relation": "contains",
@@ -56079,186 +56319,6 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L1",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions",
-      "target": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L124",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem",
-      "target": "github_copilot_instructions_commit_message_format"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L7",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem",
-      "target": "github_copilot_instructions_communication_style_caveman_mode_always_on"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L110",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem",
-      "target": "github_copilot_instructions_file_locations"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L50",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem",
-      "target": "github_copilot_instructions_non_negotiable_rules"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L22",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem",
-      "target": "github_copilot_instructions_project_overview"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L137",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_github_copilot_workspace_instructions_for_qa_isystem",
-      "target": "github_copilot_instructions_what_copilot_must_not_do"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L37",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_project_overview",
-      "target": "github_copilot_instructions_module_ports"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L103",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_non_negotiable_rules",
-      "target": "github_copilot_instructions_10_no_secrets_in_code"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L52",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_non_negotiable_rules",
-      "target": "github_copilot_instructions_1_java_style"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L59",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_non_negotiable_rules",
-      "target": "github_copilot_instructions_2_spring_injection"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L64",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_non_negotiable_rules",
-      "target": "github_copilot_instructions_3_logging"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L70",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_non_negotiable_rules",
-      "target": "github_copilot_instructions_4_error_handling"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L75",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_non_negotiable_rules",
-      "target": "github_copilot_instructions_5_testing_zero_mockito_policy"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L82",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_non_negotiable_rules",
-      "target": "github_copilot_instructions_6_conditional_beans"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L86",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_non_negotiable_rules",
-      "target": "github_copilot_instructions_7_kafka"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L92",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_non_negotiable_rules",
-      "target": "github_copilot_instructions_8_redis"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": ".github/copilot-instructions.md",
-      "source_location": "L97",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "github_copilot_instructions_non_negotiable_rules",
-      "target": "github_copilot_instructions_9_spring_boot_mcp_server"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
       "source_file": ".github/instructions/java/coding-conventions.md",
       "source_location": "L1",
       "weight": 1.0,
@@ -57798,5 +57858,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "680d8b45da0951d3c750d7a7b2706623d2531622"
+  "built_at_commit": "576da1a48719ec525394efb120ed80931ec1a3a5"
 }
