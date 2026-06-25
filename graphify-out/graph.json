@@ -4,14 +4,210 @@
   "graph": {},
   "nodes": [
     {
+      "label": "setup.sh",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L1",
+      "metadata": {
+        "language": "bash",
+        "kind": "file"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup",
+      "community": 0,
+      "norm_label": "setup.sh"
+    },
+    {
+      "label": "setup.sh script",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L1",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_entrypoint"
+      },
+      "_origin": "ast",
+      "id": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "community": 0,
+      "norm_label": "setup.sh script"
+    },
+    {
+      "label": "info()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L34",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_info",
+      "community": 0,
+      "norm_label": "info()"
+    },
+    {
+      "label": "success()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L35",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_success",
+      "community": 0,
+      "norm_label": "success()"
+    },
+    {
+      "label": "warn()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L36",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_warn",
+      "community": 0,
+      "norm_label": "warn()"
+    },
+    {
+      "label": "error()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L37",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_error",
+      "community": 0,
+      "norm_label": "error()"
+    },
+    {
+      "label": "die()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L38",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_die",
+      "community": 0,
+      "norm_label": "die()"
+    },
+    {
+      "label": "header()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L39",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_header",
+      "community": 0,
+      "norm_label": "header()"
+    },
+    {
+      "label": "note()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L40",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_note",
+      "community": 0,
+      "norm_label": "note()"
+    },
+    {
+      "label": "add_warning()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L66",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_add_warning",
+      "community": 0,
+      "norm_label": "add_warning()"
+    },
+    {
+      "label": "add_error()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L67",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_add_error",
+      "community": 0,
+      "norm_label": "add_error()"
+    },
+    {
+      "label": "brew_install()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L116",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_brew_install",
+      "community": 0,
+      "norm_label": "brew_install()"
+    },
+    {
+      "label": "java_version()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L159",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_java_version",
+      "community": 0,
+      "norm_label": "java_version()"
+    },
+    {
+      "label": "update_shell_profile()",
+      "file_type": "code",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L532",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_function"
+      },
+      "_origin": "ast",
+      "id": "scripts_setup_update_shell_profile",
+      "community": 0,
+      "norm_label": "update_shell_profile()"
+    },
+    {
       "label": "Coder.agent.md",
       "file_type": "document",
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "agents_coder_agent",
       "community": 37,
-      "norm_label": "coder.agent.md"
+      "norm_label": "coder.agent.md",
+      "id": "agents_coder_agent"
     },
     {
       "label": "Coder Agent",
@@ -19,9 +215,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L6",
       "_origin": "ast",
-      "id": "agents_coder_agent_coder_agent",
       "community": 37,
-      "norm_label": "coder agent"
+      "norm_label": "coder agent",
+      "id": "agents_coder_agent_coder_agent"
     },
     {
       "label": "Role",
@@ -29,9 +225,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L8",
       "_origin": "ast",
-      "id": "agents_coder_agent_role",
       "community": 37,
-      "norm_label": "role"
+      "norm_label": "role",
+      "id": "agents_coder_agent_role"
     },
     {
       "label": "\u26a0\ufe0f Two Separate Instruction Systems \u2014 Do Not Confuse Them",
@@ -39,9 +235,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L14",
       "_origin": "ast",
-      "id": "agents_coder_agent_two_separate_instruction_systems_do_not_confuse_them",
       "community": 37,
-      "norm_label": "\u26a0\ufe0f two separate instruction systems \u2014 do not confuse them"
+      "norm_label": "\u26a0\ufe0f two separate instruction systems \u2014 do not confuse them",
+      "id": "agents_coder_agent_two_separate_instruction_systems_do_not_confuse_them"
     },
     {
       "label": "Before Writing Anything",
@@ -49,9 +245,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L29",
       "_origin": "ast",
-      "id": "agents_coder_agent_before_writing_anything",
       "community": 37,
-      "norm_label": "before writing anything"
+      "norm_label": "before writing anything",
+      "id": "agents_coder_agent_before_writing_anything"
     },
     {
       "label": "Code Generation Rules",
@@ -59,9 +255,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L36",
       "_origin": "ast",
-      "id": "agents_coder_agent_code_generation_rules",
       "community": 37,
-      "norm_label": "code generation rules"
+      "norm_label": "code generation rules",
+      "id": "agents_coder_agent_code_generation_rules"
     },
     {
       "label": "Dependency Injection",
@@ -69,9 +265,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L38",
       "_origin": "ast",
-      "id": "agents_coder_agent_dependency_injection",
       "community": 37,
-      "norm_label": "dependency injection"
+      "norm_label": "dependency injection",
+      "id": "agents_coder_agent_dependency_injection"
     },
     {
       "label": "Logging",
@@ -79,9 +275,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L56",
       "_origin": "ast",
-      "id": "agents_coder_agent_logging",
       "community": 37,
-      "norm_label": "logging"
+      "norm_label": "logging",
+      "id": "agents_coder_agent_logging"
     },
     {
       "label": "Java 25 preferred patterns",
@@ -89,9 +285,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L63",
       "_origin": "ast",
-      "id": "agents_coder_agent_java_25_preferred_patterns",
       "community": 37,
-      "norm_label": "java 25 preferred patterns"
+      "norm_label": "java 25 preferred patterns",
+      "id": "agents_coder_agent_java_25_preferred_patterns"
     },
     {
       "label": "Conditional beans",
@@ -99,9 +295,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L85",
       "_origin": "ast",
-      "id": "agents_coder_agent_conditional_beans",
       "community": 37,
-      "norm_label": "conditional beans"
+      "norm_label": "conditional beans",
+      "id": "agents_coder_agent_conditional_beans"
     },
     {
       "label": "Kafka producer",
@@ -109,9 +305,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L95",
       "_origin": "ast",
-      "id": "agents_coder_agent_kafka_producer",
       "community": 37,
-      "norm_label": "kafka producer"
+      "norm_label": "kafka producer",
+      "id": "agents_coder_agent_kafka_producer"
     },
     {
       "label": "Kafka consumer",
@@ -119,9 +315,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L118",
       "_origin": "ast",
-      "id": "agents_coder_agent_kafka_consumer",
       "community": 37,
-      "norm_label": "kafka consumer"
+      "norm_label": "kafka consumer",
+      "id": "agents_coder_agent_kafka_consumer"
     },
     {
       "label": "MCP Tool declaration",
@@ -129,9 +325,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L132",
       "_origin": "ast",
-      "id": "agents_coder_agent_mcp_tool_declaration",
       "community": 37,
-      "norm_label": "mcp tool declaration"
+      "norm_label": "mcp tool declaration",
+      "id": "agents_coder_agent_mcp_tool_declaration"
     },
     {
       "label": "Testing Rules \u2014 Zero Mockito",
@@ -139,9 +335,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L152",
       "_origin": "ast",
-      "id": "agents_coder_agent_testing_rules_zero_mockito",
       "community": 37,
-      "norm_label": "testing rules \u2014 zero mockito"
+      "norm_label": "testing rules \u2014 zero mockito",
+      "id": "agents_coder_agent_testing_rules_zero_mockito"
     },
     {
       "label": "What Coder Must NEVER Do",
@@ -149,9 +345,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L181",
       "_origin": "ast",
-      "id": "agents_coder_agent_what_coder_must_never_do",
       "community": 37,
-      "norm_label": "what coder must never do"
+      "norm_label": "what coder must never do",
+      "id": "agents_coder_agent_what_coder_must_never_do"
     },
     {
       "label": "Script Safety Rules (Shell / Bash)",
@@ -159,9 +355,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L197",
       "_origin": "ast",
-      "id": "agents_coder_agent_script_safety_rules_shell_bash",
       "community": 37,
-      "norm_label": "script safety rules (shell / bash)"
+      "norm_label": "script safety rules (shell / bash)",
+      "id": "agents_coder_agent_script_safety_rules_shell_bash"
     },
     {
       "label": "Output",
@@ -169,9 +365,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L231",
       "_origin": "ast",
-      "id": "agents_coder_agent_output",
       "community": 37,
-      "norm_label": "output"
+      "norm_label": "output",
+      "id": "agents_coder_agent_output"
     },
     {
       "label": "JavaCoder.agent.md",
@@ -179,9 +375,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "agents_javacoder_agent",
       "community": 10,
-      "norm_label": "javacoder.agent.md"
+      "norm_label": "javacoder.agent.md",
+      "id": "agents_javacoder_agent"
     },
     {
       "label": "JavaCoder Agent",
@@ -189,9 +385,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L6",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_javacoder_agent",
       "community": 10,
-      "norm_label": "javacoder agent"
+      "norm_label": "javacoder agent",
+      "id": "agents_javacoder_agent_javacoder_agent"
     },
     {
       "label": "Role",
@@ -199,9 +395,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L8",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_role",
       "community": 10,
-      "norm_label": "role"
+      "norm_label": "role",
+      "id": "agents_javacoder_agent_role"
     },
     {
       "label": "Before Coding",
@@ -209,9 +405,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L16",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_before_coding",
       "community": 10,
-      "norm_label": "before coding"
+      "norm_label": "before coding",
+      "id": "agents_javacoder_agent_before_coding"
     },
     {
       "label": "Java 25 Patterns (Language-Specific)",
@@ -219,9 +415,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L24",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_java_25_patterns_language_specific",
       "community": 10,
-      "norm_label": "java 25 patterns (language-specific)"
+      "norm_label": "java 25 patterns (language-specific)",
+      "id": "agents_javacoder_agent_java_25_patterns_language_specific"
     },
     {
       "label": "Records for immutable DTOs",
@@ -229,9 +425,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L26",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_records_for_immutable_dtos",
       "community": 10,
-      "norm_label": "records for immutable dtos"
+      "norm_label": "records for immutable dtos",
+      "id": "agents_javacoder_agent_records_for_immutable_dtos"
     },
     {
       "label": "Pattern matching",
@@ -239,9 +435,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L31",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_pattern_matching",
       "community": 10,
-      "norm_label": "pattern matching"
+      "norm_label": "pattern matching",
+      "id": "agents_javacoder_agent_pattern_matching"
     },
     {
       "label": "Sealed classes for closed hierarchies",
@@ -249,9 +445,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L36",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_sealed_classes_for_closed_hierarchies",
       "community": 10,
-      "norm_label": "sealed classes for closed hierarchies"
+      "norm_label": "sealed classes for closed hierarchies",
+      "id": "agents_javacoder_agent_sealed_classes_for_closed_hierarchies"
     },
     {
       "label": "Virtual threads for async work",
@@ -259,9 +455,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L41",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_virtual_threads_for_async_work",
       "community": 10,
-      "norm_label": "virtual threads for async work"
+      "norm_label": "virtual threads for async work",
+      "id": "agents_javacoder_agent_virtual_threads_for_async_work"
     },
     {
       "label": "Text blocks for multi-line strings",
@@ -269,9 +465,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L46",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_text_blocks_for_multi_line_strings",
       "community": 10,
-      "norm_label": "text blocks for multi-line strings"
+      "norm_label": "text blocks for multi-line strings",
+      "id": "agents_javacoder_agent_text_blocks_for_multi_line_strings"
     },
     {
       "label": "Spring Boot 4 Patterns",
@@ -279,9 +475,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L57",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_spring_boot_4_patterns",
       "community": 10,
-      "norm_label": "spring boot 4 patterns"
+      "norm_label": "spring boot 4 patterns",
+      "id": "agents_javacoder_agent_spring_boot_4_patterns"
     },
     {
       "label": "Constructor injection via Lombok",
@@ -289,9 +485,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L59",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_constructor_injection_via_lombok",
       "community": 10,
-      "norm_label": "constructor injection via lombok"
+      "norm_label": "constructor injection via lombok",
+      "id": "agents_javacoder_agent_constructor_injection_via_lombok"
     },
     {
       "label": "Conditional beans",
@@ -299,9 +495,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L70",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_conditional_beans",
       "community": 10,
-      "norm_label": "conditional beans"
+      "norm_label": "conditional beans",
+      "id": "agents_javacoder_agent_conditional_beans"
     },
     {
       "label": "Kafka producer (non-blocking)",
@@ -309,9 +505,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L79",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_kafka_producer_non_blocking",
       "community": 10,
-      "norm_label": "kafka producer (non-blocking)"
+      "norm_label": "kafka producer (non-blocking)",
+      "id": "agents_javacoder_agent_kafka_producer_non_blocking"
     },
     {
       "label": "Kafka consumer",
@@ -319,9 +515,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L87",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_kafka_consumer",
       "community": 10,
-      "norm_label": "kafka consumer"
+      "norm_label": "kafka consumer",
+      "id": "agents_javacoder_agent_kafka_consumer"
     },
     {
       "label": "MCP Tool declaration",
@@ -329,9 +525,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L101",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_mcp_tool_declaration",
       "community": 10,
-      "norm_label": "mcp tool declaration"
+      "norm_label": "mcp tool declaration",
+      "id": "agents_javacoder_agent_mcp_tool_declaration"
     },
     {
       "label": "Testing (Zero Mockito)",
@@ -339,9 +535,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L116",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_testing_zero_mockito",
       "community": 10,
-      "norm_label": "testing (zero mockito)"
+      "norm_label": "testing (zero mockito)",
+      "id": "agents_javacoder_agent_testing_zero_mockito"
     },
     {
       "label": "Java-Specific Forbidden Patterns",
@@ -349,9 +545,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L137",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_java_specific_forbidden_patterns",
       "community": 10,
-      "norm_label": "java-specific forbidden patterns"
+      "norm_label": "java-specific forbidden patterns",
+      "id": "agents_javacoder_agent_java_specific_forbidden_patterns"
     },
     {
       "label": "Output",
@@ -359,9 +555,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L151",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_output",
       "community": 10,
-      "norm_label": "output"
+      "norm_label": "output",
+      "id": "agents_javacoder_agent_output"
     },
     {
       "label": "References",
@@ -369,9 +565,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L158",
       "_origin": "ast",
-      "id": "agents_javacoder_agent_references",
       "community": 10,
-      "norm_label": "references"
+      "norm_label": "references",
+      "id": "agents_javacoder_agent_references"
     },
     {
       "label": "CopilotAgentClient.java",
@@ -379,9 +575,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "agent_copilotagentclient",
       "community": 98,
-      "norm_label": "copilotagentclient.java"
+      "norm_label": "copilotagentclient.java",
+      "id": "agent_copilotagentclient"
     },
     {
       "label": "CopilotAgentClient",
@@ -389,9 +585,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L49",
       "_origin": "ast",
-      "id": "agent_copilotagentclient_copilotagentclient",
       "community": 98,
-      "norm_label": "copilotagentclient"
+      "norm_label": "copilotagentclient",
+      "id": "agent_copilotagentclient_copilotagentclient"
     },
     {
       "label": ".CopilotAgentClient()",
@@ -399,9 +595,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L65",
       "_origin": "ast",
-      "id": "agent_copilotagentclient_copilotagentclient_copilotagentclient",
       "community": 98,
-      "norm_label": ".copilotagentclient()"
+      "norm_label": ".copilotagentclient()",
+      "id": "agent_copilotagentclient_copilotagentclient_copilotagentclient"
     },
     {
       "label": "AiProviderProperties",
@@ -409,9 +605,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L65",
       "_origin": "ast",
-      "id": "aiproviderproperties",
       "community": 98,
-      "norm_label": "aiproviderproperties"
+      "norm_label": "aiproviderproperties",
+      "id": "aiproviderproperties"
     },
     {
       "label": "ObjectMapper",
@@ -419,9 +615,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L65",
       "_origin": "ast",
-      "id": "objectmapper",
       "community": 98,
-      "norm_label": "objectmapper"
+      "norm_label": "objectmapper",
+      "id": "objectmapper"
     },
     {
       "label": ".runAgent()",
@@ -429,9 +625,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L94",
       "_origin": "ast",
-      "id": "agent_copilotagentclient_copilotagentclient_runagent",
       "community": 98,
-      "norm_label": ".runagent()"
+      "norm_label": ".runagent()",
+      "id": "agent_copilotagentclient_copilotagentclient_runagent"
     },
     {
       "label": "String",
@@ -439,9 +635,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L94",
       "_origin": "ast",
-      "id": "string",
       "community": 98,
-      "norm_label": "string"
+      "norm_label": "string",
+      "id": "string"
     },
     {
       "label": "Path",
@@ -449,9 +645,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L94",
       "_origin": "ast",
-      "id": "path",
       "community": 98,
-      "norm_label": "path"
+      "norm_label": "path",
+      "id": "path"
     },
     {
       "label": ".extractChunkText()",
@@ -459,9 +655,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L221",
       "_origin": "ast",
-      "id": "agent_copilotagentclient_copilotagentclient_extractchunktext",
       "community": 98,
-      "norm_label": ".extractchunktext()"
+      "norm_label": ".extractchunktext()",
+      "id": "agent_copilotagentclient_copilotagentclient_extractchunktext"
     },
     {
       "label": "StringBuilder",
@@ -469,9 +665,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L221",
       "_origin": "ast",
-      "id": "stringbuilder",
       "community": 98,
-      "norm_label": "stringbuilder"
+      "norm_label": "stringbuilder",
+      "id": "stringbuilder"
     },
     {
       "label": ".availableSlots()",
@@ -479,9 +675,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L253",
       "_origin": "ast",
-      "id": "agent_copilotagentclient_copilotagentclient_availableslots",
       "community": 98,
-      "norm_label": ".availableslots()"
+      "norm_label": ".availableslots()",
+      "id": "agent_copilotagentclient_copilotagentclient_availableslots"
     },
     {
       "label": "copilot-instructions.md",
@@ -5145,7 +5341,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/ImpactResultsConsumer.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 17,
+      "community": 4,
       "norm_label": "impactresultsconsumer.java",
       "id": "kafka_impactresultsconsumer"
     },
@@ -5155,7 +5351,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/ImpactResultsConsumer.java",
       "source_location": "L31",
       "_origin": "ast",
-      "community": 17,
+      "community": 4,
       "norm_label": "impactresultsconsumer",
       "id": "kafka_impactresultsconsumer_impactresultsconsumer"
     },
@@ -5165,7 +5361,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/ImpactResultsConsumer.java",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 17,
+      "community": 4,
       "norm_label": ".consume()",
       "id": "kafka_impactresultsconsumer_impactresultsconsumer_consume"
     },
@@ -5175,7 +5371,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/ImpactResultsConsumer.java",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 17,
+      "community": 4,
       "norm_label": "consumerrecord",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_kafka_impactresultsconsumer_java_consumerrecord"
     },
@@ -5185,7 +5381,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/ImpactResultsConsumer.java",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 17,
+      "community": 4,
       "norm_label": "string",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_kafka_impactresultsconsumer_java_string"
     },
@@ -5195,7 +5391,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/ImpactResultsConsumer.java",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 17,
+      "community": 4,
       "norm_label": "acknowledgment",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_kafka_impactresultsconsumer_java_acknowledgment"
     },
@@ -5205,7 +5401,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/kafka/ImpactResultsConsumer.java",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 17,
+      "community": 4,
       "norm_label": "kafkalistener",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_kafka_impactresultsconsumer_java_kafkalistener"
     },
@@ -8045,7 +8241,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/service/RepoContextService.java",
       "source_location": "L847",
       "_origin": "ast",
-      "community": 27,
+      "community": 36,
       "norm_label": "set",
       "id": "set"
     },
@@ -8549,7 +8745,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": "testprservice.java",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice"
     },
@@ -8559,7 +8755,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L40",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": "testprservice",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice"
     },
@@ -8569,7 +8765,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L61",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": ".createbddpr()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_createbddpr"
     },
@@ -8579,7 +8775,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L61",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": "bddscenario",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_bddscenario"
     },
@@ -8589,7 +8785,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L61",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": "string",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_string"
     },
@@ -8599,7 +8795,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L104",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": ".createfinaltestpr()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_createfinaltestpr"
     },
@@ -8609,7 +8805,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L104",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": "testscript",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_testscript"
     },
@@ -8619,7 +8815,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L104",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": "testresult",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_testresult"
     },
@@ -8629,7 +8825,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L143",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": ".requireconfigured()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_requireconfigured"
     },
@@ -8639,7 +8835,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L154",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": ".buildfeaturefilecontent()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_buildfeaturefilecontent"
     },
@@ -8649,7 +8845,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L173",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": ".appendsteps()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_appendsteps"
     },
@@ -8659,7 +8855,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L173",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": "stringbuilder",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_stringbuilder"
     },
@@ -8669,7 +8865,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L173",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": "list",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_list"
     },
@@ -8679,7 +8875,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L180",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": ".buildbddprbody()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_buildbddprbody"
     },
@@ -8689,7 +8885,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L204",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": ".buildbddprtitle()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_buildbddprtitle"
     },
@@ -8699,7 +8895,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L211",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": ".buildtestprtitle()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_buildtestprtitle"
     },
@@ -8709,7 +8905,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L221",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": ".buildtestprbody()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_testprservice_buildtestprbody"
     },
@@ -8719,7 +8915,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L255",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": "githubprexception",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_githubprexception"
     },
@@ -8729,7 +8925,7 @@
       "source_file": "",
       "source_location": "",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": "runtimeexception",
       "id": "runtimeexception"
     },
@@ -8739,7 +8935,7 @@
       "source_file": "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java",
       "source_location": "L256",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": ".githubprexception()",
       "id": "codegen_service_src_main_java_nz_co_eroad_qaisystem_service_testprservice_java_service_testprservice_githubprexception_githubprexception"
     },
@@ -8749,7 +8945,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "aiclient.java",
       "id": "agent_aiclient"
     },
@@ -8759,7 +8955,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L25",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "aiclient",
       "id": "agent_aiclient_aiclient"
     },
@@ -8769,7 +8965,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": ".complete()",
       "id": "agent_aiclient_aiclient_complete"
     },
@@ -8779,7 +8975,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "string",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_aiclient_java_string"
     },
@@ -8789,7 +8985,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L53",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": ".completewithhistory()",
       "id": "agent_aiclient_aiclient_completewithhistory"
     },
@@ -8799,7 +8995,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L53",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "list",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_aiclient_java_list"
     },
@@ -8809,7 +9005,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L53",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "chatmessage",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_aiclient_java_chatmessage"
     },
@@ -8819,7 +9015,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java",
       "source_location": "L63",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": ".isavailable()",
       "id": "agent_aiclient_aiclient_isavailable"
     },
@@ -8989,7 +9185,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "copilotclient.java",
       "id": "agent_copilotclient"
     },
@@ -8999,7 +9195,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "copilotclient",
       "id": "agent_copilotclient_copilotclient"
     },
@@ -9009,7 +9205,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": ".copilotclient()",
       "id": "agent_copilotclient_copilotclient_copilotclient"
     },
@@ -9019,7 +9215,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "string",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_copilotclient_java_string"
     },
@@ -9029,7 +9225,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "objectmapper",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_copilotclient_java_objectmapper"
     },
@@ -9039,7 +9235,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L58",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": ".isavailable()",
       "id": "agent_copilotclient_copilotclient_isavailable"
     },
@@ -9049,7 +9245,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L58",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "override",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_copilotclient_java_override"
     },
@@ -9059,7 +9255,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/CopilotClient.java",
       "source_location": "L63",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": ".complete()",
       "id": "agent_copilotclient_copilotclient_complete"
     },
@@ -9069,7 +9265,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "openaiclient.java",
       "id": "agent_openaiclient"
     },
@@ -9079,7 +9275,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "openaiclient",
       "id": "agent_openaiclient_openaiclient"
     },
@@ -9089,7 +9285,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": ".openaiclient()",
       "id": "agent_openaiclient_openaiclient_openaiclient"
     },
@@ -9099,7 +9295,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "string",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_openaiclient_java_string"
     },
@@ -9109,7 +9305,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "objectmapper",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_openaiclient_java_objectmapper"
     },
@@ -9119,7 +9315,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L68",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": ".logstate()",
       "id": "agent_openaiclient_openaiclient_logstate"
     },
@@ -9129,7 +9325,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L68",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "postconstruct",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_openaiclient_java_postconstruct"
     },
@@ -9139,7 +9335,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L80",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": ".isavailable()",
       "id": "agent_openaiclient_openaiclient_isavailable"
     },
@@ -9149,7 +9345,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L80",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": "override",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_agent_openaiclient_java_override"
     },
@@ -9159,7 +9355,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/agent/OpenAiClient.java",
       "source_location": "L90",
       "_origin": "ast",
-      "community": 16,
+      "community": 21,
       "norm_label": ".complete()",
       "id": "agent_openaiclient_openaiclient_complete"
     },
@@ -9669,7 +9865,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/GitHubService.java",
       "source_location": "L266",
       "_origin": "ast",
-      "community": 33,
+      "community": 20,
       "norm_label": "githubprresult",
       "id": "githubprresult"
     },
@@ -10059,7 +10255,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": "redisprtracker.java",
       "id": "github_redisprtracker"
     },
@@ -10069,7 +10265,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": "redisprtracker",
       "id": "github_redisprtracker_redisprtracker"
     },
@@ -10079,7 +10275,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": ".trackbdd()",
       "id": "github_redisprtracker_redisprtracker_trackbdd"
     },
@@ -10089,7 +10285,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": "string",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_github_redisprtracker_java_string"
     },
@@ -10099,7 +10295,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": "bddscenario",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_github_redisprtracker_java_bddscenario"
     },
@@ -10109,7 +10305,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": "override",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_github_redisprtracker_java_override"
     },
@@ -10119,7 +10315,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": ".tracktest()",
       "id": "github_redisprtracker_redisprtracker_tracktest"
     },
@@ -10129,7 +10325,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": "testscript",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_github_redisprtracker_java_testscript"
     },
@@ -10139,7 +10335,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L27",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": ".findbybranch()",
       "id": "github_redisprtracker_redisprtracker_findbybranch"
     },
@@ -10149,7 +10345,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L27",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": "optional",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_github_redisprtracker_java_optional"
     },
@@ -10159,7 +10355,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L27",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": "prrecord",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_github_redisprtracker_java_prrecord"
     },
@@ -10169,7 +10365,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": ".findall()",
       "id": "github_redisprtracker_redisprtracker_findall"
     },
@@ -10179,7 +10375,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": "collection",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_github_redisprtracker_java_collection"
     },
@@ -10189,7 +10385,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L46",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": ".remove()",
       "id": "github_redisprtracker_redisprtracker_remove"
     },
@@ -10199,7 +10395,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L47",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": ".size()",
       "id": "github_redisprtracker_redisprtracker_size"
     },
@@ -10209,7 +10405,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/github/RedisPrTracker.java",
       "source_location": "L51",
       "_origin": "ast",
-      "community": 22,
+      "community": 36,
       "norm_label": ".save()",
       "id": "github_redisprtracker_redisprtracker_save"
     },
@@ -10409,7 +10605,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/model/ConversationHistory.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 4,
+      "community": 33,
       "norm_label": "conversationhistory.java",
       "id": "model_conversationhistory"
     },
@@ -10419,7 +10615,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/model/ConversationHistory.java",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 4,
+      "community": 33,
       "norm_label": "empty()",
       "id": "model_conversationhistory_empty"
     },
@@ -10429,7 +10625,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/model/ConversationHistory.java",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 4,
+      "community": 33,
       "norm_label": "string",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_model_conversationhistory_java_string"
     },
@@ -10439,7 +10635,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/model/ConversationHistory.java",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 4,
+      "community": 33,
       "norm_label": "conversationhistory",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_model_conversationhistory_java_conversationhistory"
     },
@@ -10789,7 +10985,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": "gitdiffparser.java",
       "id": "parser_gitdiffparser"
     },
@@ -10799,7 +10995,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": "gitdiffparser",
       "id": "parser_gitdiffparser_gitdiffparser"
     },
@@ -10809,7 +11005,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": ".parse()",
       "id": "parser_gitdiffparser_gitdiffparser_parse"
     },
@@ -10819,7 +11015,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": "string",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_parser_gitdiffparser_java_string"
     },
@@ -10829,7 +11025,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": "list",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_parser_gitdiffparser_java_list"
     },
@@ -10839,7 +11035,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": "gitdiff",
       "id": "common_src_main_java_nz_co_eroad_qaisystem_parser_gitdiffparser_java_gitdiff"
     },
@@ -10849,7 +11045,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L136",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": ".finalise()",
       "id": "parser_gitdiffparser_gitdiffparser_finalise"
     },
@@ -10859,7 +11055,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L141",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": ".extractextension()",
       "id": "parser_gitdiffparser_gitdiffparser_extractextension"
     },
@@ -10869,7 +11065,7 @@
       "source_file": "common/src/main/java/nz/co/eroad/qaisystem/parser/GitDiffParser.java",
       "source_location": "L146",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": ".istestfile()",
       "id": "parser_gitdiffparser_gitdiffparser_istestfile"
     },
@@ -11699,7 +11895,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/controller/ImpactController.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 35,
+      "community": 14,
       "norm_label": "impactcontroller.java",
       "id": "controller_impactcontroller"
     },
@@ -11709,7 +11905,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/controller/ImpactController.java",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 35,
+      "community": 14,
       "norm_label": "impactcontroller",
       "id": "controller_impactcontroller_impactcontroller"
     },
@@ -11719,7 +11915,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/controller/ImpactController.java",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 35,
+      "community": 14,
       "norm_label": ".status()",
       "id": "controller_impactcontroller_impactcontroller_status"
     },
@@ -11729,7 +11925,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/controller/ImpactController.java",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 35,
+      "community": 14,
       "norm_label": "responseentity",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_controller_impactcontroller_java_responseentity"
     },
@@ -11739,7 +11935,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/controller/ImpactController.java",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 35,
+      "community": 14,
       "norm_label": "map",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_controller_impactcontroller_java_map"
     },
@@ -11749,7 +11945,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/controller/ImpactController.java",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 35,
+      "community": 14,
       "norm_label": "string",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_controller_impactcontroller_java_string"
     },
@@ -11759,7 +11955,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/controller/ImpactController.java",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 35,
+      "community": 14,
       "norm_label": "object",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_controller_impactcontroller_java_object"
     },
@@ -11769,7 +11965,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/controller/ImpactController.java",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 35,
+      "community": 14,
       "norm_label": "getmapping",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_controller_impactcontroller_java_getmapping"
     },
@@ -11779,7 +11975,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/controller/ImpactController.java",
       "source_location": "L47",
       "_origin": "ast",
-      "community": 35,
+      "community": 14,
       "norm_label": ".analyze()",
       "id": "controller_impactcontroller_impactcontroller_analyze"
     },
@@ -11789,7 +11985,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/controller/ImpactController.java",
       "source_location": "L47",
       "_origin": "ast",
-      "community": 35,
+      "community": 14,
       "norm_label": "postmapping",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_controller_impactcontroller_java_postmapping"
     },
@@ -11799,7 +11995,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/controller/ImpactController.java",
       "source_location": "L106",
       "_origin": "ast",
-      "community": 35,
+      "community": 14,
       "norm_label": ".mergetypes()",
       "id": "controller_impactcontroller_impactcontroller_mergetypes"
     },
@@ -11809,7 +12005,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/controller/ImpactController.java",
       "source_location": "L106",
       "_origin": "ast",
-      "community": 35,
+      "community": 14,
       "norm_label": "list",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_controller_impactcontroller_java_list"
     },
@@ -11819,7 +12015,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/controller/ImpactController.java",
       "source_location": "L106",
       "_origin": "ast",
-      "community": 35,
+      "community": 14,
       "norm_label": "changetype",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_controller_impactcontroller_java_changetype"
     },
@@ -12039,7 +12235,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/engine/DependencyGraph.java",
       "source_location": "L114",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "componenttype",
       "id": "componenttype"
     },
@@ -12589,7 +12785,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/IntegrationTestScopeClassifier.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "integrationtestscopeclassifier.java",
       "id": "service_integrationtestscopeclassifier"
     },
@@ -12599,7 +12795,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/IntegrationTestScopeClassifier.java",
       "source_location": "L34",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "integrationtestscopeclassifier",
       "id": "service_integrationtestscopeclassifier_integrationtestscopeclassifier"
     },
@@ -12609,7 +12805,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/IntegrationTestScopeClassifier.java",
       "source_location": "L57",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": ".assess()",
       "id": "service_integrationtestscopeclassifier_integrationtestscopeclassifier_assess"
     },
@@ -12619,7 +12815,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/IntegrationTestScopeClassifier.java",
       "source_location": "L57",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "list",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_service_integrationtestscopeclassifier_java_list"
     },
@@ -12629,7 +12825,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/IntegrationTestScopeClassifier.java",
       "source_location": "L57",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "impactedcomponent",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_service_integrationtestscopeclassifier_java_impactedcomponent"
     },
@@ -12639,7 +12835,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/IntegrationTestScopeClassifier.java",
       "source_location": "L57",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "gitdiff",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_service_integrationtestscopeclassifier_java_gitdiff"
     },
@@ -12649,7 +12845,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/IntegrationTestScopeClassifier.java",
       "source_location": "L57",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "coveragereport",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_service_integrationtestscopeclassifier_java_coveragereport"
     },
@@ -12659,7 +12855,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/IntegrationTestScopeClassifier.java",
       "source_location": "L93",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": ".resolverequiredtesttypes()",
       "id": "service_integrationtestscopeclassifier_integrationtestscopeclassifier_resolverequiredtesttypes"
     },
@@ -12669,7 +12865,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/IntegrationTestScopeClassifier.java",
       "source_location": "L93",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "string",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_service_integrationtestscopeclassifier_java_string"
     },
@@ -12679,7 +12875,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/TestCoverageService.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "testcoverageservice.java",
       "id": "service_testcoverageservice"
     },
@@ -12689,7 +12885,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/TestCoverageService.java",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "testcoverageservice",
       "id": "service_testcoverageservice_testcoverageservice"
     },
@@ -12699,7 +12895,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/TestCoverageService.java",
       "source_location": "L52",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": ".assess()",
       "id": "service_testcoverageservice_testcoverageservice_assess"
     },
@@ -12709,7 +12905,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/TestCoverageService.java",
       "source_location": "L52",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "list",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_service_testcoverageservice_java_list"
     },
@@ -12719,7 +12915,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/TestCoverageService.java",
       "source_location": "L52",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "impactedcomponent",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_service_testcoverageservice_java_impactedcomponent"
     },
@@ -12729,7 +12925,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/TestCoverageService.java",
       "source_location": "L52",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "gitdiff",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_service_testcoverageservice_java_gitdiff"
     },
@@ -12739,7 +12935,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/TestCoverageService.java",
       "source_location": "L52",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "coveragereport",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_service_testcoverageservice_java_coveragereport"
     },
@@ -12749,7 +12945,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/TestCoverageService.java",
       "source_location": "L88",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": ".resolverequiredtesttypes()",
       "id": "service_testcoverageservice_testcoverageservice_resolverequiredtesttypes"
     },
@@ -12759,7 +12955,7 @@
       "source_file": "impact-service/src/main/java/nz/co/eroad/qaisystem/service/TestCoverageService.java",
       "source_location": "L88",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "string",
       "id": "impact_service_src_main_java_nz_co_eroad_qaisystem_service_testcoverageservice_java_string"
     },
@@ -12769,7 +12965,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": "gitdiffparsertest.java",
       "id": "engine_gitdiffparsertest"
     },
@@ -12779,7 +12975,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": "gitdiffparsertest",
       "id": "engine_gitdiffparsertest_gitdiffparsertest"
     },
@@ -12789,7 +12985,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": ".setup()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_setup"
     },
@@ -12799,7 +12995,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": "beforeeach",
       "id": "impact_service_src_test_java_nz_co_eroad_qaisystem_engine_gitdiffparsertest_java_beforeeach"
     },
@@ -12809,7 +13005,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L39",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": ".parse_modifiedfile()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_parse_modifiedfile"
     },
@@ -12819,7 +13015,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L39",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": "test",
       "id": "impact_service_src_test_java_nz_co_eroad_qaisystem_engine_gitdiffparsertest_java_test"
     },
@@ -12829,7 +13025,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L39",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": "displayname",
       "id": "impact_service_src_test_java_nz_co_eroad_qaisystem_engine_gitdiffparsertest_java_displayname"
     },
@@ -12839,7 +13035,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L49",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": ".parse_newfile()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_parse_newfile"
     },
@@ -12849,7 +13045,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L57",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": ".parse_testfile()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_parse_testfile"
     },
@@ -12859,7 +13055,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L62",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": ".parse_null_empty()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_parse_null_empty"
     },
@@ -12869,7 +13065,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L65",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": ".parse_blank_empty()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_parse_blank_empty"
     },
@@ -12879,7 +13075,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L68",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": ".parse_extension()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_parse_extension"
     },
@@ -12889,7 +13085,7 @@
       "source_file": "impact-service/src/test/java/nz/co/eroad/qaisystem/engine/GitDiffParserTest.java",
       "source_location": "L73",
       "_origin": "ast",
-      "community": 27,
+      "community": 29,
       "norm_label": ".parse_multiplefiles()",
       "id": "engine_gitdiffparsertest_gitdiffparsertest_parse_multiplefiles"
     },
@@ -13639,7 +13835,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/config/CompressionConfig.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "compressionconfig.java",
       "id": "config_compressionconfig"
     },
@@ -13649,7 +13845,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/config/CompressionConfig.java",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "compressionconfig",
       "id": "config_compressionconfig_compressionconfig"
     },
@@ -13659,7 +13855,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/config/CompressionConfig.java",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".contextcompressionservice()",
       "id": "config_compressionconfig_compressionconfig_contextcompressionservice"
     },
@@ -13669,7 +13865,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/config/CompressionConfig.java",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "compressionproperties",
       "id": "compressionproperties"
     },
@@ -13679,7 +13875,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/config/CompressionConfig.java",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "objectmapper",
       "id": "pr_service_src_main_java_nz_co_eroad_qaisystem_config_compressionconfig_java_objectmapper"
     },
@@ -13689,7 +13885,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/config/CompressionConfig.java",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "contextcompressionservice",
       "id": "contextcompressionservice"
     },
@@ -13699,7 +13895,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/config/CompressionConfig.java",
       "source_location": "L26",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "bean",
       "id": "pr_service_src_main_java_nz_co_eroad_qaisystem_config_compressionconfig_java_bean"
     },
@@ -13749,7 +13945,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/controller/PRController.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 36,
+      "community": 53,
       "norm_label": "prcontroller.java",
       "id": "controller_prcontroller"
     },
@@ -13759,7 +13955,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/controller/PRController.java",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 36,
+      "community": 53,
       "norm_label": "prcontroller",
       "id": "controller_prcontroller_prcontroller"
     },
@@ -13769,7 +13965,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/controller/PRController.java",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 36,
+      "community": 53,
       "norm_label": ".webhook()",
       "id": "controller_prcontroller_prcontroller_webhook"
     },
@@ -13779,7 +13975,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/controller/PRController.java",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 36,
+      "community": 53,
       "norm_label": "pullrequest",
       "id": "pr_service_src_main_java_nz_co_eroad_qaisystem_controller_prcontroller_java_pullrequest"
     },
@@ -13789,7 +13985,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/controller/PRController.java",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 36,
+      "community": 53,
       "norm_label": "responseentity",
       "id": "pr_service_src_main_java_nz_co_eroad_qaisystem_controller_prcontroller_java_responseentity"
     },
@@ -13799,7 +13995,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/controller/PRController.java",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 36,
+      "community": 53,
       "norm_label": "map",
       "id": "pr_service_src_main_java_nz_co_eroad_qaisystem_controller_prcontroller_java_map"
     },
@@ -13809,7 +14005,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/controller/PRController.java",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 36,
+      "community": 53,
       "norm_label": "string",
       "id": "pr_service_src_main_java_nz_co_eroad_qaisystem_controller_prcontroller_java_string"
     },
@@ -13819,7 +14015,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/controller/PRController.java",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 36,
+      "community": 53,
       "norm_label": "object",
       "id": "pr_service_src_main_java_nz_co_eroad_qaisystem_controller_prcontroller_java_object"
     },
@@ -13829,7 +14025,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/controller/PRController.java",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 36,
+      "community": 53,
       "norm_label": "postmapping",
       "id": "pr_service_src_main_java_nz_co_eroad_qaisystem_controller_prcontroller_java_postmapping"
     },
@@ -13839,7 +14035,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/controller/PRController.java",
       "source_location": "L50",
       "_origin": "ast",
-      "community": 36,
+      "community": 53,
       "norm_label": ".submit()",
       "id": "controller_prcontroller_prcontroller_submit"
     },
@@ -13849,7 +14045,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/controller/PRController.java",
       "source_location": "L79",
       "_origin": "ast",
-      "community": 36,
+      "community": 53,
       "norm_label": ".demo()",
       "id": "controller_prcontroller_prcontroller_demo"
     },
@@ -13859,7 +14055,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/controller/PRController.java",
       "source_location": "L98",
       "_origin": "ast",
-      "community": 36,
+      "community": 53,
       "norm_label": ".health()",
       "id": "controller_prcontroller_prcontroller_health"
     },
@@ -13869,7 +14065,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/controller/PRController.java",
       "source_location": "L98",
       "_origin": "ast",
-      "community": 36,
+      "community": 53,
       "norm_label": "getmapping",
       "id": "pr_service_src_main_java_nz_co_eroad_qaisystem_controller_prcontroller_java_getmapping"
     },
@@ -14049,7 +14245,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/kafka/FeatureUpdatesProducer.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "featureupdatesproducer.java",
       "id": "kafka_featureupdatesproducer"
     },
@@ -14059,7 +14255,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/kafka/FeatureUpdatesProducer.java",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "featureupdatesproducer",
       "id": "kafka_featureupdatesproducer_featureupdatesproducer"
     },
@@ -14069,7 +14265,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/kafka/FeatureUpdatesProducer.java",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".publishpullrequest()",
       "id": "kafka_featureupdatesproducer_featureupdatesproducer_publishpullrequest"
     },
@@ -14079,7 +14275,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/kafka/FeatureUpdatesProducer.java",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "pullrequest",
       "id": "pr_service_src_main_java_nz_co_eroad_qaisystem_kafka_featureupdatesproducer_java_pullrequest"
     },
@@ -14089,7 +14285,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/kafka/FeatureUpdatesProducer.java",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "completablefuture",
       "id": "pr_service_src_main_java_nz_co_eroad_qaisystem_kafka_featureupdatesproducer_java_completablefuture"
     },
@@ -14099,7 +14295,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/kafka/FeatureUpdatesProducer.java",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "sendresult",
       "id": "pr_service_src_main_java_nz_co_eroad_qaisystem_kafka_featureupdatesproducer_java_sendresult"
     },
@@ -14109,7 +14305,7 @@
       "source_file": "pr-service/src/main/java/nz/co/eroad/qaisystem/kafka/FeatureUpdatesProducer.java",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "string",
       "id": "pr_service_src_main_java_nz_co_eroad_qaisystem_kafka_featureupdatesproducer_java_string"
     },
@@ -15029,7 +15225,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "prservicetest.java",
       "id": "service_prservicetest"
     },
@@ -15049,7 +15245,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "capturingproducer",
       "id": "service_prservicetest_capturingproducer"
     },
@@ -15059,7 +15255,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".capturingproducer()",
       "id": "service_prservicetest_capturingproducer_capturingproducer"
     },
@@ -15069,7 +15265,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": ".publishpullrequest()",
       "id": "service_prservicetest_capturingproducer_publishpullrequest"
     },
@@ -15079,7 +15275,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "pullrequest",
       "id": "pr_service_src_test_java_nz_co_eroad_qaisystem_service_prservicetest_java_pullrequest"
     },
@@ -15089,7 +15285,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "completablefuture",
       "id": "pr_service_src_test_java_nz_co_eroad_qaisystem_service_prservicetest_java_completablefuture"
     },
@@ -15099,7 +15295,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "sendresult",
       "id": "pr_service_src_test_java_nz_co_eroad_qaisystem_service_prservicetest_java_sendresult"
     },
@@ -15109,7 +15305,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "string",
       "id": "pr_service_src_test_java_nz_co_eroad_qaisystem_service_prservicetest_java_string"
     },
@@ -15119,7 +15315,7 @@
       "source_file": "pr-service/src/test/java/nz/co/eroad/qaisystem/service/PRServiceTest.java",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 53,
+      "community": 65,
       "norm_label": "override",
       "id": "pr_service_src_test_java_nz_co_eroad_qaisystem_service_prservicetest_java_override"
     },
@@ -15540,188 +15736,6 @@
       "id": "scripts_create_test_payloads"
     },
     {
-      "label": "setup.sh",
-      "file_type": "code",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L1",
-      "metadata": {
-        "language": "bash",
-        "kind": "file"
-      },
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "setup.sh",
-      "id": "scripts_setup"
-    },
-    {
-      "label": "setup.sh script",
-      "file_type": "code",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L1",
-      "metadata": {
-        "language": "bash",
-        "kind": "bash_entrypoint"
-      },
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "setup.sh script",
-      "id": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry"
-    },
-    {
-      "label": "info()",
-      "file_type": "code",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L34",
-      "metadata": {
-        "language": "bash",
-        "kind": "bash_function"
-      },
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "info()",
-      "id": "scripts_setup_info"
-    },
-    {
-      "label": "success()",
-      "file_type": "code",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L35",
-      "metadata": {
-        "language": "bash",
-        "kind": "bash_function"
-      },
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "success()",
-      "id": "scripts_setup_success"
-    },
-    {
-      "label": "warn()",
-      "file_type": "code",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L36",
-      "metadata": {
-        "language": "bash",
-        "kind": "bash_function"
-      },
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "warn()",
-      "id": "scripts_setup_warn"
-    },
-    {
-      "label": "error()",
-      "file_type": "code",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L37",
-      "metadata": {
-        "language": "bash",
-        "kind": "bash_function"
-      },
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "error()",
-      "id": "scripts_setup_error"
-    },
-    {
-      "label": "die()",
-      "file_type": "code",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L38",
-      "metadata": {
-        "language": "bash",
-        "kind": "bash_function"
-      },
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "die()",
-      "id": "scripts_setup_die"
-    },
-    {
-      "label": "header()",
-      "file_type": "code",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L39",
-      "metadata": {
-        "language": "bash",
-        "kind": "bash_function"
-      },
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "header()",
-      "id": "scripts_setup_header"
-    },
-    {
-      "label": "note()",
-      "file_type": "code",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L40",
-      "metadata": {
-        "language": "bash",
-        "kind": "bash_function"
-      },
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "note()",
-      "id": "scripts_setup_note"
-    },
-    {
-      "label": "add_warning()",
-      "file_type": "code",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L66",
-      "metadata": {
-        "language": "bash",
-        "kind": "bash_function"
-      },
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "add_warning()",
-      "id": "scripts_setup_add_warning"
-    },
-    {
-      "label": "add_error()",
-      "file_type": "code",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L67",
-      "metadata": {
-        "language": "bash",
-        "kind": "bash_function"
-      },
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "add_error()",
-      "id": "scripts_setup_add_error"
-    },
-    {
-      "label": "brew_install()",
-      "file_type": "code",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L116",
-      "metadata": {
-        "language": "bash",
-        "kind": "bash_function"
-      },
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "brew_install()",
-      "id": "scripts_setup_brew_install"
-    },
-    {
-      "label": "java_version()",
-      "file_type": "code",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L159",
-      "metadata": {
-        "language": "bash",
-        "kind": "bash_function"
-      },
-      "_origin": "ast",
-      "community": 0,
-      "norm_label": "java_version()",
-      "id": "scripts_setup_java_version"
-    },
-    {
       "label": "start-local.sh",
       "file_type": "code",
       "source_file": "scripts/start-local.sh",
@@ -16129,7 +16143,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 33,
       "norm_label": "promptresponsecache.java",
       "id": "cache_promptresponsecache"
     },
@@ -16139,7 +16153,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L19",
       "_origin": "ast",
-      "community": 27,
+      "community": 33,
       "norm_label": "promptresponsecache",
       "id": "cache_promptresponsecache_promptresponsecache"
     },
@@ -16149,7 +16163,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 27,
+      "community": 33,
       "norm_label": "tohash()",
       "id": "cache_promptresponsecache_tohash"
     },
@@ -16159,7 +16173,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 27,
+      "community": 33,
       "norm_label": "string",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_cache_promptresponsecache_java_string"
     },
@@ -16169,7 +16183,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L64",
       "_origin": "ast",
-      "community": 27,
+      "community": 33,
       "norm_label": ".get()",
       "id": "cache_promptresponsecache_promptresponsecache_get"
     },
@@ -16179,7 +16193,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L64",
       "_origin": "ast",
-      "community": 27,
+      "community": 33,
       "norm_label": "cachekey",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_cache_promptresponsecache_java_cachekey"
     },
@@ -16189,7 +16203,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L64",
       "_origin": "ast",
-      "community": 27,
+      "community": 33,
       "norm_label": "optional",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_cache_promptresponsecache_java_optional"
     },
@@ -16199,7 +16213,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L77",
       "_origin": "ast",
-      "community": 27,
+      "community": 33,
       "norm_label": ".put()",
       "id": "cache_promptresponsecache_promptresponsecache_put"
     },
@@ -16209,7 +16223,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L88",
       "_origin": "ast",
-      "community": 27,
+      "community": 33,
       "norm_label": ".getstats()",
       "id": "cache_promptresponsecache_promptresponsecache_getstats"
     },
@@ -16219,7 +16233,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java",
       "source_location": "L88",
       "_origin": "ast",
-      "community": 27,
+      "community": 33,
       "norm_label": "cachestats",
       "id": "cachestats"
     },
@@ -16699,7 +16713,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/github/BddScenarioStore.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 57,
       "norm_label": "bddscenariostore.java",
       "id": "github_bddscenariostore"
     },
@@ -16709,7 +16723,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/github/BddScenarioStore.java",
       "source_location": "L21",
       "_origin": "ast",
-      "community": 27,
+      "community": 57,
       "norm_label": "bddscenariostore",
       "id": "github_bddscenariostore_bddscenariostore"
     },
@@ -16719,7 +16733,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/github/BddScenarioStore.java",
       "source_location": "L27",
       "_origin": "ast",
-      "community": 27,
+      "community": 57,
       "norm_label": ".put()",
       "id": "github_bddscenariostore_bddscenariostore_put"
     },
@@ -16729,7 +16743,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/github/BddScenarioStore.java",
       "source_location": "L27",
       "_origin": "ast",
-      "community": 27,
+      "community": 57,
       "norm_label": "string",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_github_bddscenariostore_java_string"
     },
@@ -16739,7 +16753,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/github/BddScenarioStore.java",
       "source_location": "L27",
       "_origin": "ast",
-      "community": 27,
+      "community": 57,
       "norm_label": "bddscenario",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_github_bddscenariostore_java_bddscenario"
     },
@@ -16749,7 +16763,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/github/BddScenarioStore.java",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 27,
+      "community": 57,
       "norm_label": ".findbybranch()",
       "id": "github_bddscenariostore_bddscenariostore_findbybranch"
     },
@@ -16759,7 +16773,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/github/BddScenarioStore.java",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 27,
+      "community": 57,
       "norm_label": "optional",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_github_bddscenariostore_java_optional"
     },
@@ -16769,7 +16783,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/github/BddScenarioStore.java",
       "source_location": "L37",
       "_origin": "ast",
-      "community": 27,
+      "community": 57,
       "norm_label": ".remove()",
       "id": "github_bddscenariostore_bddscenariostore_remove"
     },
@@ -16779,7 +16793,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/github/BddScenarioStore.java",
       "source_location": "L46",
       "_origin": "ast",
-      "community": 27,
+      "community": 57,
       "norm_label": ".size()",
       "id": "github_bddscenariostore_bddscenariostore_size"
     },
@@ -17019,7 +17033,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/E2ECoverageAnalyzer.java",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "e2ecoverageanalyzer.java",
       "id": "service_e2ecoverageanalyzer"
     },
@@ -17029,7 +17043,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/E2ECoverageAnalyzer.java",
       "source_location": "L40",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "e2ecoverageanalyzer",
       "id": "service_e2ecoverageanalyzer_e2ecoverageanalyzer"
     },
@@ -17039,7 +17053,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/E2ECoverageAnalyzer.java",
       "source_location": "L62",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": ".analyze()",
       "id": "service_e2ecoverageanalyzer_e2ecoverageanalyzer_analyze"
     },
@@ -17049,7 +17063,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/E2ECoverageAnalyzer.java",
       "source_location": "L62",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "impactenvelope",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_e2ecoverageanalyzer_java_impactenvelope"
     },
@@ -17059,7 +17073,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/E2ECoverageAnalyzer.java",
       "source_location": "L62",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "coveragereport",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_e2ecoverageanalyzer_java_coveragereport"
     },
@@ -17069,7 +17083,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/E2ECoverageAnalyzer.java",
       "source_location": "L178",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": ".resolverequiredtypes()",
       "id": "service_e2ecoverageanalyzer_e2ecoverageanalyzer_resolverequiredtypes"
     },
@@ -17079,7 +17093,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/E2ECoverageAnalyzer.java",
       "source_location": "L178",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "list",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_e2ecoverageanalyzer_java_list"
     },
@@ -17089,7 +17103,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/E2ECoverageAnalyzer.java",
       "source_location": "L178",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "impactedcomponent",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_e2ecoverageanalyzer_java_impactedcomponent"
     },
@@ -17099,7 +17113,7 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/E2ECoverageAnalyzer.java",
       "source_location": "L178",
       "_origin": "ast",
-      "community": 4,
+      "community": 61,
       "norm_label": "string",
       "id": "strategy_service_src_main_java_nz_co_eroad_qaisystem_service_e2ecoverageanalyzer_java_string"
     },
@@ -20816,14 +20830,331 @@
   ],
   "links": [
     {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L67",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_add_error"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L66",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_add_warning"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L116",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_brew_install"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L38",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_die"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L37",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_error"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L39",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_header"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L34",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_info"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L159",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_java_version"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L40",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_note"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L35",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_success"
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L532",
+      "weight": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_update_shell_profile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L36",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_setup",
+      "target": "scripts_setup_warn"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L1",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_setup",
+      "target": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L94",
+      "weight": 1.0,
+      "context": "call",
+      "confidence_score": 1.0,
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_add_error"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L203",
+      "weight": 1.0,
+      "context": "call",
+      "confidence_score": 1.0,
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_add_warning"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L139",
+      "weight": 1.0,
+      "context": "call",
+      "confidence_score": 1.0,
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_brew_install"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L58",
+      "weight": 1.0,
+      "context": "call",
+      "confidence_score": 1.0,
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_die"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L503",
+      "weight": 1.0,
+      "context": "call",
+      "confidence_score": 1.0,
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_error"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L72",
+      "weight": 1.0,
+      "context": "call",
+      "confidence_score": 1.0,
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_header"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L75",
+      "weight": 1.0,
+      "context": "call",
+      "confidence_score": 1.0,
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_info"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L103",
+      "weight": 1.0,
+      "context": "call",
+      "confidence_score": 1.0,
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_note"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L91",
+      "weight": 1.0,
+      "context": "call",
+      "confidence_score": 1.0,
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_success"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L562",
+      "weight": 1.0,
+      "context": "call",
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_update_shell_profile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L96",
+      "weight": 1.0,
+      "context": "call",
+      "confidence_score": 1.0,
+      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
+      "target": "scripts_setup_warn"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L124",
+      "weight": 1.0,
+      "context": "call",
+      "confidence_score": 1.0,
+      "source": "scripts_setup_brew_install",
+      "target": "scripts_setup_info"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L536",
+      "weight": 1.0,
+      "context": "call",
+      "source": "scripts_setup_update_shell_profile",
+      "target": "scripts_setup_success",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L127",
+      "weight": 1.0,
+      "context": "call",
+      "confidence_score": 1.0,
+      "source": "scripts_setup_brew_install",
+      "target": "scripts_setup_warn"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L38",
+      "weight": 1.0,
+      "context": "call",
+      "confidence_score": 1.0,
+      "source": "scripts_setup_die",
+      "target": "scripts_setup_error"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L128",
+      "weight": 1.0,
+      "context": "call",
+      "confidence_score": 1.0,
+      "source": "scripts_setup_brew_install",
+      "target": "scripts_setup_add_warning"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/setup.sh",
+      "source_location": "L120",
+      "weight": 1.0,
+      "context": "call",
+      "confidence_score": 1.0,
+      "source": "scripts_setup_brew_install",
+      "target": "scripts_setup_add_error"
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent",
-      "target": "agents_coder_agent_coder_agent",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_coder_agent"
     },
     {
       "relation": "contains",
@@ -20831,9 +21162,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L29",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent_coder_agent",
-      "target": "agents_coder_agent_before_writing_anything",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_before_writing_anything"
     },
     {
       "relation": "contains",
@@ -20841,9 +21172,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L36",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent_coder_agent",
-      "target": "agents_coder_agent_code_generation_rules",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_code_generation_rules"
     },
     {
       "relation": "contains",
@@ -20851,9 +21182,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L231",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent_coder_agent",
-      "target": "agents_coder_agent_output",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_output"
     },
     {
       "relation": "contains",
@@ -20861,9 +21192,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent_coder_agent",
-      "target": "agents_coder_agent_role",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_role"
     },
     {
       "relation": "contains",
@@ -20871,9 +21202,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L197",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent_coder_agent",
-      "target": "agents_coder_agent_script_safety_rules_shell_bash",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_script_safety_rules_shell_bash"
     },
     {
       "relation": "contains",
@@ -20881,9 +21212,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L152",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent_coder_agent",
-      "target": "agents_coder_agent_testing_rules_zero_mockito",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_testing_rules_zero_mockito"
     },
     {
       "relation": "contains",
@@ -20891,9 +21222,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent_coder_agent",
-      "target": "agents_coder_agent_two_separate_instruction_systems_do_not_confuse_them",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_two_separate_instruction_systems_do_not_confuse_them"
     },
     {
       "relation": "contains",
@@ -20901,9 +21232,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L181",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent_coder_agent",
-      "target": "agents_coder_agent_what_coder_must_never_do",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_what_coder_must_never_do"
     },
     {
       "relation": "contains",
@@ -20911,9 +21242,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L85",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent_code_generation_rules",
-      "target": "agents_coder_agent_conditional_beans",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_conditional_beans"
     },
     {
       "relation": "contains",
@@ -20921,9 +21252,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L38",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent_code_generation_rules",
-      "target": "agents_coder_agent_dependency_injection",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_dependency_injection"
     },
     {
       "relation": "contains",
@@ -20931,9 +21262,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L63",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent_code_generation_rules",
-      "target": "agents_coder_agent_java_25_preferred_patterns",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_java_25_preferred_patterns"
     },
     {
       "relation": "contains",
@@ -20941,9 +21272,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L118",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent_code_generation_rules",
-      "target": "agents_coder_agent_kafka_consumer",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_kafka_consumer"
     },
     {
       "relation": "contains",
@@ -20951,9 +21282,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L95",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent_code_generation_rules",
-      "target": "agents_coder_agent_kafka_producer",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_kafka_producer"
     },
     {
       "relation": "contains",
@@ -20961,9 +21292,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L56",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent_code_generation_rules",
-      "target": "agents_coder_agent_logging",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_logging"
     },
     {
       "relation": "contains",
@@ -20971,9 +21302,9 @@
       "source_file": ".github/agents/Coder.agent.md",
       "source_location": "L132",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_coder_agent_code_generation_rules",
-      "target": "agents_coder_agent_mcp_tool_declaration",
-      "confidence_score": 1.0
+      "target": "agents_coder_agent_mcp_tool_declaration"
     },
     {
       "relation": "contains",
@@ -20981,9 +21312,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent",
-      "target": "agents_javacoder_agent_javacoder_agent",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_javacoder_agent"
     },
     {
       "relation": "contains",
@@ -20991,9 +21322,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_javacoder_agent",
-      "target": "agents_javacoder_agent_before_coding",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_before_coding"
     },
     {
       "relation": "contains",
@@ -21001,9 +21332,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L24",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_javacoder_agent",
-      "target": "agents_javacoder_agent_java_25_patterns_language_specific",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_java_25_patterns_language_specific"
     },
     {
       "relation": "contains",
@@ -21011,9 +21342,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L137",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_javacoder_agent",
-      "target": "agents_javacoder_agent_java_specific_forbidden_patterns",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_java_specific_forbidden_patterns"
     },
     {
       "relation": "contains",
@@ -21021,9 +21352,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L151",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_javacoder_agent",
-      "target": "agents_javacoder_agent_output",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_output"
     },
     {
       "relation": "contains",
@@ -21031,9 +21362,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L158",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_javacoder_agent",
-      "target": "agents_javacoder_agent_references",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_references"
     },
     {
       "relation": "contains",
@@ -21041,9 +21372,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_javacoder_agent",
-      "target": "agents_javacoder_agent_role",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_role"
     },
     {
       "relation": "contains",
@@ -21051,9 +21382,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L57",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_javacoder_agent",
-      "target": "agents_javacoder_agent_spring_boot_4_patterns",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_spring_boot_4_patterns"
     },
     {
       "relation": "contains",
@@ -21061,9 +21392,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L116",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_javacoder_agent",
-      "target": "agents_javacoder_agent_testing_zero_mockito",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_testing_zero_mockito"
     },
     {
       "relation": "contains",
@@ -21071,9 +21402,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L31",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_java_25_patterns_language_specific",
-      "target": "agents_javacoder_agent_pattern_matching",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_pattern_matching"
     },
     {
       "relation": "contains",
@@ -21081,9 +21412,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L26",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_java_25_patterns_language_specific",
-      "target": "agents_javacoder_agent_records_for_immutable_dtos",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_records_for_immutable_dtos"
     },
     {
       "relation": "contains",
@@ -21091,9 +21422,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L36",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_java_25_patterns_language_specific",
-      "target": "agents_javacoder_agent_sealed_classes_for_closed_hierarchies",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_sealed_classes_for_closed_hierarchies"
     },
     {
       "relation": "contains",
@@ -21101,9 +21432,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L46",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_java_25_patterns_language_specific",
-      "target": "agents_javacoder_agent_text_blocks_for_multi_line_strings",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_text_blocks_for_multi_line_strings"
     },
     {
       "relation": "contains",
@@ -21111,9 +21442,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L41",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_java_25_patterns_language_specific",
-      "target": "agents_javacoder_agent_virtual_threads_for_async_work",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_virtual_threads_for_async_work"
     },
     {
       "relation": "contains",
@@ -21121,9 +21452,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L70",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_spring_boot_4_patterns",
-      "target": "agents_javacoder_agent_conditional_beans",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_conditional_beans"
     },
     {
       "relation": "contains",
@@ -21131,9 +21462,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L59",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_spring_boot_4_patterns",
-      "target": "agents_javacoder_agent_constructor_injection_via_lombok",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_constructor_injection_via_lombok"
     },
     {
       "relation": "contains",
@@ -21141,9 +21472,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L87",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_spring_boot_4_patterns",
-      "target": "agents_javacoder_agent_kafka_consumer",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_kafka_consumer"
     },
     {
       "relation": "contains",
@@ -21151,9 +21482,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L79",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_spring_boot_4_patterns",
-      "target": "agents_javacoder_agent_kafka_producer_non_blocking",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_kafka_producer_non_blocking"
     },
     {
       "relation": "contains",
@@ -21161,9 +21492,9 @@
       "source_file": ".github/agents/JavaCoder.agent.md",
       "source_location": "L101",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agents_javacoder_agent_spring_boot_4_patterns",
-      "target": "agents_javacoder_agent_mcp_tool_declaration",
-      "confidence_score": 1.0
+      "target": "agents_javacoder_agent_mcp_tool_declaration"
     },
     {
       "relation": "contains",
@@ -21182,9 +21513,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient",
-      "target": "aiproviderproperties",
-      "confidence_score": 1.0
+      "target": "aiproviderproperties"
     },
     {
       "relation": "imports",
@@ -21193,9 +21524,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L4",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient",
-      "target": "objectmapper",
-      "confidence_score": 1.0
+      "target": "objectmapper"
     },
     {
       "relation": "imports",
@@ -21204,9 +21535,9 @@
       "source_file": "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java",
       "source_location": "L12",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient",
-      "target": "path",
-      "confidence_score": 1.0
+      "target": "path"
     },
     {
       "relation": "method",
@@ -21255,9 +21586,9 @@
       "source_location": "L65",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient_copilotagentclient_copilotagentclient",
-      "target": "aiproviderproperties",
-      "confidence_score": 1.0
+      "target": "aiproviderproperties"
     },
     {
       "relation": "references",
@@ -21266,9 +21597,9 @@
       "source_location": "L65",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient_copilotagentclient_copilotagentclient",
-      "target": "objectmapper",
-      "confidence_score": 1.0
+      "target": "objectmapper"
     },
     {
       "relation": "imports",
@@ -21387,9 +21718,9 @@
       "source_location": "L94",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient_copilotagentclient_runagent",
-      "target": "path",
-      "confidence_score": 1.0
+      "target": "path"
     },
     {
       "relation": "references",
@@ -21398,9 +21729,9 @@
       "source_location": "L94",
       "weight": 1.0,
       "context": "return_type",
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient_copilotagentclient_runagent",
-      "target": "string",
-      "confidence_score": 1.0
+      "target": "string"
     },
     {
       "relation": "references",
@@ -21409,9 +21740,9 @@
       "source_location": "L221",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient_copilotagentclient_extractchunktext",
-      "target": "string",
-      "confidence_score": 1.0
+      "target": "string"
     },
     {
       "relation": "imports",
@@ -21486,9 +21817,9 @@
       "source_location": "L221",
       "weight": 1.0,
       "context": "parameter_type",
+      "confidence_score": 1.0,
       "source": "agent_copilotagentclient_copilotagentclient_extractchunktext",
-      "target": "stringbuilder",
-      "confidence_score": 1.0
+      "target": "stringbuilder"
     },
     {
       "relation": "references",
@@ -51638,291 +51969,6 @@
     {
       "relation": "defines",
       "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L67",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_setup",
-      "target": "scripts_setup_add_error"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L66",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_setup",
-      "target": "scripts_setup_add_warning"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L116",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_setup",
-      "target": "scripts_setup_brew_install"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L38",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_setup",
-      "target": "scripts_setup_die"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L37",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_setup",
-      "target": "scripts_setup_error"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L39",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_setup",
-      "target": "scripts_setup_header"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L34",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_setup",
-      "target": "scripts_setup_info"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L159",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_setup",
-      "target": "scripts_setup_java_version"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L40",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_setup",
-      "target": "scripts_setup_note"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L35",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_setup",
-      "target": "scripts_setup_success"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L36",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_setup",
-      "target": "scripts_setup_warn"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L1",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_setup",
-      "target": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L94",
-      "weight": 1.0,
-      "context": "call",
-      "confidence_score": 1.0,
-      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
-      "target": "scripts_setup_add_error"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L203",
-      "weight": 1.0,
-      "context": "call",
-      "confidence_score": 1.0,
-      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
-      "target": "scripts_setup_add_warning"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L139",
-      "weight": 1.0,
-      "context": "call",
-      "confidence_score": 1.0,
-      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
-      "target": "scripts_setup_brew_install"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L58",
-      "weight": 1.0,
-      "context": "call",
-      "confidence_score": 1.0,
-      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
-      "target": "scripts_setup_die"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L503",
-      "weight": 1.0,
-      "context": "call",
-      "confidence_score": 1.0,
-      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
-      "target": "scripts_setup_error"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L72",
-      "weight": 1.0,
-      "context": "call",
-      "confidence_score": 1.0,
-      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
-      "target": "scripts_setup_header"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L75",
-      "weight": 1.0,
-      "context": "call",
-      "confidence_score": 1.0,
-      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
-      "target": "scripts_setup_info"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L103",
-      "weight": 1.0,
-      "context": "call",
-      "confidence_score": 1.0,
-      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
-      "target": "scripts_setup_note"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L91",
-      "weight": 1.0,
-      "context": "call",
-      "confidence_score": 1.0,
-      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
-      "target": "scripts_setup_success"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L96",
-      "weight": 1.0,
-      "context": "call",
-      "confidence_score": 1.0,
-      "source": "users_ranveeraiden_library_cloudstorage_onedrive_eroad_desktop_workspace_qa_isystem_scripts_setup_sh__entry",
-      "target": "scripts_setup_warn"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L124",
-      "weight": 1.0,
-      "context": "call",
-      "confidence_score": 1.0,
-      "source": "scripts_setup_brew_install",
-      "target": "scripts_setup_info"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L127",
-      "weight": 1.0,
-      "context": "call",
-      "confidence_score": 1.0,
-      "source": "scripts_setup_brew_install",
-      "target": "scripts_setup_warn"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L38",
-      "weight": 1.0,
-      "context": "call",
-      "confidence_score": 1.0,
-      "source": "scripts_setup_die",
-      "target": "scripts_setup_error"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L128",
-      "weight": 1.0,
-      "context": "call",
-      "confidence_score": 1.0,
-      "source": "scripts_setup_brew_install",
-      "target": "scripts_setup_add_warning"
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/setup.sh",
-      "source_location": "L120",
-      "weight": 1.0,
-      "context": "call",
-      "confidence_score": 1.0,
-      "source": "scripts_setup_brew_install",
-      "target": "scripts_setup_add_error"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
       "source_file": "scripts/start-local.sh",
       "source_location": "L31",
       "weight": 1.0,
@@ -58538,5 +58584,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "13a39e9509396022f8f2448fb9198192d2f4f426"
+  "built_at_commit": "c8885a8b00eb63ca9bc4988875728765ede6020d"
 }

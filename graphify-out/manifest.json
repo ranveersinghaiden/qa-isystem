@@ -405,8 +405,8 @@
     "semantic_hash": ""
   },
   "scripts/setup.sh": {
-    "mtime": 1782173552.6603312,
-    "ast_hash": "4cc01fe496c0d6b41619ec70e1bf5ef2",
+    "mtime": 1782378307.3352456,
+    "ast_hash": "434bf642a98e70475d3b06fc80913757",
     "semantic_hash": ""
   },
   "scripts/start-local.sh": {
