@@ -430,7 +430,150 @@ if [ "${GRAPHIFY_OK}" = true ]; then
 fi
 
 # =============================================================================
-# 10. Environment file (.env)
+# 10. headroom-ai + rtk (Rust Token Killer — context compression)
+# =============================================================================
+header "headroom + rtk"
+
+HEADROOM_BIN="${HOME}/.headroom/bin"
+HEADROOM_OK=false
+RTK_OK=false
+HEADROOM_CMD=""
+
+# ── Detect existing headroom ──────────────────────────────────────────────────
+if command -v headroom &>/dev/null; then
+  HEADROOM_CMD="headroom"
+  HM_VER="$(headroom --version 2>/dev/null || echo 'installed')"
+  success "headroom ${HM_VER} on PATH"
+  HEADROOM_OK=true
+elif [ -x "${HOME}/.local/pipx/venvs/headroom-ai/bin/headroom" ]; then
+  HEADROOM_CMD="${HOME}/.local/pipx/venvs/headroom-ai/bin/headroom"
+  HM_VER="$("${HEADROOM_CMD}" --version 2>/dev/null || echo 'installed')"
+  success "headroom ${HM_VER} (pipx venv)"
+  HEADROOM_OK=true
+fi
+
+# ── Install headroom-ai if missing ───────────────────────────────────────────
+if [ "${HEADROOM_OK}" = false ]; then
+  if [ "${CHECK_ONLY}" = true ]; then
+    add_error "headroom-ai not installed. Run: pipx install headroom-ai  OR  uv tool install headroom-ai"
+  else
+    # Ensure pipx is available
+    if ! command -v pipx &>/dev/null; then
+      if [ "${IS_MAC}" = true ]; then
+        info "Installing pipx via Homebrew..."
+        brew install pipx 2>/dev/null && pipx ensurepath 2>/dev/null || true
+      else
+        info "Installing pipx via pip3..."
+        python3 -m pip install --user pipx 2>/dev/null && \
+          python3 -m pipx ensurepath 2>/dev/null || true
+      fi
+    fi
+
+    if command -v pipx &>/dev/null; then
+      info "Installing headroom-ai via pipx..."
+      pipx install headroom-ai 2>&1 | grep -v "^$" | tail -5 && {
+        HEADROOM_CMD="headroom"
+        HEADROOM_OK=true
+        success "headroom-ai installed via pipx"
+      } || warn "pipx install headroom-ai failed — trying uv..."
+    fi
+
+    if [ "${HEADROOM_OK}" = false ] && command -v uv &>/dev/null; then
+      info "Installing headroom-ai via uv tool..."
+      uv tool install headroom-ai 2>&1 | tail -3 && {
+        HEADROOM_CMD="headroom"
+        HEADROOM_OK=true
+        success "headroom-ai installed via uv"
+      } || warn "uv tool install headroom-ai failed"
+    fi
+
+    [ "${HEADROOM_OK}" = false ] && \
+      add_warning "headroom-ai install failed. Manually: pipx install headroom-ai"
+  fi
+fi
+
+# ── Download rtk binary (resolved via headroom Python API) ────────────────────
+if [ "${HEADROOM_OK}" = true ]; then
+  if [ -f "${HEADROOM_BIN}/rtk" ] && [ -x "${HEADROOM_BIN}/rtk" ]; then
+    RTK_VER="$("${HEADROOM_BIN}/rtk" --version 2>/dev/null | head -1 || echo 'installed')"
+    success "rtk ${RTK_VER} (${HEADROOM_BIN}/rtk)"
+    RTK_OK=true
+  elif [ "${CHECK_ONLY}" = true ]; then
+    add_warning "rtk binary not found at ${HEADROOM_BIN}/rtk. Re-run without --check-only."
+  else
+    info "Downloading rtk binary via headroom..."
+    HR_PYTHON=""
+    _PIPX_PY="${HOME}/.local/pipx/venvs/headroom-ai/bin/python3"
+    if [ -x "${_PIPX_PY}" ]; then
+      HR_PYTHON="${_PIPX_PY}"
+    elif python3 -c "import headroom" 2>/dev/null; then
+      HR_PYTHON="python3"
+    fi
+
+    if [ -n "${HR_PYTHON}" ]; then
+      "${HR_PYTHON}" -c \
+        "from headroom.rtk.installer import ensure_rtk; p = ensure_rtk(); print('rtk ->', p)" && {
+        RTK_OK=true
+        success "rtk binary ready at ${HEADROOM_BIN}/rtk"
+      } || add_warning "rtk download failed. Manually: python3 -c 'from headroom.rtk.installer import ensure_rtk; ensure_rtk()'"
+    else
+      add_warning "Cannot resolve headroom Python interpreter. rtk not downloaded."
+    fi
+  fi
+fi
+
+# =============================================================================
+# 11. Shell profile updates (headroom PATH + Copilot provider env vars)
+# =============================================================================
+header "Shell Profiles"
+
+PROFILE_SENTINEL="# QA-ISystem headroom env (added by setup.sh)"
+
+update_shell_profile() {
+  local profile="${1}"
+  [ -f "${profile}" ] || return 0
+  if grep -qF "${PROFILE_SENTINEL}" "${profile}" 2>/dev/null; then
+    success "${profile##"${HOME}"} — headroom block already present"
+    return 0
+  fi
+  cat >> "${profile}" << 'HEADROOM_PROFILE_BLOCK'
+
+# QA-ISystem headroom env (added by setup.sh) ─────────────────────────────────
+export HEADROOM_BIN="${HOME}/.headroom/bin"
+[[ ":${PATH}:" != *":${HEADROOM_BIN}:"* ]] && export PATH="${HEADROOM_BIN}:${PATH}"
+
+export COPILOT_PROVIDER_BASE_URL="http://127.0.0.1:8787/v1"
+export COPILOT_MODEL="claude-sonnet-4.6"
+export COPILOT_PROVIDER_TYPE="openai"
+
+# Dynamically inject the active token into cmux child panes at startup
+if [ -n "$CMUX_WORKSPACE_ID" ]; then
+    export COPILOT_PROVIDER_API_KEY="$(gh auth token 2>/dev/null)"
+    export COPILOT_PROVIDER_BEARER_TOKEN="$COPILOT_PROVIDER_API_KEY"
+fi
+# ─────────────────────────────────────────────────────────────────────────────
+HEADROOM_PROFILE_BLOCK
+  success "Added headroom env vars → ${profile##"${HOME}"}"
+}
+
+if [ "${CHECK_ONLY}" = false ]; then
+  # macOS: ~/.zshrc is the primary interactive shell config (zsh is default since Catalina)
+  [ -f "${HOME}/.zshrc" ] || { touch "${HOME}/.zshrc"; note "Created ~/.zshrc"; }
+  update_shell_profile "${HOME}/.zshrc"
+  update_shell_profile "${HOME}/.bashrc"
+  update_shell_profile "${HOME}/.bash_profile"
+  note "Reload: source ~/.zshrc  (or open a new terminal)"
+else
+  for _pf in "${HOME}/.zshrc" "${HOME}/.bashrc" "${HOME}/.bash_profile"; do
+    [ -f "${_pf}" ] || continue
+    grep -qF "${PROFILE_SENTINEL}" "${_pf}" 2>/dev/null && \
+      success "${_pf##"${HOME}"} — headroom block present" || \
+      add_warning "${_pf##"${HOME}"} missing headroom env block. Re-run without --check-only."
+  done
+fi
+
+# =============================================================================
+# 12. Environment file (.env)
 # =============================================================================
 header "Environment Configuration"
 ENV_FILE="${ROOT_DIR}/.env"
@@ -458,7 +601,7 @@ else
 fi
 
 # =============================================================================
-# 11. Build (optional)
+# 13. Build (optional)
 # =============================================================================
 if [ "${DO_BUILD}" = true ]; then
   header "Maven Build"
@@ -514,19 +657,30 @@ cat << 'NEXT_STEPS'
        gh auth login
        gh extension install github/gh-copilot
 
-  3. Build (if you didn't use --build):
+  3. Reload your shell to activate headroom env vars:
+       source ~/.zshrc          # zsh
+       source ~/.bash_profile   # bash
+
+  4. (Optional) Start headroom proxy (Copilot token compression):
+       headroom proxy           # runs on 127.0.0.1:8787
+
+  5. Build (if you didn't use --build):
        ./mvnw clean package -DskipTests --no-transfer-progress
 
-  4. Start the full pipeline:
+  6. Start the full pipeline:
        ./scripts/start-local.sh
 
-  5. Submit a test PR webhook:
+  7. Submit a test PR webhook:
        curl -X POST http://localhost:8080/api/pr/demo
 
-  6. (Optional) Monitor AI cost metrics:
+  8. (Optional) Monitor AI cost metrics:
        curl http://localhost:8082/api/qa/cost/report
 
-  7. (Optional) Build knowledge graph of the codebase:
+  9. (Optional) Verify rtk is working (token-optimised shell commands):
+       rtk git status
+       rtk git log
+
+  10. (Optional) Build knowledge graph of the codebase:
        /graphify                        # full pipeline - run inside Claude/Copilot
        graphify query "how does a PR flow through the pipeline?"
        graphify hook status             # check post-commit hook
