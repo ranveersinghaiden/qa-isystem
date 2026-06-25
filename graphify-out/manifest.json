@@ -953,5 +953,65 @@
     "mtime": 1782260769.166934,
     "ast_hash": "8adb4de3832a50464febbb265dca680b",
     "semantic_hash": ""
+  },
+  "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/CopilotAgentClient.java": {
+    "mtime": 1782173552.0,
+    "ast_hash": "0129aa90b71ed30f95b77468fb202e20",
+    "semantic_hash": ""
+  },
+  ".github/agents/Coder.agent.md": {
+    "mtime": 1782173365.0,
+    "ast_hash": "191c3a721ccdd5f94b2385528b866be2",
+    "semantic_hash": ""
+  },
+  ".github/agents/JavaCoder.agent.md": {
+    "mtime": 1781581161.0,
+    "ast_hash": "7054f15317c21ee89abb8050af4e9aa1",
+    "semantic_hash": ""
+  },
+  ".playwright-mcp/page-2026-06-11T04-22-03-381Z.yml": {
+    "mtime": 1781151723.0,
+    "ast_hash": "5c527517acaf979f681980bbed619b74",
+    "semantic_hash": ""
+  },
+  ".playwright-mcp/page-2026-06-11T04-22-11-840Z.yml": {
+    "mtime": 1781151731.0,
+    "ast_hash": "b679f464a06df5808a23a69509ec8544",
+    "semantic_hash": ""
+  },
+  ".playwright-mcp/page-2026-06-11T04-22-25-527Z.yml": {
+    "mtime": 1781151745.0,
+    "ast_hash": "cf86b9184f59c7d2c4bb19f37993d2f0",
+    "semantic_hash": ""
+  },
+  ".playwright-mcp/page-2026-06-11T04-22-33-961Z.yml": {
+    "mtime": 1781151753.0,
+    "ast_hash": "616e5ca3fdac99eac586410292bfae4c",
+    "semantic_hash": ""
+  },
+  ".playwright-mcp/page-2026-06-11T04-22-40-799Z.yml": {
+    "mtime": 1781151760.0,
+    "ast_hash": "7c7a99d524bb83c06966a6b25315e043",
+    "semantic_hash": ""
+  },
+  ".playwright-mcp/page-2026-06-11T04-22-45-037Z.yml": {
+    "mtime": 1781151765.0,
+    "ast_hash": "4140c27997825700f1a21d802c620a44",
+    "semantic_hash": ""
+  },
+  ".playwright-mcp/page-2026-06-11T04-22-52-476Z.yml": {
+    "mtime": 1781151772.0,
+    "ast_hash": "6db3c3811d258b3f43032cda4ab0fb0f",
+    "semantic_hash": ""
+  },
+  ".playwright-mcp/page-2026-06-11T04-22-59-005Z.yml": {
+    "mtime": 1781151779.0,
+    "ast_hash": "fa35ea2c6690b5e9513a37fd0f59336a",
+    "semantic_hash": ""
+  },
+  ".playwright-mcp/page-2026-06-11T04-23-06-881Z.yml": {
+    "mtime": 1781151786.0,
+    "ast_hash": "4bf17cde70198681a430e5f46607004d",
+    "semantic_hash": ""
   }
 }
