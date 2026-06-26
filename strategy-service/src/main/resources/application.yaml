@@ -9,6 +9,13 @@ spring:
       enable-auto-commit: false
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # One message per poll: a long Conductor run (BDD generation) never blocks a batch
+      # or breaches the poll interval (which causes rebalances + duplicate processing).
+      max-poll-records: ${KAFKA_MAX_POLL_RECORDS:1}
+      # Must exceed: semaphore_wait + agent_timeout + thread_join_overhead.
+      # agent_timeout defaults to 300s; worst case (all slots busy) is ~2x that = ~610s.
+      # 900s (15 min) gives comfortable headroom. Override via KAFKA_MAX_POLL_INTERVAL_MS.
+      max-poll-interval-ms: ${KAFKA_MAX_POLL_INTERVAL_MS:900000}
     producer:
       acks: all
       retries: 3

@@ -256,7 +256,21 @@ public class RepoContextService {
         Path local = Path.of(props.getLocalPath());
         if (Files.exists(local.resolve(".git"))) {
             log.info("[RepoContextService] Pulling latest from '{}'", props.getBranch());
-            runGit(local, "git", "pull", "origin", props.getBranch());
+            try {
+                runGit(local, "git", "pull", "origin", props.getBranch());
+            } catch (IOException pullEx) {
+                // git pull fails when untracked files in the working tree conflict with
+                // incoming changes (e.g. a file that exists locally but is also being
+                // introduced on the remote). Recover via fetch + reset --hard so the local
+                // clone always mirrors the remote state exactly.
+                log.warn("[RepoContextService] git pull failed ({}). " +
+                        "Recovering via fetch + reset --hard origin/{} ...",
+                        pullEx.getMessage(), props.getBranch());
+                runGit(local, "git", "fetch", "origin", props.getBranch());
+                runGit(local, "git", "reset", "--hard", "origin/" + props.getBranch());
+                log.info("[RepoContextService] Force-sync complete — local clone now at origin/{}",
+                        props.getBranch());
+            }
         } else {
             log.info("[RepoContextService] Cloning '{}' (branch={}) → {}",
                     props.getUrl(), props.getBranch(), local);

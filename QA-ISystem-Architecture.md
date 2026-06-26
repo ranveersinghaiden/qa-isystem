@@ -908,11 +908,45 @@ QA-ISystem/                 ← parent pom.xml (groupId: nz.co.eroad, version: 0
 
 ## 14. Docker Compose Setup
 
+### Infrastructure containers (`docker-compose.yml`)
+
+| Image | Version | Container | Purpose |
+|-------|---------|-----------|---------|
+| `confluentinc/cp-zookeeper` | `7.6.0` | `qa-zookeeper` | Kafka metadata coordinator. Required by the Confluent Kafka broker for leader election and topic metadata. Pinned to match the Kafka image version exactly. |
+| `confluentinc/cp-kafka` | `7.6.0` | `qa-kafka` | Event bus for all inter-service communication. Single-broker, single-partition config suitable for local dev (`REPLICATION_FACTOR=1`). |
+| `redis:7-alpine` | `7-alpine` | `qa-redis` | In-memory state store used by `RedisPrTracker` (PR state machine), `PromptResponseCache` (dedup AI calls), and `RedisConversationStore` (conversation history). Alpine variant keeps it ~30 MB. Persistence disabled (`--save ""`). |
+| `provectuslabs/kafka-ui` | `latest` | `qa-kafka-ui` | Optional dev-only web UI for inspecting Kafka topics and messages at `http://localhost:8090`. Only started when `start-local.sh --with-kafka-ui` is used. Not included in prod. |
+
+### Application image build stages (all five Dockerfiles)
+
+All service Dockerfiles use a two-stage build:
+
+| Stage | Image | Used by | Why |
+|-------|-------|---------|-----|
+| **Build** | `eclipse-temurin:25-jdk` | All 5 services | Full JDK to compile and package Maven modules inside the container. Dependencies are pre-fetched in a separate `dependency:go-offline` layer so source changes don't re-download jars. |
+| **Runtime** | `eclipse-temurin:25-jre` | `pr-service`, `impact-service`, `feedback-service` | JRE-only — smaller image (~200 MB vs ~450 MB for JDK). These services only run the Spring Boot JAR; no runtime compilation required. |
+| **Runtime** | `eclipse-temurin:25-jdk` | `codegen-service` | Full JDK required. `codegen-service` uses `javax.tools.JavaCompiler` at runtime to compile AI-generated test code into `.class` files before execution. A JRE cannot do this. |
+| **Runtime** | `eclipse-temurin:25-jre` + Python 3 + `headroom-ai[proxy]` | `strategy-service`, `codegen-service` | These two services run the optional headroom proxy sidecar for LLM token compression. Python 3 and `headroom-ai[proxy]` are installed at image build time; `build-essential` and `python3-dev` are purged afterwards to keep the layer lean. |
+
+### Production images (`docker-compose.prod.yml`)
+
+CI builds each service and pushes to GitHub Container Registry. Tags default to `latest` but can be pinned per service.
+
+| Image | Tag env var | Service |
+|-------|------------|---------|
+| `ghcr.io/${GHCR_ORG}/qa-isystem/pr-service` | `${PR_SERVICE_TAG:-latest}` | pr-service |
+| `ghcr.io/${GHCR_ORG}/qa-isystem/impact-service` | `${IMPACT_SERVICE_TAG:-latest}` | impact-service |
+| `ghcr.io/${GHCR_ORG}/qa-isystem/strategy-service` | `${STRATEGY_SERVICE_TAG:-latest}` | strategy-service |
+| `ghcr.io/${GHCR_ORG}/qa-isystem/codegen-service` | `${CODEGEN_SERVICE_TAG:-latest}` | codegen-service |
+| `ghcr.io/${GHCR_ORG}/qa-isystem/feedback-service` | `${FEEDBACK_SERVICE_TAG:-latest}` | feedback-service |
+
 ```yaml
+# local dev — infrastructure containers only:
 services:
-  qa-zookeeper:        # Kafka's metadata coordinator (required by Kafka)
-  qa-redis:            # Redis — PromptResponseCache + RedisPrTracker + RedisConversationStore
+  qa-zookeeper:        # Kafka's metadata coordinator
   qa-kafka:            # The message broker
+  qa-redis:            # Redis — PromptResponseCache + RedisPrTracker + RedisConversationStore
+  qa-kafka-ui:         # (optional) Kafka topic inspector at :8090
 ```
 
 The five Java services run as separate JVM processes outside Docker during local development.

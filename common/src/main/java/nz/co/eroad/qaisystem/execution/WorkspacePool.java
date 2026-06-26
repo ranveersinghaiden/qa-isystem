@@ -71,13 +71,14 @@ public class WorkspacePool {
 
         // Contract check: the target repo must own its Conductor agent definition.
         // QA-ISystem is a pure orchestrator and never adds files to the target repo.
-        Path conductorMd = basePath.resolve(".github").resolve("agents").resolve("Conductor.md");
-        if (!Files.exists(conductorMd)) {
+        // Accept any file matching Conductor*.md (e.g. Conductor.md, Conductor.agent.md).
+        Path conductorMd = findConductorAgentFile(basePath.resolve(".github").resolve("agents"));
+        if (conductorMd == null) {
             throw new IllegalStateException(
                     LOG_PREFIX + " TARGET REPO CONTRACT VIOLATION: " +
-                    "base clone '" + basePath + "' has no .github/agents/Conductor.md. " +
+                    "base clone '" + basePath + "' has no .github/agents/Conductor*.md. " +
                     "QA-ISystem cannot start without a Conductor agent in the target repository. " +
-                    "Add .github/agents/Conductor.md to the target repo and re-deploy.");
+                    "Add .github/agents/Conductor.md (or Conductor.agent.md) to the target repo and re-deploy.");
         }
         log.info("{} Conductor agent confirmed in target repo at '{}'", LOG_PREFIX, conductorMd);
 
@@ -116,6 +117,13 @@ public class WorkspacePool {
     /**
      * Borrows an isolated working directory. Blocks until one is free (bounded in practice by the
      * agent concurrency semaphore). In degraded mode returns the shared base clone path immediately.
+     *
+     * <p>Before returning a worktree, resets it to {@code origin/{branch}} so that any committed
+     * files added to the target repo since the worktrees were first created (e.g. a
+     * {@code .github/agents/Conductor*.md} file) are present in the working directory. The
+     * worktrees share the same {@code .git} object store as the base clone, so remote refs
+     * updated by a {@code git fetch}/{@code git pull} on the base clone are immediately visible
+     * here without a separate network call.
      */
     public Path lease() throws InterruptedException {
         if (degraded) return basePath;
@@ -126,6 +134,7 @@ public class WorkspacePool {
                     scaling.getWorkspaceLeaseTimeoutSeconds(), basePath);
             return basePath;
         }
+        syncWorktreeToBase(ws);
         return ws;
     }
 
@@ -184,6 +193,46 @@ public class WorkspacePool {
             log.debug("{} git command non-fatal failure '{}': {}",
                     LOG_PREFIX, String.join(" ", cmd), e.getMessage());
         }
+    }
+
+    // ─── Agent file helpers ────────────────────────────────────────────────────
+
+    /**
+     * Resets a worktree to {@code origin/{branch}} so it mirrors the base clone's remote state.
+     * Called in {@link #lease()} before every agent run, ensuring committed files (e.g. the
+     * Conductor agent definition) are present even when worktrees were created from an older HEAD.
+     * Non-fatal: logs and continues if the reset fails.
+     */
+    private void syncWorktreeToBase(Path ws) {
+        String branch = props.getBranch();
+        if (branch == null || branch.isBlank()) {
+            log.debug("{} Branch name unavailable — skipping worktree sync for '{}'", LOG_PREFIX, ws);
+            return;
+        }
+        String ref = "origin/" + branch;
+        runGitQuiet(ws, "git", "reset", "--hard", ref);
+        log.debug("{} Worktree '{}' reset to {}", LOG_PREFIX, ws, ref);
+    }
+
+    /**
+     * Finds the first file matching {@code Conductor*.md} inside {@code agentsDir}.
+     * Accepts {@code Conductor.md}, {@code Conductor.agent.md}, or any other variant
+     * the target repo chooses to use.
+     *
+     * @return the matched {@link Path}, or {@code null} if none found
+     */
+    private Path findConductorAgentFile(Path agentsDir) {
+        if (!Files.isDirectory(agentsDir)) {
+            return null;
+        }
+        try (var entries = Files.newDirectoryStream(agentsDir, "Conductor*.md")) {
+            for (Path p : entries) {
+                return p;
+            }
+        } catch (IOException e) {
+            log.debug("{} Could not scan '{}' for Conductor*.md: {}", LOG_PREFIX, agentsDir, e.getMessage());
+        }
+        return null;
     }
 }
 

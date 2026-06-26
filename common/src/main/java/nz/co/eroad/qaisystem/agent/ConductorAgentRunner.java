@@ -28,7 +28,8 @@ import java.util.concurrent.TimeUnit;
  *
  * <p>QA-ISystem is a pure orchestrator. It never modifies the target repo's agent
  * definitions and never injects files into it. The target repo <strong>must</strong>
- * contain {@code .github/agents/Conductor.md} — if it does not, every delegation
+ * contain {@code .github/agents/Conductor*.md} (e.g. {@code Conductor.md} or
+ * {@code Conductor.agent.md}) — if it does not, every delegation
  * attempt will fail fast with a clear error message telling the operator what to add.
  *
  * <p>The Conductor agent is the single entry point for all BDD scenario and test
@@ -132,11 +133,13 @@ public class ConductorAgentRunner {
             throw e;
         }
 
-        validateConductorAgent(workspace);
-
-        log.info("{} Slot acquired (remaining={}) workspace='{}' - launching agent='{}'",
-                LOG_PREFIX, semaphore.availablePermits(), workspace, CONDUCTOR_AGENT);
+        // validateConductorAgent is inside the try/finally so that any exception it throws
+        // still triggers workspace + semaphore release. Previously it was outside, which
+        // caused a permanent semaphore leak on the first IllegalStateException.
         try {
+            validateConductorAgent(workspace);
+            log.info("{} Slot acquired (remaining={}) workspace='{}' - launching agent='{}'",
+                    LOG_PREFIX, semaphore.availablePermits(), workspace, CONDUCTOR_AGENT);
             return timed(prompt, workspace);
         } finally {
             workspacePool.release(workspace);
@@ -236,17 +239,25 @@ public class ConductorAgentRunner {
 
         try {
             boolean finished = process.waitFor(agentTimeoutSeconds, TimeUnit.SECONDS);
-            stdoutThread.join(5_000);
-            stderrThread.join(5_000);
 
             if (!finished) {
-                log.error("{} Subprocess timed out after {}s - destroying pid={} agent='{}'",
+                // Kill the entire process tree before joining I/O threads.
+                // destroyForcibly() alone only SIGKILLs the direct child; grandchildren
+                // (Node.js workers, git subprocesses, etc.) survive as orphans and keep
+                // consuming resources. Killing descendants first closes the pipes, which
+                // lets the I/O threads exit cleanly within the join timeout below.
+                killProcessTree(process);
+                stdoutThread.join(2_000);
+                stderrThread.join(2_000);
+                log.error("{} Subprocess timed out after {}s - destroyed pid={} agent='{}'",
                         LOG_PREFIX, agentTimeoutSeconds, process.pid(), CONDUCTOR_AGENT);
-                process.destroyForcibly();
                 throw new IllegalStateException(
                         LOG_PREFIX + " Subprocess timed out after " + agentTimeoutSeconds
                         + "s for agent='" + CONDUCTOR_AGENT + "'");
             }
+
+            stdoutThread.join(5_000);
+            stderrThread.join(5_000);
 
             int exitCode = process.exitValue();
             if (exitCode != 0) {
@@ -269,8 +280,18 @@ public class ConductorAgentRunner {
             return result;
 
         } finally {
-            process.destroyForcibly();
+            killProcessTree(process);
         }
+    }
+
+    /**
+     * Kills the process and all its descendants (Node.js workers, git subprocesses, etc.).
+     * {@link Process#destroyForcibly()} alone only SIGKILLs the direct child; grandchildren
+     * survive as orphans. This method kills the full tree bottom-up.
+     */
+    private static void killProcessTree(Process process) {
+        process.descendants().forEach(ProcessHandle::destroyForcibly);
+        process.destroyForcibly();
     }
 
     private void extractChunkText(String line, StringBuilder target) {
@@ -309,26 +330,47 @@ public class ConductorAgentRunner {
     // ─── Target repo contract validation ────────────────────────────────────────
 
     /**
-     * Asserts that the target repo workspace contains a Conductor agent definition at
-     * {@code .github/agents/Conductor.md}.
+     * Asserts that the target repo workspace contains a Conductor agent definition matching
+     * {@code .github/agents/Conductor*.md} (e.g. {@code Conductor.md} or
+     * {@code Conductor.agent.md}).
      *
      * <p>QA-ISystem is a pure orchestrator and <em>never</em> modifies or adds files to
      * the target repo. The Conductor agent is the target repo's own responsibility. If it
      * is missing, the operator must add it before QA-ISystem can generate BDD or test code
      * for that repository.
      *
-     * @throws IllegalStateException if the agent definition file is absent
+     * @throws IllegalStateException if no matching agent definition file is found
      */
     private void validateConductorAgent(Path workspace) {
-        Path agentMd = workspace.resolve(".github").resolve("agents")
-                                .resolve(CONDUCTOR_AGENT + ".md");
-        if (!Files.exists(agentMd)) {
+        Path agentsDir = workspace.resolve(".github").resolve("agents");
+        Path agentMd = findConductorAgentFile(agentsDir);
+        if (agentMd == null) {
             throw new IllegalStateException(
                     LOG_PREFIX + " Target repo workspace '" + workspace
-                    + "' is missing .github/agents/" + CONDUCTOR_AGENT + ".md. "
+                    + "' is missing .github/agents/" + CONDUCTOR_AGENT + "*.md. "
                     + "QA-ISystem never adds agents to target repos — add a Conductor agent "
-                    + "to the target repository and re-deploy.");
+                    + "(Conductor.md or Conductor.agent.md) to the target repository and re-deploy.");
         }
         log.debug("{} Conductor agent confirmed at '{}'", LOG_PREFIX, agentMd);
+    }
+
+    /**
+     * Finds the first file matching {@code Conductor*.md} inside {@code agentsDir}.
+     * Accepts {@code Conductor.md}, {@code Conductor.agent.md}, or any other variant.
+     *
+     * @return the matched {@link Path}, or {@code null} if none found
+     */
+    private Path findConductorAgentFile(Path agentsDir) {
+        if (!Files.isDirectory(agentsDir)) {
+            return null;
+        }
+        try (var entries = Files.newDirectoryStream(agentsDir, "Conductor*.md")) {
+            for (Path p : entries) {
+                return p;
+            }
+        } catch (IOException e) {
+            log.debug("{} Could not scan '{}' for Conductor*.md: {}", LOG_PREFIX, agentsDir, e.getMessage());
+        }
+        return null;
     }
 }
