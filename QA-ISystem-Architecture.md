@@ -819,6 +819,19 @@ aiqa:
 
 > `aiqa.conversation.*` applies to feedback-service, strategy-service, and codegen-service.
 
+### Context trace capture (debug / observability)
+
+The `ConductorAgentRunner` delegation boundary can be instrumented for inspection. When
+`aiqa.trace.enabled=true` (default **false**), each `copilot --agent=Conductor` invocation
+persists — under `aiqa.trace.dir` (default `./logs/context-traces`) — the exact prompt sent
+(`prompt.txt`), the **full raw JSON-RPC agent stream** that is otherwise capped and discarded
+(`raw-stream.jsonl`: tool calls, file reads, sub-agent handoffs), the final assembled output
+(`final.txt`), and a `meta.json` (task type, PR id, exit code, sizes, timing), plus a
+`trace-index.jsonl`. Purpose: inspect and optimise the context shared with the LLM. The capture
+is **best-effort** (never throws into the pipeline), secrets are redacted best-effort, files are
+owner-only, and the raw stream is size-capped. See README § "Context Trace Capture" and
+`.env.example` (`AIQA_TRACE_*`) for configuration.
+
 ---
 
 ## 11. The Two-Phase Coverage Assessment — In Depth

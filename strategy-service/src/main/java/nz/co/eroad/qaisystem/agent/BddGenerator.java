@@ -124,7 +124,7 @@ public class BddGenerator {
         log.info("[BddGenerator] Delegating BDD generation to Conductor for PR '{}' (prompt {} chars)",
                 envelope.getPrId(), conductorPrompt.length());
         try {
-            var gherkin = conductorAgentRunner.delegateToConductor(conductorPrompt);
+            var gherkin = conductorAgentRunner.delegateToConductor(conductorPrompt, "BDD", envelope.getPrId());
             log.info("[BddGenerator] Conductor produced {} chars of Gherkin for PR '{}'",
                     gherkin == null ? 0 : gherkin.length(), envelope.getPrId());
             return gherkin;

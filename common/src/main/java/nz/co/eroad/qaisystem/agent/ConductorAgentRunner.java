@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import nz.co.eroad.qaisystem.config.AgentScalingProperties;
 import nz.co.eroad.qaisystem.config.AiProviderProperties;
 import nz.co.eroad.qaisystem.execution.WorkspacePool;
+import nz.co.eroad.qaisystem.trace.ContextTraceRecorder;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -65,12 +66,14 @@ public class ConductorAgentRunner {
     private final ObjectMapper   objectMapper;
     private final WorkspacePool  workspacePool;
     private final Timer          latencyTimer;   // null when no MeterRegistry is present
+    private final ContextTraceRecorder traceRecorder; // null when aiqa.trace.enabled is unset
 
     public ConductorAgentRunner(AiProviderProperties props,
                                 AgentScalingProperties scaling,
                                 WorkspacePool workspacePool,
                                 ObjectMapper objectMapper,
-                                ObjectProvider<MeterRegistry> meterRegistryProvider) {
+                                ObjectProvider<MeterRegistry> meterRegistryProvider,
+                                ObjectProvider<ContextTraceRecorder> traceRecorderProvider) {
         var cfg = props.getCopilotAgent();
         this.copilotCliPath        = cfg.getCopilotCliPath();
         this.agentTimeoutSeconds   = cfg.getAgentTimeoutSeconds();
@@ -80,6 +83,10 @@ public class ConductorAgentRunner {
         this.headroomProviderBaseUrl  = props.getHeadroom().providerBaseUrl();
         this.workspacePool         = workspacePool;
         this.objectMapper          = objectMapper;
+
+        // Off-by-default Context Trace recorder. Absent (null) unless aiqa.trace.enabled=true.
+        // Mirrors the ObjectProvider<MeterRegistry> pattern: optional, never required.
+        this.traceRecorder = traceRecorderProvider.getIfAvailable();
 
         final int permits = scaling.effectiveMaxConcurrent();
         this.semaphore = new Semaphore(permits, true);
@@ -103,17 +110,17 @@ public class ConductorAgentRunner {
             this.latencyTimer = null;
         }
 
-        log.info("{} Initialised - copilotCliPath='{}' maxConcurrent={} timeoutSec={} maxContinues={} headroom={} metrics={}",
+        log.info("{} Initialised - copilotCliPath='{}' maxConcurrent={} timeoutSec={} maxContinues={} headroom={} metrics={} trace={}",
                 LOG_PREFIX, copilotCliPath, permits, agentTimeoutSeconds, maxAutopilotContinues,
                 headroomEnabled && headroomProviderBaseUrl != null
                         ? "enabled(providerBaseUrl=" + headroomProviderBaseUrl + ")"
                         : headroomEnabled ? "enabled(WARNING: github-username not set)" : "disabled",
-                registry != null);
+                registry != null, traceRecorder != null);
     }
 
     /**
-     * Delegates a task to the Conductor agent: acquires a concurrency slot, borrows an isolated
-     * workspace from the {@link WorkspacePool}, runs the monitored subprocess, then releases both.
+     * Backward-compatible entry point: delegates with {@code taskType="UNKNOWN"} and
+     * {@code prId="UNKNOWN"}. Behaviour is identical to the original single-arg method.
      *
      * @param prompt the prompt to execute via {@code -p}
      * @return assembled agent text (or raw stdout if no structured packets)
@@ -121,6 +128,24 @@ public class ConductorAgentRunner {
      * @throws IllegalStateException if the subprocess times out or exits non-zero
      */
     public String delegateToConductor(String prompt) throws InterruptedException {
+        return delegateToConductor(prompt, "UNKNOWN", "UNKNOWN");
+    }
+
+    /**
+     * Delegates a task to the Conductor agent: acquires a concurrency slot, borrows an isolated
+     * workspace from the {@link WorkspacePool}, runs the monitored subprocess, then releases both.
+     *
+     * <p>{@code taskType} and {@code prId} are used only for off-by-default context-trace labelling
+     * (see {@link ContextTraceRecorder}); they have no effect on the subprocess invocation itself.
+     *
+     * @param prompt   the prompt to execute via {@code -p}
+     * @param taskType coarse task label for tracing (e.g. {@code BDD}, {@code CODEGEN}, {@code FIX-BDD})
+     * @param prId     the PR identifier for tracing (or {@code "UNKNOWN"} when not in scope)
+     * @return assembled agent text (or raw stdout if no structured packets)
+     * @throws InterruptedException  if interrupted while waiting for a slot/workspace/process
+     * @throws IllegalStateException if the subprocess times out or exits non-zero
+     */
+    public String delegateToConductor(String prompt, String taskType, String prId) throws InterruptedException {
         log.info("{} Waiting for slot (available={}) agent='{}'",
                 LOG_PREFIX, semaphore.availablePermits(), CONDUCTOR_AGENT);
         semaphore.acquire();
@@ -140,7 +165,7 @@ public class ConductorAgentRunner {
             validateConductorAgent(workspace);
             log.info("{} Slot acquired (remaining={}) workspace='{}' - launching agent='{}'",
                     LOG_PREFIX, semaphore.availablePermits(), workspace, CONDUCTOR_AGENT);
-            return timed(prompt, workspace);
+            return timed(prompt, taskType, prId, workspace);
         } finally {
             workspacePool.release(workspace);
             semaphore.release();
@@ -149,10 +174,10 @@ public class ConductorAgentRunner {
         }
     }
 
-    private String timed(String prompt, Path workingDir) throws InterruptedException {
+    private String timed(String prompt, String taskType, String prId, Path workingDir) throws InterruptedException {
         long start = System.nanoTime();
         try {
-            return runConductorProcess(prompt, workingDir);
+            return runConductorProcess(prompt, taskType, prId, workingDir);
         } finally {
             if (latencyTimer != null) {
                 latencyTimer.record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
@@ -161,7 +186,8 @@ public class ConductorAgentRunner {
     }
 
     /** Launches and monitors the copilot subprocess in {@code workingDir}. Caller owns the slot. */
-    private String runConductorProcess(String prompt, Path workingDir) throws InterruptedException {
+    private String runConductorProcess(String prompt, String taskType, String prId, Path workingDir)
+            throws InterruptedException {
         var command = List.of(
                 copilotCliPath,
                 "--allow-all",
@@ -196,91 +222,134 @@ public class ConductorAgentRunner {
                     LOG_PREFIX);
         }
 
-        Process process;
+        // Begin off-by-default context trace BEFORE the subprocess starts, so the prompt is
+        // captured even if the process fails to launch. Null/no-op when tracing is disabled.
+        var traceHandle = traceRecorder != null
+                ? traceRecorder.begin("copilot-cli", taskType, prId, CONDUCTOR_AGENT, prompt)
+                : null;
+        String  traceResult  = "";
+        int     traceExit    = -1;
+        boolean traceSuccess = false;
+        Thread  stdoutThread = null;
+
         try {
-            process = pb.start();
-            log.info("{} Subprocess started (pid={}) agent='{}' workingDir='{}'",
-                    LOG_PREFIX, process.pid(), CONDUCTOR_AGENT, workingDir);
-        } catch (IOException e) {
-            throw new IllegalStateException(
-                    LOG_PREFIX + " Failed to start copilot subprocess for agent='"
-                    + CONDUCTOR_AGENT + "': " + e.getMessage(), e);
-        }
+            Process process;
+            try {
+                process = pb.start();
+                log.info("{} Subprocess started (pid={}) agent='{}' workingDir='{}'",
+                        LOG_PREFIX, process.pid(), CONDUCTOR_AGENT, workingDir);
+            } catch (IOException e) {
+                throw new IllegalStateException(
+                        LOG_PREFIX + " Failed to start copilot subprocess for agent='"
+                        + CONDUCTOR_AGENT + "': " + e.getMessage(), e);
+            }
 
-        var assembledText = new StringBuilder();
-        var rawStdout     = new StringBuilder();
-        var stderrBuf     = new StringBuilder();
+            var assembledText = new StringBuilder();
+            var rawStdout     = new StringBuilder();
+            var stderrBuf     = new StringBuilder();
 
-        var stdoutThread = Thread.ofVirtual().name("copilot-stdout-Conductor").start(() -> {
-            try (var reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (rawStdout.length() < maxOutputChars) {
-                        rawStdout.append(line).append('\n');
+            stdoutThread = Thread.ofVirtual().name("copilot-stdout-Conductor").start(() -> {
+                try (var reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (rawStdout.length() < maxOutputChars) {
+                            rawStdout.append(line).append('\n');
+                        }
+                        extractChunkText(line, assembledText);
+                        // Capture the FULL raw stream regardless of the maxOutputChars cap above;
+                        // the recorder enforces its own (configurable) bound. Best-effort, never throws.
+                        if (traceRecorder != null && traceHandle != null) {
+                            traceRecorder.rawLine(traceHandle, line);
+                        }
                     }
-                    extractChunkText(line, assembledText);
+                } catch (IOException e) {
+                    log.debug("{} stdout reader ended for agent='{}': {}", LOG_PREFIX, CONDUCTOR_AGENT, e.getMessage());
                 }
-            } catch (IOException e) {
-                log.debug("{} stdout reader ended for agent='{}': {}", LOG_PREFIX, CONDUCTOR_AGENT, e.getMessage());
-            }
-        });
+            });
 
-        var stderrThread = Thread.ofVirtual().name("copilot-stderr-Conductor").start(() -> {
-            try (var reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    stderrBuf.append(line).append('\n');
-                    log.debug("{} stderr agent='{}': {}", LOG_PREFIX, CONDUCTOR_AGENT, line);
+            var stderrThread = Thread.ofVirtual().name("copilot-stderr-Conductor").start(() -> {
+                try (var reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        stderrBuf.append(line).append('\n');
+                        log.debug("{} stderr agent='{}': {}", LOG_PREFIX, CONDUCTOR_AGENT, line);
+                    }
+                } catch (IOException e) {
+                    log.debug("{} stderr reader ended for agent='{}': {}", LOG_PREFIX, CONDUCTOR_AGENT, e.getMessage());
                 }
-            } catch (IOException e) {
-                log.debug("{} stderr reader ended for agent='{}': {}", LOG_PREFIX, CONDUCTOR_AGENT, e.getMessage());
-            }
-        });
+            });
 
-        try {
-            boolean finished = process.waitFor(agentTimeoutSeconds, TimeUnit.SECONDS);
+            try {
+                boolean finished = process.waitFor(agentTimeoutSeconds, TimeUnit.SECONDS);
 
-            if (!finished) {
-                // Kill the entire process tree before joining I/O threads.
-                // destroyForcibly() alone only SIGKILLs the direct child; grandchildren
-                // (Node.js workers, git subprocesses, etc.) survive as orphans and keep
-                // consuming resources. Killing descendants first closes the pipes, which
-                // lets the I/O threads exit cleanly within the join timeout below.
+                if (!finished) {
+                    // Kill the entire process tree before joining I/O threads.
+                    // destroyForcibly() alone only SIGKILLs the direct child; grandchildren
+                    // (Node.js workers, git subprocesses, etc.) survive as orphans and keep
+                    // consuming resources. Killing descendants first closes the pipes, which
+                    // lets the I/O threads exit cleanly within the join timeout below.
+                    killProcessTree(process);
+                    stdoutThread.join(2_000);
+                    stderrThread.join(2_000);
+                    log.error("{} Subprocess timed out after {}s - destroyed pid={} agent='{}'",
+                            LOG_PREFIX, agentTimeoutSeconds, process.pid(), CONDUCTOR_AGENT);
+                    // Record whatever partial output was assembled before the timeout.
+                    traceResult = assembledText.length() > 0
+                            ? assembledText.toString().trim()
+                            : rawStdout.toString().trim();
+                    throw new IllegalStateException(
+                            LOG_PREFIX + " Subprocess timed out after " + agentTimeoutSeconds
+                            + "s for agent='" + CONDUCTOR_AGENT + "'");
+                }
+
+                stdoutThread.join(5_000);
+                stderrThread.join(5_000);
+
+                int exitCode = process.exitValue();
+                if (exitCode != 0) {
+                    var stderrSnippet = stderrBuf.length() > 2_000
+                            ? stderrBuf.substring(0, 2_000) + "..." : stderrBuf.toString();
+                    log.error("{} Subprocess exited with code={} agent='{}' pid={} stderr={}",
+                            LOG_PREFIX, exitCode, CONDUCTOR_AGENT, process.pid(), stderrSnippet);
+                    // Record partial output + the real non-zero exit code for later analysis.
+                    traceResult = assembledText.length() > 0
+                            ? assembledText.toString().trim()
+                            : rawStdout.toString().trim();
+                    traceExit = exitCode;
+                    throw new IllegalStateException(
+                            LOG_PREFIX + " Subprocess exited with code=" + exitCode
+                            + " for agent='" + CONDUCTOR_AGENT + "'. stderr: " + stderrSnippet);
+                }
+
+                String result = assembledText.length() > 0
+                        ? assembledText.toString().trim()
+                        : rawStdout.toString().trim();
+
+                log.info("{} agent='{}' pid={} completed - chunks={} chars rawStdout={} chars",
+                        LOG_PREFIX, CONDUCTOR_AGENT, process.pid(),
+                        assembledText.length(), rawStdout.length());
+                traceResult  = result;
+                traceExit    = exitCode;
+                traceSuccess = true;
+                return result;
+
+            } finally {
                 killProcessTree(process);
-                stdoutThread.join(2_000);
-                stderrThread.join(2_000);
-                log.error("{} Subprocess timed out after {}s - destroyed pid={} agent='{}'",
-                        LOG_PREFIX, agentTimeoutSeconds, process.pid(), CONDUCTOR_AGENT);
-                throw new IllegalStateException(
-                        LOG_PREFIX + " Subprocess timed out after " + agentTimeoutSeconds
-                        + "s for agent='" + CONDUCTOR_AGENT + "'");
             }
-
-            stdoutThread.join(5_000);
-            stderrThread.join(5_000);
-
-            int exitCode = process.exitValue();
-            if (exitCode != 0) {
-                var stderrSnippet = stderrBuf.length() > 2_000
-                        ? stderrBuf.substring(0, 2_000) + "..." : stderrBuf.toString();
-                log.error("{} Subprocess exited with code={} agent='{}' pid={} stderr={}",
-                        LOG_PREFIX, exitCode, CONDUCTOR_AGENT, process.pid(), stderrSnippet);
-                throw new IllegalStateException(
-                        LOG_PREFIX + " Subprocess exited with code=" + exitCode
-                        + " for agent='" + CONDUCTOR_AGENT + "'. stderr: " + stderrSnippet);
-            }
-
-            String result = assembledText.length() > 0
-                    ? assembledText.toString().trim()
-                    : rawStdout.toString().trim();
-
-            log.info("{} agent='{}' pid={} completed - chunks={} chars rawStdout={} chars",
-                    LOG_PREFIX, CONDUCTOR_AGENT, process.pid(),
-                    assembledText.length(), rawStdout.length());
-            return result;
-
         } finally {
-            killProcessTree(process);
+            // Finish the trace exactly once, on every path (success, timeout, non-zero exit,
+            // failed launch). Join the stdout thread first so all rawLine() writes complete
+            // before the recorder closes the raw-stream writer. Best-effort, never throws.
+            if (traceRecorder != null && traceHandle != null) {
+                if (stdoutThread != null) {
+                    try {
+                        stdoutThread.join(5_000);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+                traceRecorder.finish(traceHandle, traceResult, traceExit, traceSuccess);
+            }
         }
     }
 

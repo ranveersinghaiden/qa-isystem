@@ -998,6 +998,41 @@ redis-cli ping
 docker compose restart qa-redis
 ```
 
+### 10 — Context Trace Capture (inspect agent ↔ LLM context)
+
+The Copilot-CLI delegation boundary (`ConductorAgentRunner` → `copilot --agent=Conductor`) can persist, **per invocation**, exactly what we send and receive — useful for optimising context selection and compression. **Off by default**; best-effort (never affects the pipeline).
+
+Enable it:
+
+```bash
+export AIQA_TRACE_ENABLED=true        # or aiqa.trace.enabled=true
+# optional:
+export AIQA_TRACE_DIR=./logs/context-traces
+```
+
+Each Conductor invocation writes a directory `<AIQA_TRACE_DIR>/<timestamp>-<taskType>-<prId>/`:
+
+| Artifact | Contents |
+|----------|----------|
+| `prompt.txt` | The exact prompt sent to the agent (captured even if the launch fails) |
+| `raw-stream.jsonl` | The **full** raw JSON-RPC agent stream — tool calls, file reads, sub-agent handoffs (the context shared *between* agents); normally capped and discarded |
+| `final.txt` | The final assembled output returned to the pipeline |
+| `meta.json` | Task type, PR id, exit code, success flag, sizes, timing |
+
+A `trace-index.jsonl` at the directory root appends one line per run for quick scanning.
+
+Config knobs (`aiqa.trace.*`):
+
+| Property | Env | Default | Purpose |
+|----------|-----|---------|---------|
+| `enabled` | `AIQA_TRACE_ENABLED` | `false` | Master switch (recorder bean absent when false) |
+| `dir` | `AIQA_TRACE_DIR` | `./logs/context-traces` | Output root |
+| `capture-raw-stream` | `AIQA_TRACE_CAPTURERAWSTREAM` | `true` | Capture the full JSON-RPC stream |
+| `max-raw-stream-chars` | `AIQA_TRACE_MAXRAWSTREAMCHARS` | `5000000` | Per-trace raw-stream cap |
+| `redact` | `AIQA_TRACE_REDACT` | `true` | Scrub tokens/keys from captured text |
+
+**Privacy:** traces contain real prompt/diff/context excerpts. Secrets are redacted best-effort, files are written owner-only (`rw-------`). A OneDrive-backed `logs/` path may sync to the cloud — keep it private or point `AIQA_TRACE_DIR` elsewhere.
+
 ---
 
 ## Technology Stack

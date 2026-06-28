@@ -67,10 +67,14 @@ public class PrFeedbackService {
      * Delegates a prompt to the repository's Conductor agent via a monitored copilot
      * subprocess running in the cloned target repo directory. Returns {@code null} on
      * interruption or subprocess failure so callers can fall back to template output.
+     *
+     * @param prompt   the prompt to send to the Conductor agent
+     * @param taskType coarse task label for off-by-default context tracing
+     * @param prId     the PR identifier for tracing (or {@code "UNKNOWN"})
      */
-    private String delegateToConductor(String prompt) {
+    private String delegateToConductor(String prompt, String taskType, String prId) {
         try {
-            return conductorAgentRunner.delegateToConductor(prompt);
+            return conductorAgentRunner.delegateToConductor(prompt, taskType, prId);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.warn("[PrFeedbackService] Interrupted during Conductor delegation: {}", e.getMessage());
@@ -172,7 +176,7 @@ public class PrFeedbackService {
                 %s
                 """.formatted(feedback);
 
-        String classification = delegateToConductor(classifyPrompt);
+        String classification = delegateToConductor(classifyPrompt, "FIX-EXPERT", prId);
 
         if (classification == null || !classification.startsWith("KNOWLEDGE_GAP:")) {
             log.info("[PrFeedbackService] Feedback classified as style/structure — no product expert update needed");
@@ -215,7 +219,7 @@ public class PrFeedbackService {
                 Return ONLY the complete updated file content (markdown format).
                 """.formatted(expertFilePath, existingContent, missingKnowledge, feedback);
 
-        String updatedContent = delegateToConductor(updatePrompt);
+        String updatedContent = delegateToConductor(updatePrompt, "FIX-EXPERT", prId);
 
         if (updatedContent == null || updatedContent.isBlank()) {
             log.warn("[PrFeedbackService] AI returned empty product expert update — skipping");
@@ -294,7 +298,7 @@ public class PrFeedbackService {
                 original.getFeatureDescription(),
                 feedback);
 
-        String revised = delegateToConductor(userPrompt);
+        String revised = delegateToConductor(userPrompt, "FIX-BDD", original.getPrId());
         if (revised != null && !revised.isBlank()) {
             log.info("[PrFeedbackService] Conductor generated revised BDD for PR '{}'", original.getPrId());
             return revised;
@@ -345,7 +349,7 @@ public class PrFeedbackService {
                 testTypeName, original.getFileName(),
                 original.getScriptContent(), feedback);
 
-        String revised = delegateToConductor(userPrompt);
+        String revised = delegateToConductor(userPrompt, "FIX-TEST", original.getPrId());
         if (revised != null && !revised.isBlank()) {
             log.info("[PrFeedbackService] Conductor generated revised test code for '{}'", original.getFileName());
             return revised;

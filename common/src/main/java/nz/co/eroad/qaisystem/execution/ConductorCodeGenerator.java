@@ -43,7 +43,7 @@ public class ConductorCodeGenerator {
 
         String prompt = buildPrompt(scenario, parent, testType);
         try {
-            String code = conductorAgentRunner.delegateToConductor(prompt);
+            String code = conductorAgentRunner.delegateToConductor(prompt, "CODEGEN", parent.getPrId());
             log.info("[ConductorCodeGenerator] Conductor returned {} chars of {} test code for PR '{}'",
                     code == null ? 0 : code.length(), testType, parent.getPrId());
             return code;
