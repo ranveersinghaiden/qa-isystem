@@ -30,6 +30,7 @@ tracking, and AI clients. Every service depends on this; it is never deployed in
 | `AppConfig` | `ObjectMapper` bean (ISO-8601 dates, `JavaTimeModule`), async task executor (`qa-async-*` virtual threads). |
 | `KafkaConfig` | Producer factory, consumer factory, `KafkaTemplate`, `KafkaAdmin`, all topic declarations. Configured from `application.yaml`. Topics are declared idempotently — any service can start first. |
 | `AiClientConfig` | Creates the active `AiClient` bean based on `aiqa.ai.provider`. Options: `copilot-cli` (default), `copilot`, `openai`. Falls back to template mode when no credential is configured. |
+| `TraceProperties` | `@ConfigurationProperties("aiqa.trace")` — off-by-default context-trace capture knobs: `enabled` (false), `dir`, `captureRawStream`, `maxRawStreamChars`, `redact`. See top-level README § "Context Trace Capture". |
 
 ---
 
@@ -72,6 +73,14 @@ tracking, and AI clients. Every service depends on this; it is never deployed in
 | Class | Description |
 |-------|-------------|
 | `RepoContextService` | Clones the target test repo (`git clone --depth 1` or `git pull`), scans test files for package/import/class conventions, builds coverage index (`componentName → test files`), loads `productExpert/*.md` and `.aiqa/context.md`. Refreshable via `POST /api/strategy/refresh-context`. |
+
+---
+
+## Context Trace (`qaisystem.trace`)
+
+| Class | Description |
+|-------|-------------|
+| `ContextTraceRecorder` | `@Service @ConditionalOnProperty("aiqa.trace.enabled"=true)` — **off by default** (bean absent → zero behaviour change). When enabled, persists per Copilot-CLI Conductor invocation: the exact prompt, the **full raw JSON-RPC agent stream** (otherwise capped and discarded — tool calls, file reads, sub-agent handoffs), the final output, and `meta.json`, plus a `trace-index.jsonl`. Best-effort (never throws into the pipeline); webhook-derived ids are path-sanitised, secrets redacted best-effort, files owner-only (`rw-------`), raw stream size-capped. Wired into `ConductorAgentRunner` via `ObjectProvider`. See top-level README § "Context Trace Capture". |
 
 ---
 
