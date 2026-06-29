@@ -515,8 +515,8 @@
     "semantic_hash": ""
   },
   "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java": {
-    "mtime": 1782692573.4221692,
-    "ast_hash": "468d5d1ed0089f40d3a65fe86be886be",
+    "mtime": 1782693673.4959464,
+    "ast_hash": "f38ad31a4b86a89748bcdb1d15cfff9c",
     "semantic_hash": ""
   },
   "strategy-service/src/test/java/nz/co/eroad/qaisystem/execution/RepoContextTest.java": {
@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "common/README.md": {
-    "mtime": 1782692797.617651,
-    "ast_hash": "707e9fe8d732a9b1863b0bea66d10887",
+    "mtime": 1782693756.7068367,
+    "ast_hash": "4735bc1dc4a23d32212739fd28604437",
     "semantic_hash": ""
   },
   "docker-compose.prod.yml": {
@@ -1015,13 +1015,23 @@
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/CoveragePlanner.java": {
-    "mtime": 1782692489.2492645,
-    "ast_hash": "86541da236b1c3c0a4ea51bd1167c8b7",
+    "mtime": 1782693489.459076,
+    "ast_hash": "6ebaeb022f7e3f5631ffef2d4e4338c9",
     "semantic_hash": ""
   },
   "strategy-service/src/test/java/nz/co/eroad/qaisystem/service/CoveragePlannerTest.java": {
-    "mtime": 1782692612.3355377,
-    "ast_hash": "02bed8844fc51788686701da35d0e1d5",
+    "mtime": 1782693534.785427,
+    "ast_hash": "b3a36d96e1fe3669b4b9af705800f37d",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/monitor/CoveragePlanMonitor.java": {
+    "mtime": 1782693464.133957,
+    "ast_hash": "9f722abf4368126b2c6ef400b5d329a6",
+    "semantic_hash": ""
+  },
+  "common/src/test/java/nz/co/eroad/qaisystem/monitor/CoveragePlanMonitorTest.java": {
+    "mtime": 1782693619.4752972,
+    "ast_hash": "b39ef2278bee74d0922cb5a3260142b0",
     "semantic_hash": ""
   }
 }
