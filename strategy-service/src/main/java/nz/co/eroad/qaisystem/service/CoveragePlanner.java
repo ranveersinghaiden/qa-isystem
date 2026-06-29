@@ -9,8 +9,9 @@ import nz.co.eroad.qaisystem.model.ScenarioClass;
 import nz.co.eroad.qaisystem.model.ScenarioMatrix;
 import nz.co.eroad.qaisystem.model.ScenarioMatrix.Cell;
 import nz.co.eroad.qaisystem.model.ScenarioMatrix.CellStatus;
-import lombok.RequiredArgsConstructor;
+import nz.co.eroad.qaisystem.monitor.CoveragePlanMonitor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -29,10 +30,16 @@ import java.util.*;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class CoveragePlanner {
 
-    private final RejectionLedger rejectionLedger;
+    private final RejectionLedger     rejectionLedger;
+    private final CoveragePlanMonitor monitor; // null unless aiqa.coverage-plan.monitor.enabled=true
+
+    public CoveragePlanner(RejectionLedger rejectionLedger,
+                           ObjectProvider<CoveragePlanMonitor> monitorProvider) {
+        this.rejectionLedger = rejectionLedger;
+        this.monitor         = monitorProvider.getIfAvailable();
+    }
 
     private static final Set<ComponentType> TESTABLE = Set.of(
             ComponentType.CONTROLLER, ComponentType.SERVICE,
@@ -94,6 +101,11 @@ public class CoveragePlanner {
         log.info("[CoveragePlanner] PR '{}' matrix: {} capabilities × {} classes → {} gaps, recall={}",
                 envelope.getPrId(), capabilities.size(), classes.size(), matrix.gaps().size(),
                 String.format("%.2f", matrix.recall()));
+        if (monitor != null) {
+            List<String> changeTypeNames = (envelope.getDetectedChangeTypes() == null ? List.<ChangeType>of()
+                    : envelope.getDetectedChangeTypes()).stream().map(Enum::name).toList();
+            monitor.record(envelope.getPrId(), changeTypeNames, capabilities, classes, matrix);
+        }
         return matrix;
     }
 

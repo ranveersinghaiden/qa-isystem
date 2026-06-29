@@ -130,8 +130,8 @@
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/model/CoverageReport.java": {
-    "mtime": 1779861866.5204923,
-    "ast_hash": "c43952ac4e85ef3adae26743116fe18f",
+    "mtime": 1782692281.8944454,
+    "ast_hash": "7637ab6616b224f656f4af7d26b9fe21",
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/model/FeedbackEvent.java": {
@@ -210,8 +210,8 @@
     "semantic_hash": ""
   },
   "feedback-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java": {
-    "mtime": 1782627868.6524858,
-    "ast_hash": "cb94c28db39318f224450ab6544f74a6",
+    "mtime": 1782692524.6179528,
+    "ast_hash": "3bc4025072973f3a0c30b1fcbe986dd3",
     "semantic_hash": ""
   },
   "feedback-service/src/main/java/nz/co/eroad/qaisystem/feedback/FeedbackServiceApplication.java": {
@@ -420,8 +420,8 @@
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/BddGenerator.java": {
-    "mtime": 1782627722.91203,
-    "ast_hash": "579beca6f5d690e4392454bac254e631",
+    "mtime": 1782692391.346132,
+    "ast_hash": "d437412935c725bf7f38f3052a9e5991",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java": {
@@ -430,8 +430,8 @@
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/StrategyAgent.java": {
-    "mtime": 1781158058.0496266,
-    "ast_hash": "22a218538f7d1c788047ef9b363e5139",
+    "mtime": 1782692359.5187855,
+    "ast_hash": "7cd27266ec290b08daf4194ebf21d39d",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java": {
@@ -515,8 +515,8 @@
     "semantic_hash": ""
   },
   "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java": {
-    "mtime": 1782551170.3528557,
-    "ast_hash": "0d8ae8397fc5a2e9707977d24f649a09",
+    "mtime": 1782692573.4221692,
+    "ast_hash": "468d5d1ed0089f40d3a65fe86be886be",
     "semantic_hash": ""
   },
   "strategy-service/src/test/java/nz/co/eroad/qaisystem/execution/RepoContextTest.java": {
@@ -715,8 +715,8 @@
     "semantic_hash": ""
   },
   "BDD_And_CodeGen_Logic.md": {
-    "mtime": 1782551170.321511,
-    "ast_hash": "bca5fdce68f36414605531f39c2a5a46",
+    "mtime": 1782692903.5833013,
+    "ast_hash": "c3498000844e70604db72e8f54ec532e",
     "semantic_hash": ""
   },
   "Board-Presentation-QA-ISystem.md": {
@@ -725,8 +725,8 @@
     "semantic_hash": ""
   },
   "QA-ISystem-Architecture.md": {
-    "mtime": 1782628832.848117,
-    "ast_hash": "0205d7c7959bf709a59eb5ef899096bf",
+    "mtime": 1782692882.5262346,
+    "ast_hash": "248b5eb98491b0f9d1958af38ab538d1",
     "semantic_hash": ""
   },
   "README.md": {
@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "common/README.md": {
-    "mtime": 1782629175.8640068,
-    "ast_hash": "3fdacb6fbc15a263a5b37f3df69607fc",
+    "mtime": 1782692797.617651,
+    "ast_hash": "707e9fe8d732a9b1863b0bea66d10887",
     "semantic_hash": ""
   },
   "docker-compose.prod.yml": {
@@ -765,8 +765,8 @@
     "semantic_hash": ""
   },
   "feedback-service/README.md": {
-    "mtime": 1782173552.5922568,
-    "ast_hash": "e539db0e9ae67391afede3d21abfce18",
+    "mtime": 1782692759.5995996,
+    "ast_hash": "1bd215be943b6636774364147160b87a",
     "semantic_hash": ""
   },
   "feedback-service/src/main/resources/application.yaml": {
@@ -810,8 +810,8 @@
     "semantic_hash": ""
   },
   "strategy-service/README.md": {
-    "mtime": 1782551170.351489,
-    "ast_hash": "757bfb58f69446cdc6109212920ce886",
+    "mtime": 1782692722.8478856,
+    "ast_hash": "1ba84c72b49e8e705833014152ca84b2",
     "semantic_hash": ""
   },
   "strategy-service/src/main/resources/application.yaml": {
@@ -982,6 +982,46 @@
   "common/src/test/java/nz/co/eroad/qaisystem/trace/ContextTraceRecorderTest.java": {
     "mtime": 1782628047.4856038,
     "ast_hash": "e066304629dee0dc2dd165a112f3bc6a",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/config/CoveragePlanMonitorProperties.java": {
+    "mtime": 1782693388.6969376,
+    "ast_hash": "48745534d349655940b9d04bdbfca557",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/model/ScenarioClass.java": {
+    "mtime": 1782692260.1389117,
+    "ast_hash": "f925f64c561046a19c5284f704882b3a",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/model/ScenarioMatrix.java": {
+    "mtime": 1782692274.1141658,
+    "ast_hash": "cba9dafc9cb2157f10b70611f3814a1e",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/service/NoOpRejectionLedger.java": {
+    "mtime": 1782692573.3889387,
+    "ast_hash": "2ba2763cdf1639effab53173cee24cfd",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/service/RedisRejectionLedger.java": {
+    "mtime": 1782692466.5464413,
+    "ast_hash": "0e6937f394906db8c40903528686d7dd",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/service/RejectionLedger.java": {
+    "mtime": 1782692443.4488337,
+    "ast_hash": "16f161144801a17102a0a3ec170f7dcb",
+    "semantic_hash": ""
+  },
+  "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/CoveragePlanner.java": {
+    "mtime": 1782692489.2492645,
+    "ast_hash": "86541da236b1c3c0a4ea51bd1167c8b7",
+    "semantic_hash": ""
+  },
+  "strategy-service/src/test/java/nz/co/eroad/qaisystem/service/CoveragePlannerTest.java": {
+    "mtime": 1782692612.3355377,
+    "ast_hash": "02bed8844fc51788686701da35d0e1d5",
     "semantic_hash": ""
   }
 }

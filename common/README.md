@@ -33,6 +33,7 @@ tracking, and AI clients. Every service depends on this; it is never deployed in
 | `KafkaConfig` | Producer factory, consumer factory, `KafkaTemplate`, `KafkaAdmin`, all topic declarations. Configured from `application.yaml`. Topics are declared idempotently — any service can start first. |
 | `AiClientConfig` | Creates the active `AiClient` bean based on `aiqa.ai.provider`. Options: `copilot-cli` (default), `copilot`, `openai`. Falls back to template mode when no credential is configured. |
 | `TraceProperties` | `@ConfigurationProperties("aiqa.trace")` — off-by-default context-trace capture knobs: `enabled` (false), `dir`, `captureRawStream`, `maxRawStreamChars`, `redact`. See top-level README § "Context Trace Capture". |
+| `CoveragePlanMonitorProperties` | `@ConfigurationProperties("aiqa.coverage-plan.monitor")` — off-by-default coverage-plan monitor knobs: `enabled` (false), `dir` (`./logs/coverage-plans`), `includeCells` (true), `maxCells` (500). |
 
 ---
 
@@ -86,6 +87,12 @@ tracking, and AI clients. Every service depends on this; it is never deployed in
 | Class | Description |
 |-------|-------------|
 | `ContextTraceRecorder` | `@Service @ConditionalOnProperty("aiqa.trace.enabled"=true)` — **off by default** (bean absent → zero behaviour change). When enabled, persists per Copilot-CLI Conductor invocation: the exact prompt, the **full raw JSON-RPC agent stream** (otherwise capped and discarded — tool calls, file reads, sub-agent handoffs), the final output, and `meta.json`, plus a `trace-index.jsonl`. Best-effort (never throws into the pipeline); webhook-derived ids are path-sanitised, secrets redacted best-effort, files owner-only (`rw-------`), raw stream size-capped. Wired into `ConductorAgentRunner` via `ObjectProvider`. See top-level README § "Context Trace Capture". |
+
+## Coverage-Plan Monitor (`qaisystem.coverage-plan.monitor`)
+
+| Class | Description |
+|-------|-------------|
+| `CoveragePlanMonitor` | `@Service @ConditionalOnProperty("aiqa.coverage-plan.monitor.enabled"=true)` — **off by default** (bean absent → zero behaviour change). When enabled, persists per `CoveragePlanner.plan()` call a `plan-{ts}.json` (change types, required scenario classes, capability list, covered/planned/gaps counts, recall, optional cell grid) plus one summary line in `coverage-plan-index.jsonl`. Holds names/counts only — no secrets, no diff. Best-effort (never throws into the pipeline); webhook-derived prId path-sanitised, files owner-only, cells capped. Wired into `CoveragePlanner` via `ObjectProvider`. Config: `CoveragePlanMonitorProperties`. |
 
 ---
 

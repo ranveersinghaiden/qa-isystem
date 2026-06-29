@@ -8,6 +8,7 @@ import nz.co.eroad.qaisystem.model.ImpactEnvelope.ImpactedComponent.ComponentTyp
 import nz.co.eroad.qaisystem.model.ScenarioClass;
 import nz.co.eroad.qaisystem.model.ScenarioMatrix;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.List;
 import java.util.Set;
@@ -17,7 +18,8 @@ import static org.junit.jupiter.api.Assertions.*;
 /** Zero-mock tests for the deterministic coverage planner. */
 class CoveragePlannerTest {
 
-    private final CoveragePlanner planner = new CoveragePlanner(new NoOpRejectionLedger());
+    private final CoveragePlanner planner =
+            new CoveragePlanner(new NoOpRejectionLedger(), new NoOpMonitorProvider());
 
     private static ImpactEnvelope envelope(ChangeType ct, String component) {
         return ImpactEnvelope.builder()
@@ -51,9 +53,17 @@ class CoveragePlannerTest {
         CoveragePlanner withLedger = new CoveragePlanner(new RejectionLedger() {
             public void recordRejection(String c, ScenarioClass s) {}
             public Set<ScenarioClass> recurringClasses(String c) { return Set.of(ScenarioClass.DATA_INTEGRITY); }
-        });
+        }, new NoOpMonitorProvider());
         ScenarioMatrix m = withLedger.plan(envelope(ChangeType.BUG_FIX, "AuthService"),
                 CoverageReport.builder().testedComponents(List.of()).build());
         assertTrue(m.gaps().stream().anyMatch(c -> c.scenarioClass() == ScenarioClass.DATA_INTEGRITY));
+    }
+
+    /** ObjectProvider double that supplies no monitor (mirrors disabled bean). */
+    static final class NoOpMonitorProvider implements ObjectProvider<nz.co.eroad.qaisystem.monitor.CoveragePlanMonitor> {
+        public nz.co.eroad.qaisystem.monitor.CoveragePlanMonitor getObject() { return null; }
+        public nz.co.eroad.qaisystem.monitor.CoveragePlanMonitor getObject(Object... args) { return null; }
+        public nz.co.eroad.qaisystem.monitor.CoveragePlanMonitor getIfAvailable() { return null; }
+        public nz.co.eroad.qaisystem.monitor.CoveragePlanMonitor getIfUnique() { return null; }
     }
 }
