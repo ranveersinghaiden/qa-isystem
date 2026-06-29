@@ -8,6 +8,7 @@ import nz.co.eroad.qaisystem.model.TestStrategy.StrategyDecision;
 import nz.co.eroad.qaisystem.model.TestStrategy.TestRequirement;
 import nz.co.eroad.qaisystem.monitor.AiCostMonitor;
 import nz.co.eroad.qaisystem.service.E2ECoverageAnalyzer;
+import nz.co.eroad.qaisystem.service.CoveragePlanner;
 import nz.co.eroad.qaisystem.service.TestPrService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,7 @@ public class StrategyAgent {
     private final BddGenerator        bddGenerator;
     private final TestPrService       testPrService;
     private final E2ECoverageAnalyzer e2eCoverageAnalyzer;
+    private final CoveragePlanner     coveragePlanner;
     private final AiCallGate          gate;
     private final AiCostMonitor       monitor;
 
@@ -52,6 +54,10 @@ public class StrategyAgent {
 
         // Perform real E2E/integration coverage analysis against the test repo.
         CoverageReport coverage = e2eCoverageAnalyzer.analyze(envelope);
+
+        // Turn component-level coverage into a scenario-class gap matrix.
+        coverage.setScenarioMatrix(coveragePlanner.plan(envelope, coverage));
+        envelope.setCoverageReport(coverage);
 
         // Evaluate the gate and log its advisory output — does not override computeDecision()
         AiCallGate.GateDecision gateDecision = gate.evaluate(envelope);

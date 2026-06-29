@@ -9,6 +9,8 @@ import nz.co.eroad.qaisystem.model.ImpactEnvelope.RiskLevel;
 import nz.co.eroad.qaisystem.model.TestStrategy.StrategyDecision;
 import nz.co.eroad.qaisystem.monitor.AiCostMonitor;
 import nz.co.eroad.qaisystem.service.E2ECoverageAnalyzer;
+import nz.co.eroad.qaisystem.service.CoveragePlanner;
+import nz.co.eroad.qaisystem.service.NoOpRejectionLedger;
 import nz.co.eroad.qaisystem.service.TestPrService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -79,7 +81,8 @@ class StrategyAgentTest {
         gate             = new AiCallGate();
         monitor          = new AiCostMonitor(new SimpleMeterRegistry());
         monitor.initMetrics();
-        agent            = new StrategyAgent(bddGen, testPr, coverageAnalyzer, gate, monitor);
+        agent            = new StrategyAgent(bddGen, testPr, coverageAnalyzer,
+                new CoveragePlanner(new NoOpRejectionLedger()), gate, monitor);
     }
 
     // ── Core decision tests ───────────────────────────────────────────────────

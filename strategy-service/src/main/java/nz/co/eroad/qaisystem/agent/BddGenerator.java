@@ -148,12 +148,19 @@ public class BddGenerator {
         var externalCtx = (envelope.getPrContext() != null)
                 ? envelope.getPrContext().asPromptSection() : "";
 
-        return """
-                QA task: produce a Gherkin feature file of BDD scenarios for the following code
-                change. Gather any context you need from this repository yourself.
+        var matrix = envelope.getCoverageReport() != null
+                ? envelope.getCoverageReport().getScenarioMatrix() : null;
+        var gaps = formatGaps(matrix);
+        var coverageTask = gaps.isBlank()
+                ? "produce a Gherkin feature file of BDD scenarios for the following code change"
+                : "fill EXACTLY the coverage gaps listed below — write one scenario per cell, "
+                    + "tagging each with the cell's scenario-class tag PLUS one layer tag (@api/@ui/@mobile). "
+                    + "Do not add scenarios outside the listed gaps";
 
-                Output ONLY the Gherkin starting with "Feature:". Tag each scenario
-                (@api, @ui, @mobile, @smoke, @regression). No prose outside the Gherkin.
+        return """
+                QA task: %s. Gather any context you need from this repository yourself.
+
+                Output ONLY the Gherkin starting with "Feature:". No prose outside the Gherkin.
 
                 PR ID          : %s
                 Risk Level     : %s
@@ -163,15 +170,30 @@ public class BddGenerator {
 
                 Test requirements:
                 %s
-                %s
+                %s%s
                 """.formatted(
+                coverageTask,
                 envelope.getPrId(),
                 envelope.getRiskLevel(),
                 changeTypes,
                 envelope.getChangesSummary(),
                 strategy.isFullRegressionRequired(),
                 reqs,
+                gaps.isBlank() ? "" : "\nCoverage gaps to fill:\n" + gaps,
                 externalCtx.isBlank() ? "" : "\n" + externalCtx);
+    }
+
+    /** Renders PLANNED matrix cells grouped by capability, each tagged with its class. */
+    private String formatGaps(nz.co.eroad.qaisystem.model.ScenarioMatrix matrix) {
+        if (matrix == null || matrix.gaps().isEmpty()) return "";
+        return matrix.gaps().stream()
+                .collect(Collectors.groupingBy(c -> c.capability(),
+                        java.util.LinkedHashMap::new, Collectors.toList()))
+                .entrySet().stream()
+                .map(e -> "  " + e.getKey() + ":\n" + e.getValue().stream()
+                        .map(c -> "    - " + c.scenarioClass().name() + " " + c.scenarioClass().tag())
+                        .collect(Collectors.joining("\n")))
+                .collect(Collectors.joining("\n"));
     }
 
     // ─── Cache key builder ─────────────────────────────────────────────────────

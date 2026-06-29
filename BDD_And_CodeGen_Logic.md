@@ -85,6 +85,12 @@ Regression: true
 External context: <Jira ticket / Confluence page if present>
 ```
 
+`StrategyAgent` runs `CoveragePlanner` before `BddGenerator`, producing a `ScenarioMatrix`
+(capability × `ScenarioClass`). The user prompt then enumerates the **PLANNED** gap cells — one
+scenario per `(capability, class)` — so generation is gap-driven, not open-ended. Classes that keep
+getting rejected (`RejectionLedger`) are folded back into the required set. See
+`QA-ISystem-Architecture.md` §11 Phase 3.
+
 ---
 
 ### Step 3 — AI call + caching

@@ -65,6 +65,14 @@ public class CoverageReport {
     /** True when there are components without integration/E2E test coverage. */
     private boolean requiresNewTests;
 
+    /**
+     * Scenario-class gap matrix (capability × {@link ScenarioClass}) produced by the
+     * coverage planner. Distinguishes <em>has-a-test</em> (component covered) from
+     * <em>tested-well</em> (every required scenario class covered). Null when the
+     * planner has not run. The BDD generator fills only PLANNED cells.
+     */
+    private ScenarioMatrix scenarioMatrix;
+
     public enum CoverageLevel {
         GOOD,    // all testable components have integration test coverage
         PARTIAL, // some components covered, some not

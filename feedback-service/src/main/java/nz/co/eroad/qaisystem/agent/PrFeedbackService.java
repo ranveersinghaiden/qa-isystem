@@ -9,8 +9,10 @@ import nz.co.eroad.qaisystem.model.BddScenario;
 import nz.co.eroad.qaisystem.model.ChatMessage;
 import nz.co.eroad.qaisystem.model.ConversationHistory;
 import nz.co.eroad.qaisystem.model.PrRecord;
+import nz.co.eroad.qaisystem.model.ScenarioClass;
 import nz.co.eroad.qaisystem.model.TestScript;
 import nz.co.eroad.qaisystem.service.ConversationStore;
+import nz.co.eroad.qaisystem.service.RejectionLedger;
 import nz.co.eroad.qaisystem.service.RepoContextService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +68,7 @@ public class PrFeedbackService {
     private final RepoContextService   repoContextService;
     private final TargetRepoProperties repoProps;
     private final ConversationStore    conversationStore;
+    private final RejectionLedger      rejectionLedger;
 
     private static final String CONV_SUFFIX_BDD  = ":bdd";
     private static final String CONV_SUFFIX_TEST = ":test";
@@ -125,6 +128,11 @@ public class PrFeedbackService {
             return;
         }
         log.info("[PrFeedbackService] Received {} chars of feedback for PR #{}", feedback.length(), prNumber);
+
+        // Cross-PR learning: capability gaps that drew rejection are forced into future plans.
+        String capability = original.getFeatureTitle() != null ? original.getFeatureTitle() : original.getPrId();
+        rejectionLedger.recordRejection(capability, ScenarioClass.REGRESSION);
+        rejectionLedger.recordRejection(capability, ScenarioClass.NEGATIVE);
 
         // 2. Load current repo context for product expert content
         RepoContext context = repoContextService.getContext("API");

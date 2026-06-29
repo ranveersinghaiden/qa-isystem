@@ -728,6 +728,9 @@ learns from the reviewer's comments and re-generates improved content.
    - Opens a separate knowledge-update PR for human review
 5. Re-generates the rejected content with feedback as additional context in the AI prompt
 6. Creates a revised PR (`-rev-*` suffix in the branch name)
+7. Records the rejected scenario classes (REGRESSION + NEGATIVE per capability) in the cross-PR
+   `RejectionLedger` so `CoveragePlanner` forces those gaps into future coverage plans
+   (`aiqa.feedback.recurrence-threshold`, default 2; TTL `aiqa.feedback.ledger-ttl-days`, default 90)
 
 The entire feedback cycle runs on a **virtual thread** so the GitHub webhook HTTP response
 is returned immediately without blocking.
@@ -871,6 +874,17 @@ covered (1) >= uncovered (1) → PARTIAL
 ```
 
 `StrategyAgent` uses this: `PARTIAL` → `UPDATE_TESTS`.
+
+### Phase 3 in strategy-service — CoveragePlanner (scenario-class gap matrix)
+
+`E2ECoverageAnalyzer` only answers *does this component have a test?* `CoveragePlanner.plan(...)`
+upgrades that to *is it tested well?* It maps each `ChangeType` to a required `ScenarioClass` set
+(e.g. `NEW_FEATURE` → happy+alternate+boundary+negative+auth+error; `API_CHANGE` →
+happy+negative+auth+compat+error; `BUG_FIX` → regression+negative+boundary) and builds a
+`ScenarioMatrix` (capability × class). Covered components mark their HAPPY_PATH cell COVERED; the
+rest are PLANNED. Classes that keep recurring in `RejectionLedger` are forced back in. `recall =
+covered / (covered + planned)`. `BddGenerator` then writes one scenario per PLANNED cell instead of
+open-ended prose, so coverage is deterministic and gap-driven.
 
 ---
 
@@ -1163,6 +1177,7 @@ Current test counts (106 total, 0 failures, zero Mockito):
 | `PromptResponseCache` | service | Redis cache (24h TTL) for AI prompt responses |
 | `AiCostMonitor` | monitor | Micrometer metrics: gate skips, cache hits, AI call count |
 | `E2ECoverageAnalyzer` | service | Phase 2 coverage: scan repo index → GOOD/PARTIAL/NONE |
+| `CoveragePlanner` | service | Phase 3: ChangeType → required ScenarioClass set → capability × class matrix (COVERED/PLANNED); folds recurring `RejectionLedger` classes; recall = covered/required |
 | `TestPrService` | service | GitHub PR creation for BDD scenarios |
 | `StrategyController` | controller | REST: /status, /pending-bdd, /approve-bdd, /github-webhook, /refresh-context, /cost/report |
 
@@ -1190,8 +1205,9 @@ Current test counts (106 total, 0 failures, zero Mockito):
 | `FeedbackServiceApplication` | feedback | Spring Boot entry point |
 | `KafkaConfig` | config | Explicit consumer/factory beans with MANUAL_IMMEDIATE ack |
 | `FeedbackConsumer` | kafka | Consume FeedbackEvent → trigger PrFeedbackService |
-| `PrFeedbackService` | service | Orchestrate full feedback loop: fetch comments → classify → update knowledge → re-generate |
+| `PrFeedbackService` | service | Orchestrate full feedback loop: fetch comments → classify → update knowledge → re-generate; records rejected scenario classes in `RejectionLedger` |
 | `FeedbackClassifier` | service | AI classification: KNOWLEDGE_GAP vs STYLE_ONLY |
 | `ProductExpertUpdater` | service | Append new knowledge to `productExpert/{product}/PRODUCT.md` in target repo |
+| `RejectionLedger` *(common)* | service | Cross-PR rejection memory (Redis/NoOp); recurring classes feed `CoveragePlanner` |
 | `FeedbackController` | controller | REST: /status |
 

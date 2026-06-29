@@ -12,7 +12,9 @@ tracking, and AI clients. Every service depends on this; it is never deployed in
 | `PullRequest` | Incoming PR event. Key fields: `prId`, `title`, `author`, `sourceBranch`, `repositoryName`, `rawDiffContent`, `diffs`, `jiraIds`, `products`, `status`. |
 | `GitDiff` | Single file diff: `filePath`, `diffType` (ADDED/MODIFIED/DELETED/RENAMED), `hunks`, `linesAdded`, `linesDeleted`, `fileExtension`, `isTestFile`. |
 | `ImpactEnvelope` | Full impact result from impact-service: `riskLevel`, `overallRiskScore`, `prTitle`, `detectedChangeTypes`, `impactedComponents`, `serviceConfidence`, `coverageReport`, dependency graph, strategy hints, optional `aiInsight`. |
-| `CoverageReport` | Test coverage snapshot: `level` (GOOD/PARTIAL/NONE/UNKNOWN), `coverageRatio`, `testedComponents`, `untestedComponents`, `requiredTestTypes`, `existingTestFiles`, `requiresNewTests`. |
+| `CoverageReport` | Test coverage snapshot: `level` (GOOD/PARTIAL/NONE/UNKNOWN), `coverageRatio`, `testedComponents`, `untestedComponents`, `requiredTestTypes`, `existingTestFiles`, `requiresNewTests`, `scenarioMatrix` (capability × scenario-class gap plan from `CoveragePlanner`). |
+| `ScenarioClass` | Test dimension enum: HAPPY_PATH, ALTERNATE, BOUNDARY, NEGATIVE, AUTH, ERROR, REGRESSION, COMPAT, DATA_INTEGRITY. `tag()` → Gherkin tag (`@happy`, `@negative`, …). |
+| `ScenarioMatrix` | Coverage plan: `Cell(capability, scenarioClass, status)` with `CellStatus` COVERED/PLANNED/NA. `gaps()`, `coveredCount()`, `plannedCount()`, `recall()` = covered / (covered + planned). |
 | `TestStrategy` | StrategyAgent decision: `decision` (CREATE/UPDATE/SKIP), `confidenceScore`, `fullRegressionRequired`, `expandedScope`, `expandedAreas`, `newTestRequirements`. |
 | `BddScenario` | Gherkin feature file: `featureTitle`, `prId`, `prTitle`, `scenarios` (each with given/when/then steps, tags, examples). `prTitle` flows from `PullRequest.title` through the pipeline for GitHub PR naming. |
 | `TestScript` | Generated test code: `scriptContent`, `testType` (API/UI/MOBILE), `status`, `prId`, `prTitle`, `retryCount`. |
@@ -73,6 +75,9 @@ tracking, and AI clients. Every service depends on this; it is never deployed in
 | Class | Description |
 |-------|-------------|
 | `RepoContextService` | Clones the target test repo (`git clone --depth 1` or `git pull`), scans test files for package/import/class conventions, builds coverage index (`componentName → test files`), loads `productExpert/*.md` and `.aiqa/context.md`. Refreshable via `POST /api/strategy/refresh-context`. |
+| `RejectionLedger` | Interface: `recordRejection(capability, scenarioClass)`, `recurringClasses(capability)`. Cross-PR memory of which scenario classes keep getting rejected so `CoveragePlanner` forces them back into future plans. |
+| `RedisRejectionLedger` | `@ConditionalOnProperty(spring.data.redis.host)`. Key prefix `qa:fb:reject:`; class becomes recurring at `aiqa.feedback.recurrence-threshold` (default 2); counts expire after `aiqa.feedback.ledger-ttl-days` (default 90). |
+| `NoOpRejectionLedger` | `@ConditionalOnMissingBean(RedisRejectionLedger)` fallback — no recurrence memory. |
 
 ---
 
