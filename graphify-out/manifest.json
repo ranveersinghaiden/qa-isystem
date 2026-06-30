@@ -5,18 +5,18 @@
     "semantic_hash": ""
   },
   "codegen-service/src/main/java/nz/co/eroad/qaisystem/codegen/CodegenServiceApplication.java": {
-    "mtime": 1780887582.5478108,
-    "ast_hash": "c3172af30c69a50acaf4baae87b5ca83",
+    "mtime": 1782811933.968053,
+    "ast_hash": "e44831a9c074ab0ddc0f302f44e122b3",
     "semantic_hash": ""
   },
   "codegen-service/src/main/java/nz/co/eroad/qaisystem/execution/CodegenService.java": {
-    "mtime": 1782206426.8065526,
-    "ast_hash": "31ad9d4b057864ecf78931ab2797d1c1",
+    "mtime": 1782815480.5270915,
+    "ast_hash": "747a97c2865eef7b8d7decd2a5d1b64c",
     "semantic_hash": ""
   },
   "codegen-service/src/main/java/nz/co/eroad/qaisystem/execution/StabilizationLoop.java": {
-    "mtime": 1782551170.3300822,
-    "ast_hash": "9b045a1b16bea065471d28dc921d80cb",
+    "mtime": 1782815455.6983101,
+    "ast_hash": "0223a9ae1b85a079aca165020da73c2d",
     "semantic_hash": ""
   },
   "codegen-service/src/main/java/nz/co/eroad/qaisystem/execution/TestExecutionEngine.java": {
@@ -30,8 +30,8 @@
     "semantic_hash": ""
   },
   "codegen-service/src/main/java/nz/co/eroad/qaisystem/service/TestPrService.java": {
-    "mtime": 1780979705.0689516,
-    "ast_hash": "61138176d922ee56e64285384fed6354",
+    "mtime": 1782815564.4163864,
+    "ast_hash": "2a6e386c2096f1655a7660e18eae0f60",
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/agent/AiClient.java": {
@@ -130,8 +130,8 @@
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/model/CoverageReport.java": {
-    "mtime": 1782692281.8944454,
-    "ast_hash": "7637ab6616b224f656f4af7d26b9fe21",
+    "mtime": 1782811368.1780887,
+    "ast_hash": "c43952ac4e85ef3adae26743116fe18f",
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/model/FeedbackEvent.java": {
@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/model/TestResult.java": {
-    "mtime": 1779675411.425644,
-    "ast_hash": "a838cfbe34d755fff32eea60295402ef",
+    "mtime": 1782815437.6120362,
+    "ast_hash": "cd727b3485793a203b174865f14fe161",
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/model/TestScript.java": {
@@ -210,13 +210,13 @@
     "semantic_hash": ""
   },
   "feedback-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java": {
-    "mtime": 1782692524.6179528,
-    "ast_hash": "3bc4025072973f3a0c30b1fcbe986dd3",
+    "mtime": 1782811368.179464,
+    "ast_hash": "cb94c28db39318f224450ab6544f74a6",
     "semantic_hash": ""
   },
   "feedback-service/src/main/java/nz/co/eroad/qaisystem/feedback/FeedbackServiceApplication.java": {
-    "mtime": 1780887582.595002,
-    "ast_hash": "f5c0cbb0fe8436646d921e5809310404",
+    "mtime": 1782811942.8248782,
+    "ast_hash": "30db385223d8fde24fb91cf9925b9c34",
     "semantic_hash": ""
   },
   "feedback-service/src/main/java/nz/co/eroad/qaisystem/feedback/kafka/FeedbackEventConsumer.java": {
@@ -270,8 +270,8 @@
     "semantic_hash": ""
   },
   "impact-service/src/main/java/nz/co/eroad/qaisystem/impact/ImpactServiceApplication.java": {
-    "mtime": 1779675411.4407058,
-    "ast_hash": "7ca25d74905f83b109c5d742bc55a935",
+    "mtime": 1782811911.7843542,
+    "ast_hash": "7dc988290a31ac96b22a1adb2d79c8cd",
     "semantic_hash": ""
   },
   "impact-service/src/main/java/nz/co/eroad/qaisystem/kafka/FeatureUpdatesConsumer.java": {
@@ -420,8 +420,8 @@
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/BddGenerator.java": {
-    "mtime": 1782692391.346132,
-    "ast_hash": "d437412935c725bf7f38f3052a9e5991",
+    "mtime": 1782811368.1801124,
+    "ast_hash": "579beca6f5d690e4392454bac254e631",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/PrFeedbackService.java": {
@@ -430,8 +430,8 @@
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/agent/StrategyAgent.java": {
-    "mtime": 1782692359.5187855,
-    "ast_hash": "7cd27266ec290b08daf4194ebf21d39d",
+    "mtime": 1782811368.1802726,
+    "ast_hash": "83bb3ef0afc680fa2647a5cadb4215cc",
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/cache/PromptResponseCache.java": {
@@ -510,13 +510,13 @@
     "semantic_hash": ""
   },
   "strategy-service/src/main/java/nz/co/eroad/qaisystem/strategy/StrategyServiceApplication.java": {
-    "mtime": 1779675411.480449,
-    "ast_hash": "2f13625cf541c12ee84b3a5b27f9dd83",
+    "mtime": 1782811924.9822247,
+    "ast_hash": "0a11d81f22b20526f45a92fd73b06f3e",
     "semantic_hash": ""
   },
   "strategy-service/src/test/java/nz/co/eroad/qaisystem/agent/StrategyAgentTest.java": {
-    "mtime": 1782693673.4959464,
-    "ast_hash": "f38ad31a4b86a89748bcdb1d15cfff9c",
+    "mtime": 1782811368.1804616,
+    "ast_hash": "0d8ae8397fc5a2e9707977d24f649a09",
     "semantic_hash": ""
   },
   "strategy-service/src/test/java/nz/co/eroad/qaisystem/execution/RepoContextTest.java": {
@@ -715,8 +715,8 @@
     "semantic_hash": ""
   },
   "BDD_And_CodeGen_Logic.md": {
-    "mtime": 1782692903.5833013,
-    "ast_hash": "c3498000844e70604db72e8f54ec532e",
+    "mtime": 1782811368.1774478,
+    "ast_hash": "bca5fdce68f36414605531f39c2a5a46",
     "semantic_hash": ""
   },
   "Board-Presentation-QA-ISystem.md": {
@@ -725,13 +725,13 @@
     "semantic_hash": ""
   },
   "QA-ISystem-Architecture.md": {
-    "mtime": 1782692882.5262346,
-    "ast_hash": "248b5eb98491b0f9d1958af38ab538d1",
+    "mtime": 1782818294.8080134,
+    "ast_hash": "27f1d198121b560876d9c874a940a605",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1782628820.3008053,
-    "ast_hash": "4db52b2bc0bf747e98f246bfbbfb8db3",
+    "mtime": 1782818294.8080106,
+    "ast_hash": "e739460162fa798d20dfea5488896aed",
     "semantic_hash": ""
   },
   "codegen-service/README.md": {
@@ -740,8 +740,8 @@
     "semantic_hash": ""
   },
   "codegen-service/src/main/resources/application.yaml": {
-    "mtime": 1782260745.5674684,
-    "ast_hash": "e6f3fe8c9a485edf428692ec2d5fd328",
+    "mtime": 1782811969.6951804,
+    "ast_hash": "23f722c3716cfef568296683329c7c2b",
     "semantic_hash": ""
   },
   "codegen-service/src/test/resources/application.yaml": {
@@ -750,8 +750,8 @@
     "semantic_hash": ""
   },
   "common/README.md": {
-    "mtime": 1782693756.7068367,
-    "ast_hash": "4735bc1dc4a23d32212739fd28604437",
+    "mtime": 1782818312.302679,
+    "ast_hash": "3a14e1e73f6f5789464192bb8ffac0a1",
     "semantic_hash": ""
   },
   "docker-compose.prod.yml": {
@@ -765,13 +765,13 @@
     "semantic_hash": ""
   },
   "feedback-service/README.md": {
-    "mtime": 1782692759.5995996,
-    "ast_hash": "1bd215be943b6636774364147160b87a",
+    "mtime": 1782811368.178371,
+    "ast_hash": "e539db0e9ae67391afede3d21abfce18",
     "semantic_hash": ""
   },
   "feedback-service/src/main/resources/application.yaml": {
-    "mtime": 1782250381.399938,
-    "ast_hash": "64008742ba150c229129492b2caad1a2",
+    "mtime": 1782811974.4364688,
+    "ast_hash": "1a8529f328c3e2dd678c89ab5800828c",
     "semantic_hash": ""
   },
   "feedback-service/src/test/resources/application.yaml": {
@@ -785,8 +785,8 @@
     "semantic_hash": ""
   },
   "impact-service/src/main/resources/application.yaml": {
-    "mtime": 1781131040.9301374,
-    "ast_hash": "9fed0885353f6c85cac224163d7faa99",
+    "mtime": 1782811957.9615648,
+    "ast_hash": "dc833e1661bc1c58e3a22b2cf282468f",
     "semantic_hash": ""
   },
   "impact-service/src/test/resources/application.yaml": {
@@ -800,8 +800,8 @@
     "semantic_hash": ""
   },
   "pr-service/src/main/resources/application.yaml": {
-    "mtime": 1781478355.7127907,
-    "ast_hash": "0ce38bce66bb33458d314381b606b0a7",
+    "mtime": 1782811978.9860942,
+    "ast_hash": "da9ef15b5177f2db42babb38a32dceed",
     "semantic_hash": ""
   },
   "pr-service/src/test/resources/application.yaml": {
@@ -810,13 +810,13 @@
     "semantic_hash": ""
   },
   "strategy-service/README.md": {
-    "mtime": 1782692722.8478856,
-    "ast_hash": "1ba84c72b49e8e705833014152ca84b2",
+    "mtime": 1782811368.1798146,
+    "ast_hash": "757bfb58f69446cdc6109212920ce886",
     "semantic_hash": ""
   },
   "strategy-service/src/main/resources/application.yaml": {
-    "mtime": 1782423425.193022,
-    "ast_hash": "f2b5388364002f05e6771961c4a2d1f2",
+    "mtime": 1782811963.7918816,
+    "ast_hash": "63ccf828b83bf6e7e252d8d45794e7d7",
     "semantic_hash": ""
   },
   "strategy-service/src/main/resources/productExpert-templates/README.md": {
@@ -865,8 +865,8 @@
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/agent/ConductorAgentRunner.java": {
-    "mtime": 1782627672.9481184,
-    "ast_hash": "573006fa99a3b7b5fd71722c710c6ac3",
+    "mtime": 1782817493.334597,
+    "ast_hash": "297863f7469a35098dedc83863490de0",
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/execution/ConductorCodeGenerator.java": {
@@ -970,68 +970,233 @@
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/config/TraceProperties.java": {
-    "mtime": 1782623568.2767773,
-    "ast_hash": "b6c77fa44eb97c1a27d927ebf756465f",
+    "mtime": 1782817327.6022289,
+    "ast_hash": "afc127d64af085ecd1bc193ccd3883f7",
     "semantic_hash": ""
   },
   "common/src/main/java/nz/co/eroad/qaisystem/trace/ContextTraceRecorder.java": {
-    "mtime": 1782623698.647176,
-    "ast_hash": "8e8197f6eb556f9cea300b3c6a99185e",
+    "mtime": 1782817866.3295133,
+    "ast_hash": "07bdc2c2d42cc3b181770d87678f4ea8",
     "semantic_hash": ""
   },
   "common/src/test/java/nz/co/eroad/qaisystem/trace/ContextTraceRecorderTest.java": {
-    "mtime": 1782628047.4856038,
-    "ast_hash": "e066304629dee0dc2dd165a112f3bc6a",
+    "mtime": 1782817505.0534072,
+    "ast_hash": "a3d2123c2a254351bbfd83b0ddb37363",
     "semantic_hash": ""
   },
-  "common/src/main/java/nz/co/eroad/qaisystem/config/CoveragePlanMonitorProperties.java": {
-    "mtime": 1782693388.6969376,
-    "ast_hash": "48745534d349655940b9d04bdbfca557",
+  "codegen-service/src/main/java/nz/co/eroad/qaisystem/oneshot/CodegenOneShotRunner.java": {
+    "mtime": 1782815676.5323,
+    "ast_hash": "a12bd353803312853991eadfddeaabd5",
     "semantic_hash": ""
   },
-  "common/src/main/java/nz/co/eroad/qaisystem/model/ScenarioClass.java": {
-    "mtime": 1782692260.1389117,
-    "ast_hash": "f925f64c561046a19c5284f704882b3a",
+  "codegen-service/src/test/java/nz/co/eroad/qaisystem/execution/CodegenServiceTest.java": {
+    "mtime": 1782816471.7978263,
+    "ast_hash": "9c6242e035a50b951cc4fc81f7c98bce",
     "semantic_hash": ""
   },
-  "common/src/main/java/nz/co/eroad/qaisystem/model/ScenarioMatrix.java": {
-    "mtime": 1782692274.1141658,
-    "ast_hash": "cba9dafc9cb2157f10b70611f3814a1e",
+  "codegen-service/src/test/java/nz/co/eroad/qaisystem/execution/StabilizationLoopTest.java": {
+    "mtime": 1782816399.4850407,
+    "ast_hash": "0a812cfedefa139a1d3e8bdc79d97b22",
     "semantic_hash": ""
   },
-  "common/src/main/java/nz/co/eroad/qaisystem/service/NoOpRejectionLedger.java": {
-    "mtime": 1782692573.3889387,
-    "ast_hash": "2ba2763cdf1639effab53173cee24cfd",
+  "codegen-service/src/test/java/nz/co/eroad/qaisystem/oneshot/CodegenOneShotRunnerTest.java": {
+    "mtime": 1782816261.6584582,
+    "ast_hash": "b6fa5ad6af3950cb81a12e12a42a7037",
     "semantic_hash": ""
   },
-  "common/src/main/java/nz/co/eroad/qaisystem/service/RedisRejectionLedger.java": {
-    "mtime": 1782692466.5464413,
-    "ast_hash": "0e6937f394906db8c40903528686d7dd",
+  "codegen-service/src/test/java/nz/co/eroad/qaisystem/service/TestPrServiceTest.java": {
+    "mtime": 1782816512.9664488,
+    "ast_hash": "ca0d9025c5af7855cc060876fae8588d",
     "semantic_hash": ""
   },
-  "common/src/main/java/nz/co/eroad/qaisystem/service/RejectionLedger.java": {
-    "mtime": 1782692443.4488337,
-    "ast_hash": "16f161144801a17102a0a3ec170f7dcb",
+  "common/src/main/java/nz/co/eroad/qaisystem/oneshot/OneShotArgs.java": {
+    "mtime": 1782811201.7063813,
+    "ast_hash": "4c8c01bff492efe9c0293b16fb0d88b0",
     "semantic_hash": ""
   },
-  "strategy-service/src/main/java/nz/co/eroad/qaisystem/service/CoveragePlanner.java": {
-    "mtime": 1782693489.459076,
-    "ast_hash": "6ebaeb022f7e3f5631ffef2d4e4338c9",
+  "common/src/main/java/nz/co/eroad/qaisystem/state/GateState.java": {
+    "mtime": 1782811043.8463707,
+    "ast_hash": "f1aa71796e0a1cade37bf4d3a0d2a628",
     "semantic_hash": ""
   },
-  "strategy-service/src/test/java/nz/co/eroad/qaisystem/service/CoveragePlannerTest.java": {
-    "mtime": 1782693534.785427,
-    "ast_hash": "b3a36d96e1fe3669b4b9af705800f37d",
+  "common/src/main/java/nz/co/eroad/qaisystem/state/InMemoryStateStore.java": {
+    "mtime": 1782812130.605363,
+    "ast_hash": "3b9631467ec1d2659660d541083debcf",
     "semantic_hash": ""
   },
-  "common/src/main/java/nz/co/eroad/qaisystem/monitor/CoveragePlanMonitor.java": {
-    "mtime": 1782693464.133957,
-    "ast_hash": "9f722abf4368126b2c6ef400b5d329a6",
+  "common/src/main/java/nz/co/eroad/qaisystem/state/PostgresStateStore.java": {
+    "mtime": 1782811186.764488,
+    "ast_hash": "e537542f3425c01c19c1ab1a45a6a641",
     "semantic_hash": ""
   },
-  "common/src/test/java/nz/co/eroad/qaisystem/monitor/CoveragePlanMonitorTest.java": {
-    "mtime": 1782693619.4752972,
-    "ast_hash": "b39ef2278bee74d0922cb5a3260142b0",
+  "common/src/main/java/nz/co/eroad/qaisystem/state/PrHistory.java": {
+    "mtime": 1782811054.1380894,
+    "ast_hash": "d701159ffb63fac153d44edb63f8a624",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/state/ScenarioState.java": {
+    "mtime": 1782811063.228682,
+    "ast_hash": "043fb893f37772525ca8a5faf5d06fe3",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/state/StateStore.java": {
+    "mtime": 1782811077.1341743,
+    "ast_hash": "460e6e5ed4428a074d65b92456d534ec",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/state/StateStoreDataSourceConfig.java": {
+    "mtime": 1782811137.6280203,
+    "ast_hash": "c4a0108873fe382fb974f69ad587da9a",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/trace/PostgresTraceSink.java": {
+    "mtime": 1782817461.9684865,
+    "ast_hash": "36e324e5c72d7e8c52490a72b2144542",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/trace/TraceConfig.java": {
+    "mtime": 1782817475.2549944,
+    "ast_hash": "3671fc14e0c65fec34d4a399a520a5e5",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/trace/TraceHandle.java": {
+    "mtime": 1782817861.8027852,
+    "ast_hash": "d5329691ca47a3701432e2df6490f808",
+    "semantic_hash": ""
+  },
+  "common/src/main/java/nz/co/eroad/qaisystem/trace/TraceSink.java": {
+    "mtime": 1782817239.6567848,
+    "ast_hash": "e0cab5a1fb5e1c93d2a5e7a1b77c9464",
+    "semantic_hash": ""
+  },
+  "common/src/test/java/nz/co/eroad/qaisystem/state/InMemoryStateStoreTest.java": {
+    "mtime": 1782812396.598079,
+    "ast_hash": "c3ef1add90f1d64576e0609148b6f13d",
+    "semantic_hash": ""
+  },
+  "common/src/test/java/nz/co/eroad/qaisystem/state/PostgresStateStoreGatingTest.java": {
+    "mtime": 1782812447.1241243,
+    "ast_hash": "0bf189007755433eda906bf7fb7cbbe8",
+    "semantic_hash": ""
+  },
+  "common/src/test/java/nz/co/eroad/qaisystem/trace/PostgresTraceSinkTest.java": {
+    "mtime": 1782817654.2346036,
+    "ast_hash": "76a978cf6200fa4a122889dad117fed5",
+    "semantic_hash": ""
+  },
+  "common/src/test/java/nz/co/eroad/qaisystem/trace/TraceConfigGatingTest.java": {
+    "mtime": 1782817680.7832046,
+    "ast_hash": "740cd50434adcfdc3bf9795d69c532dc",
+    "semantic_hash": ""
+  },
+  "db/schema.sql": {
+    "mtime": 1782808524.8779278,
+    "ast_hash": "e5614e91d78edda45f1d05a8d213d8a2",
+    "semantic_hash": ""
+  },
+  "feedback-service/src/main/java/nz/co/eroad/qaisystem/oneshot/FeedbackOneShotRunner.java": {
+    "mtime": 1782815876.0215645,
+    "ast_hash": "a89e30401a959ab49e5566ecdbe8517e",
+    "semantic_hash": ""
+  },
+  "feedback-service/src/test/java/nz/co/eroad/qaisystem/oneshot/FeedbackOneShotRunnerTest.java": {
+    "mtime": 1782816681.1628704,
+    "ast_hash": "06917ec2f17136ad087eea515d7906fd",
+    "semantic_hash": ""
+  },
+  "impact-service/src/main/java/nz/co/eroad/qaisystem/oneshot/ImpactOneShotRunner.java": {
+    "mtime": 1782811368.544054,
+    "ast_hash": "83c2e9225f5c14c42380541494b12570",
+    "semantic_hash": ""
+  },
+  "impact-service/src/test/java/nz/co/eroad/qaisystem/oneshot/ImpactOneShotRunnerTest.java": {
+    "mtime": 1782812510.5309238,
+    "ast_hash": "12ff974d55a4719f1f35597641f6df44",
+    "semantic_hash": ""
+  },
+  "qa-control/github-app-manifest.json": {
+    "mtime": 1782809065.3403096,
+    "ast_hash": "f7f3318eb50d39eb591c2a1d77991289",
+    "semantic_hash": ""
+  },
+  "qa-control/receiver/package.json": {
+    "mtime": 1782809012.8821347,
+    "ast_hash": "9c79d1ea795d8b8a509add42a7099064",
+    "semantic_hash": ""
+  },
+  "qa-control/receiver/src/index.ts": {
+    "mtime": 1782808928.439373,
+    "ast_hash": "434b2d639a37eff4a5c6ec64fd271f93",
+    "semantic_hash": ""
+  },
+  "qa-control/receiver/test/mapEvent.test.ts": {
+    "mtime": 1782808992.0754645,
+    "ast_hash": "ce7f70bbde743fe0950b6212799e4e43",
+    "semantic_hash": ""
+  },
+  "qa-control/receiver/tsconfig.json": {
+    "mtime": 1782808951.3847382,
+    "ast_hash": "65b9e85aaac9d0215d12bd9b71a06c84",
+    "semantic_hash": ""
+  },
+  "strategy-service/src/main/java/nz/co/eroad/qaisystem/oneshot/StrategyOneShotRunner.java": {
+    "mtime": 1782811526.5804722,
+    "ast_hash": "944a125c7d7619d6c281291405e37ecc",
+    "semantic_hash": ""
+  },
+  "strategy-service/src/test/java/nz/co/eroad/qaisystem/oneshot/StrategyOneShotRunnerTest.java": {
+    "mtime": 1782812561.4525898,
+    "ast_hash": "0ca75fd3cd2d8cfdbf4d9a36aa147e26",
+    "semantic_hash": ""
+  },
+  ".github/workflows/qa-runner-image.yml": {
+    "mtime": 1782808802.3328753,
+    "ast_hash": "ea6dbe9cd3238475376d49456eb7b701",
+    "semantic_hash": ""
+  },
+  "RUNBOOK-k8s-migration.md": {
+    "mtime": 1782810640.4798417,
+    "ast_hash": "17d98764e34b7f86eec548fc1bb0cf84",
+    "semantic_hash": ""
+  },
+  "k8s/arc/runner-scale-set-values.yaml": {
+    "mtime": 1782810540.8716536,
+    "ast_hash": "6ef19306c9b09d2bc39743f258738a72",
+    "semantic_hash": ""
+  },
+  "k8s/headroom/deployment.yaml": {
+    "mtime": 1782809104.4606044,
+    "ast_hash": "59f717142c7258e9edfd0cf26de780f4",
+    "semantic_hash": ""
+  },
+  "k8s/headroom/service.yaml": {
+    "mtime": 1782809109.9141378,
+    "ast_hash": "d583ebdc4c619189f7828c9fe841147d",
+    "semantic_hash": ""
+  },
+  "qa-control/.github/workflows/qa-codegen.yml": {
+    "mtime": 1782808745.1374218,
+    "ast_hash": "ba162f00ee9190182aa4bfdff701af73",
+    "semantic_hash": ""
+  },
+  "qa-control/.github/workflows/qa-feedback.yml": {
+    "mtime": 1782808755.8720446,
+    "ast_hash": "da5f49c5c8e4b5a526fe88c0456dcf55",
+    "semantic_hash": ""
+  },
+  "qa-control/.github/workflows/qa-impact-strategy.yml": {
+    "mtime": 1782808727.2202365,
+    "ast_hash": "bd1d82dfda5435d05a6791568f1fc9d1",
+    "semantic_hash": ""
+  },
+  "qa-control/README.md": {
+    "mtime": 1782809038.657506,
+    "ast_hash": "f57d977884511c89a11a01692051a081",
+    "semantic_hash": ""
+  },
+  "qa-control/receiver/README.md": {
+    "mtime": 1782809057.268122,
+    "ast_hash": "4ce1fe3061f25826435d78a93c4b5275",
     "semantic_hash": ""
   }
 }
