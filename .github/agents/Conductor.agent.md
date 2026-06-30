@@ -266,9 +266,7 @@ Touch `common` first when a feature affects shared infrastructure; rebuild depen
 | `**/Dockerfile` | Container build definitions |
 | `docker-compose*.yml` | Local dev / prod compose files |
 | `scripts/**` | Operational shell scripts |
-| `README.md`, `QA-ISystem-Architecture.md` | Primary project docs |
-| `BDD_And_CodeGen_Logic.md` | Design documentation |
-| `Board-Presentation-QA-ISystem.md` | Project presentation doc |
+| `README.md`, `QA-ISystem-Architecture.md` | Primary project docs (the only two) |
 
 ### ❌ MUST NOT be in git
 | Path / Pattern | Why |
