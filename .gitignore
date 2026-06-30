@@ -51,6 +51,7 @@ pr-webhook-sample.json
 
 # Graphify outputs and parallel chunking files (all local-only tooling artifacts)
 .graphify_cache/
+.graphify_cache/*.json
 extract_ast.py
 generate_extraction_prompts.py
 prepare_chunks.py
