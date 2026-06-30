@@ -545,8 +545,8 @@
     "semantic_hash": ""
   },
   ".github/agents/Conductor.agent.md": {
-    "mtime": 1782253504.5073385,
-    "ast_hash": "c426b38a9aba8b65c0480a208c3cbd64",
+    "mtime": 1782863107.8747885,
+    "ast_hash": "044a3189739b7f7be419b50a86581424",
     "semantic_hash": ""
   },
   ".github/agents/Documentation.agent.md": {
@@ -714,28 +714,18 @@
     "ast_hash": "309f4f95c773918225a2dc987d46404a",
     "semantic_hash": ""
   },
-  "BDD_And_CodeGen_Logic.md": {
-    "mtime": 1782858780.6129217,
-    "ast_hash": "bca5fdce68f36414605531f39c2a5a46",
-    "semantic_hash": ""
-  },
-  "Board-Presentation-QA-ISystem.md": {
-    "mtime": 1782173552.582595,
-    "ast_hash": "c74c12fda986e19ae0ff7409f603787b",
-    "semantic_hash": ""
-  },
   "QA-ISystem-Architecture.md": {
-    "mtime": 1782858780.6158936,
-    "ast_hash": "27f1d198121b560876d9c874a940a605",
+    "mtime": 1782862876.0910256,
+    "ast_hash": "2bc07b7942558ba01820aa619bd186e8",
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1782858780.617845,
-    "ast_hash": "e739460162fa798d20dfea5488896aed",
+    "mtime": 1782862983.1695378,
+    "ast_hash": "47734f4bea8f9fcbd24f4f52780963b7",
     "semantic_hash": ""
   },
   "codegen-service/README.md": {
-    "mtime": 1782858780.6198611,
+    "mtime": 1782863609.8949761,
     "ast_hash": "42890bd69db5be62ac6871f93d78ff54",
     "semantic_hash": ""
   },
@@ -750,7 +740,7 @@
     "semantic_hash": ""
   },
   "common/README.md": {
-    "mtime": 1782858780.6225774,
+    "mtime": 1782863609.8970754,
     "ast_hash": "3a14e1e73f6f5789464192bb8ffac0a1",
     "semantic_hash": ""
   },
@@ -765,7 +755,7 @@
     "semantic_hash": ""
   },
   "feedback-service/README.md": {
-    "mtime": 1782858780.6278837,
+    "mtime": 1782863609.89847,
     "ast_hash": "e539db0e9ae67391afede3d21abfce18",
     "semantic_hash": ""
   },
@@ -780,7 +770,7 @@
     "semantic_hash": ""
   },
   "impact-service/README.md": {
-    "mtime": 1782858780.6501553,
+    "mtime": 1782863609.8999584,
     "ast_hash": "1eb5a0ba0254b06a3756e299248727d1",
     "semantic_hash": ""
   },
@@ -795,7 +785,7 @@
     "semantic_hash": ""
   },
   "pr-service/README.md": {
-    "mtime": 1782858780.651559,
+    "mtime": 1782863609.9009063,
     "ast_hash": "6c54f5bf23c979e8db79ac742d32f976",
     "semantic_hash": ""
   },
@@ -810,7 +800,7 @@
     "semantic_hash": ""
   },
   "strategy-service/README.md": {
-    "mtime": 1782858780.654692,
+    "mtime": 1782863590.2825665,
     "ast_hash": "757bfb58f69446cdc6109212920ce886",
     "semantic_hash": ""
   },
@@ -904,11 +894,6 @@
     "ast_hash": "ef435f7b37045317321d79ec53682605",
     "semantic_hash": ""
   },
-  "k8s/README.md": {
-    "mtime": 1782207312.189327,
-    "ast_hash": "3edd44ccdc8e95e9c574a15070b6b2fc",
-    "semantic_hash": ""
-  },
   "k8s/codegen-deployment.yaml": {
     "mtime": 1782207257.6920493,
     "ast_hash": "f5b97045e0b354ff722587661c970bb2",
@@ -937,11 +922,6 @@
   ".github/agents/JAVA-CODER.agent.md": {
     "mtime": 1782253504.5178182,
     "ast_hash": "59e97adce313d59583f6a5923fb6fa41",
-    "semantic_hash": ""
-  },
-  "Load-Management.md": {
-    "mtime": 1782858780.614367,
-    "ast_hash": "f8c442f34f30678a4dbde223a3e13f72",
     "semantic_hash": ""
   },
   "codegen-service/docker-entrypoint.sh": {
@@ -1154,11 +1134,6 @@
     "ast_hash": "ea6dbe9cd3238475376d49456eb7b701",
     "semantic_hash": ""
   },
-  "RUNBOOK-k8s-migration.md": {
-    "mtime": 1782810640.4798417,
-    "ast_hash": "17d98764e34b7f86eec548fc1bb0cf84",
-    "semantic_hash": ""
-  },
   "k8s/arc/runner-scale-set-values.yaml": {
     "mtime": 1782810540.8716536,
     "ast_hash": "6ef19306c9b09d2bc39743f258738a72",
@@ -1190,13 +1165,8 @@
     "semantic_hash": ""
   },
   "qa-control/README.md": {
-    "mtime": 1782809038.657506,
+    "mtime": 1782863649.5727158,
     "ast_hash": "f57d977884511c89a11a01692051a081",
-    "semantic_hash": ""
-  },
-  "qa-control/receiver/README.md": {
-    "mtime": 1782809057.268122,
-    "ast_hash": "4ce1fe3061f25826435d78a93c4b5275",
     "semantic_hash": ""
   }
 }
