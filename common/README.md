@@ -12,9 +12,7 @@ tracking, and AI clients. Every service depends on this; it is never deployed in
 | `PullRequest` | Incoming PR event. Key fields: `prId`, `title`, `author`, `sourceBranch`, `repositoryName`, `rawDiffContent`, `diffs`, `jiraIds`, `products`, `status`. |
 | `GitDiff` | Single file diff: `filePath`, `diffType` (ADDED/MODIFIED/DELETED/RENAMED), `hunks`, `linesAdded`, `linesDeleted`, `fileExtension`, `isTestFile`. |
 | `ImpactEnvelope` | Full impact result from impact-service: `riskLevel`, `overallRiskScore`, `prTitle`, `detectedChangeTypes`, `impactedComponents`, `serviceConfidence`, `coverageReport`, dependency graph, strategy hints, optional `aiInsight`. |
-| `CoverageReport` | Test coverage snapshot: `level` (GOOD/PARTIAL/NONE/UNKNOWN), `coverageRatio`, `testedComponents`, `untestedComponents`, `requiredTestTypes`, `existingTestFiles`, `requiresNewTests`, `scenarioMatrix` (capability × scenario-class gap plan from `CoveragePlanner`). |
-| `ScenarioClass` | Test dimension enum: HAPPY_PATH, ALTERNATE, BOUNDARY, NEGATIVE, AUTH, ERROR, REGRESSION, COMPAT, DATA_INTEGRITY. `tag()` → Gherkin tag (`@happy`, `@negative`, …). |
-| `ScenarioMatrix` | Coverage plan: `Cell(capability, scenarioClass, status)` with `CellStatus` COVERED/PLANNED/NA. `gaps()`, `coveredCount()`, `plannedCount()`, `recall()` = covered / (covered + planned). |
+| `CoverageReport` | Test coverage snapshot: `level` (GOOD/PARTIAL/NONE/UNKNOWN), `coverageRatio`, `testedComponents`, `untestedComponents`, `requiredTestTypes`, `existingTestFiles`, `requiresNewTests`. |
 | `TestStrategy` | StrategyAgent decision: `decision` (CREATE/UPDATE/SKIP), `confidenceScore`, `fullRegressionRequired`, `expandedScope`, `expandedAreas`, `newTestRequirements`. |
 | `BddScenario` | Gherkin feature file: `featureTitle`, `prId`, `prTitle`, `scenarios` (each with given/when/then steps, tags, examples). `prTitle` flows from `PullRequest.title` through the pipeline for GitHub PR naming. |
 | `TestScript` | Generated test code: `scriptContent`, `testType` (API/UI/MOBILE), `status`, `prId`, `prTitle`, `retryCount`. |
@@ -32,8 +30,7 @@ tracking, and AI clients. Every service depends on this; it is never deployed in
 | `AppConfig` | `ObjectMapper` bean (ISO-8601 dates, `JavaTimeModule`), async task executor (`qa-async-*` virtual threads). |
 | `KafkaConfig` | Producer factory, consumer factory, `KafkaTemplate`, `KafkaAdmin`, all topic declarations. Configured from `application.yaml`. Topics are declared idempotently — any service can start first. |
 | `AiClientConfig` | Creates the active `AiClient` bean based on `aiqa.ai.provider`. Options: `copilot-cli` (default), `copilot`, `openai`. Falls back to template mode when no credential is configured. |
-| `TraceProperties` | `@ConfigurationProperties("aiqa.trace")` — off-by-default context-trace capture knobs: `enabled` (false), `dir`, `captureRawStream`, `maxRawStreamChars`, `redact`. See top-level README § "Context Trace Capture". |
-| `CoveragePlanMonitorProperties` | `@ConfigurationProperties("aiqa.coverage-plan.monitor")` — off-by-default coverage-plan monitor knobs: `enabled` (false), `dir` (`./logs/coverage-plans`), `includeCells` (true), `maxCells` (500). |
+| `TraceProperties` | `@ConfigurationProperties("aiqa.trace")` — off-by-default context-trace capture knobs: `enabled` (false), `dir`, `captureRawStream`, `maxRawStreamChars`, `redact`, `sink` (`file`\|`postgres`). See top-level README § "Context Trace Capture". |
 
 ---
 
@@ -76,9 +73,6 @@ tracking, and AI clients. Every service depends on this; it is never deployed in
 | Class | Description |
 |-------|-------------|
 | `RepoContextService` | Clones the target test repo (`git clone --depth 1` or `git pull`), scans test files for package/import/class conventions, builds coverage index (`componentName → test files`), loads `productExpert/*.md` and `.aiqa/context.md`. Refreshable via `POST /api/strategy/refresh-context`. |
-| `RejectionLedger` | Interface: `recordRejection(capability, scenarioClass)`, `recurringClasses(capability)`. Cross-PR memory of which scenario classes keep getting rejected so `CoveragePlanner` forces them back into future plans. |
-| `RedisRejectionLedger` | `@ConditionalOnProperty(spring.data.redis.host)`. Key prefix `qa:fb:reject:`; class becomes recurring at `aiqa.feedback.recurrence-threshold` (default 2); counts expire after `aiqa.feedback.ledger-ttl-days` (default 90). |
-| `NoOpRejectionLedger` | `@ConditionalOnMissingBean(RedisRejectionLedger)` fallback — no recurrence memory. |
 
 ---
 
@@ -86,13 +80,10 @@ tracking, and AI clients. Every service depends on this; it is never deployed in
 
 | Class | Description |
 |-------|-------------|
-| `ContextTraceRecorder` | `@Service @ConditionalOnProperty("aiqa.trace.enabled"=true)` — **off by default** (bean absent → zero behaviour change). When enabled, persists per Copilot-CLI Conductor invocation: the exact prompt, the **full raw JSON-RPC agent stream** (otherwise capped and discarded — tool calls, file reads, sub-agent handoffs), the final output, and `meta.json`, plus a `trace-index.jsonl`. Best-effort (never throws into the pipeline); webhook-derived ids are path-sanitised, secrets redacted best-effort, files owner-only (`rw-------`), raw stream size-capped. Wired into `ConductorAgentRunner` via `ObjectProvider`. See top-level README § "Context Trace Capture". |
-
-## Coverage-Plan Monitor (`qaisystem.coverage-plan.monitor`)
-
-| Class | Description |
-|-------|-------------|
-| `CoveragePlanMonitor` | `@Service @ConditionalOnProperty("aiqa.coverage-plan.monitor.enabled"=true)` — **off by default** (bean absent → zero behaviour change). When enabled, persists per `CoveragePlanner.plan()` call a `plan-{ts}.json` (change types, required scenario classes, capability list, covered/planned/gaps counts, recall, optional cell grid) plus one summary line in `coverage-plan-index.jsonl`. Holds names/counts only — no secrets, no diff. Best-effort (never throws into the pipeline); webhook-derived prId path-sanitised, files owner-only, cells capped. Wired into `CoveragePlanner` via `ObjectProvider`. Config: `CoveragePlanMonitorProperties`. |
+| `TraceSink` | Interface for the trace backend: `begin` / `rawLine` / `finish`. Implemented by `ContextTraceRecorder` (file) and `PostgresTraceSink`. `ConductorAgentRunner` depends on this interface via `ObjectProvider`, so the backend is swappable without touching the delegation code. |
+| `ContextTraceRecorder` | File-based `TraceSink` (instantiated by `TraceConfig` when `aiqa.trace.sink=file`, the default). **Off by default** (no sink bean when `aiqa.trace.enabled=false` → zero behaviour change). When enabled, persists per Copilot-CLI Conductor invocation: the exact prompt, the **full raw JSON-RPC agent stream** (otherwise capped and discarded — tool calls, file reads, sub-agent handoffs), the final output, and `meta.json`, plus a `trace-index.jsonl`. Best-effort (never throws into the pipeline); webhook-derived ids are path-sanitised, secrets redacted best-effort, files owner-only (`rw-------`), raw stream size-capped. Exposes the static `redact()` reused by `PostgresTraceSink`. See top-level README § "Context Trace Capture". |
+| `PostgresTraceSink` | Postgres `TraceSink` (instantiated by `TraceConfig` when `aiqa.trace.sink=postgres`). Buffers the redacted prompt + raw stream per invocation and writes **one `context_history` row** on `finish` (`pr_id`, `boundary`, `payload` JSONB, `char_count`) via `JdbcTemplate` (`?::jsonb`). Best-effort (never throws); when no `DataSource` is present it is a no-op with one WARN. The queryable trace form for the K8s / one-shot deployment. |
+| `TraceConfig` | `@Configuration @ConditionalOnProperty("aiqa.trace.enabled"=true)` — selects exactly one `TraceSink` bean by `aiqa.trace.sink`: `file` (`matchIfMissing`, → `ContextTraceRecorder`) or `postgres` (→ `PostgresTraceSink`). When tracing is disabled no sink bean exists at all. |
 
 ---
 

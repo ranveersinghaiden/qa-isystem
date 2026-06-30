@@ -1,0 +1,18 @@
+# Stable in-cluster DNS for the shared headroom proxy (Decision C2).
+# Runner pods set AI_BASE_URL=http://headroom.qa.svc.cluster.local:8787
+apiVersion: v1
+kind: Service
+metadata:
+  name: headroom
+  namespace: qa
+  labels:
+    app: headroom
+spec:
+  type: ClusterIP
+  selector:
+    app: headroom
+  ports:
+    - name: http
+      port: 8787
+      targetPort: http
+      protocol: TCP

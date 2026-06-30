@@ -1030,6 +1030,9 @@ Config knobs (`aiqa.trace.*`):
 | `capture-raw-stream` | `AIQA_TRACE_CAPTURERAWSTREAM` | `true` | Capture the full JSON-RPC stream |
 | `max-raw-stream-chars` | `AIQA_TRACE_MAXRAWSTREAMCHARS` | `5000000` | Per-trace raw-stream cap |
 | `redact` | `AIQA_TRACE_REDACT` | `true` | Scrub tokens/keys from captured text |
+| `sink` | `AIQA_TRACE_SINK` | `file` | Backend: `file` (per-run files under `dir`) or `postgres` (one `context_history` row per run) |
+
+**Sink backends:** `file` (default) writes the per-run directories described above. `postgres` (set `AIQA_TRACE_SINK=postgres`; requires `spring.datasource.url`) instead writes one redacted `context_history` row per Conductor invocation — prompt + raw stream + final output as JSONB — for centralised, queryable traces in the K8s / one-shot deployment. Both are best-effort and inert unless `enabled=true`.
 
 **Privacy:** traces contain real prompt/diff/context excerpts. Secrets are redacted best-effort, files are written owner-only (`rw-------`). A OneDrive-backed `logs/` path may sync to the cloud — keep it private or point `AIQA_TRACE_DIR` elsewhere.
 

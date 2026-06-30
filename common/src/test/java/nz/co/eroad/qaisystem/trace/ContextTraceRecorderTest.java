@@ -3,7 +3,6 @@ package nz.co.eroad.qaisystem.trace;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import nz.co.eroad.qaisystem.config.TraceProperties;
-import nz.co.eroad.qaisystem.trace.ContextTraceRecorder.TraceHandle;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

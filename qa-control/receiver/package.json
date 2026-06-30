@@ -1,0 +1,17 @@
+{
+  "name": "qa-isystem-receiver",
+  "version": "0.1.0",
+  "private": true,
+  "description": "QA-ISystem webhook receiver — verifies HMAC, maps GitHub events to repository_dispatch (Design doc Decision C4 / Part D).",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node --test \"test/**/*.test.ts\""
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240909.0",
+    "typescript": "^5.6.2",
+    "wrangler": "^3.78.0"
+  }
+}

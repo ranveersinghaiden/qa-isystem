@@ -13,6 +13,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Creates Pull Requests on the target test repository for human review.
@@ -138,6 +142,80 @@ public class TestPrService {
         return pr.url();
     }
 
+    // ─── Aggregate Test Code PR (K8s one-shot gather) ─────────────────────────
+
+    /**
+     * Repo-relative file to commit in an aggregate test PR: its path and Java source content.
+     */
+    public record AggregateTestFile(String filePath, String content) {}
+
+    /**
+     * Creates ONE aggregate test-code review PR committing ALL scenario test files for a source PR.
+     *
+     * <p>Used only by the K8s scale-to-zero one-shot gather step — the always-on Kafka path opens a
+     * per-scenario PR via {@link #createFinalTestPr} instead. Additive: this method is never called
+     * on the Kafka path. Unlike the per-scenario flow it does NOT register with {@code prTracker};
+     * one-shot rejection routing is driven by {@code pr_history} gate state in the {@code StateStore}
+     * (read by {@code FeedbackOneShotRunner}), not by {@code PrTracker}.
+     *
+     * @param prId     source PR id (groups the scenario files)
+     * @param prTitle  optional source PR title for the PR title (falls back to {@code prId})
+     * @param files    the per-scenario test files to commit (blank/duplicate paths are skipped)
+     * @return the opened {@link GitHubService.GitHubPrResult}
+     * @throws IllegalStateException if GitHub is not configured or any GitHub API call fails
+     */
+    public GitHubService.GitHubPrResult createAggregateTestPr(String prId, String prTitle,
+                                                              List<AggregateTestFile> files) {
+        requireConfigured();
+
+        String branch = "qa/tests/" + prId + "-" + UUID.randomUUID().toString().substring(0, 6);
+
+        log.info("[TestPrService] Creating aggregate-test PR on GitHub — branch='{}' base='{}' files={}",
+                branch, repoProps.getBranch(), files == null ? 0 : files.size());
+
+        if (!gitHubService.createBranch(branch, repoProps.getBranch())) {
+            throw new IllegalStateException("Failed to create branch '" + branch + "'");
+        }
+
+        Set<String> seenPaths = new HashSet<>();
+        int committed = 0;
+        if (files != null) {
+            for (AggregateTestFile file : files) {
+                if (file == null
+                        || file.filePath() == null || file.filePath().isBlank()
+                        || file.content() == null || file.content().isBlank()) {
+                    log.debug("[TestPrService] Skipping aggregate entry with blank path/content for prId='{}'", prId);
+                    continue;
+                }
+                if (!seenPaths.add(file.filePath())) {
+                    log.debug("[TestPrService] Skipping duplicate test file path '{}' for prId='{}'",
+                            file.filePath(), prId);
+                    continue;
+                }
+                if (!gitHubService.createFile(branch, file.filePath(), file.content(),
+                        "Add generated tests for " + prId)) {
+                    throw new IllegalStateException("Failed to commit aggregate test file '" + file.filePath() + "'");
+                }
+                committed++;
+            }
+        }
+
+        String title = "\u26A0\uFE0F [NEEDS REVIEW] [AI-QA] "
+                + (prTitle != null && !prTitle.isBlank() ? prTitle : prId);
+        String body = buildAggregateTestPrBody(prId, committed);
+
+        log.info("[TestPrService] Aggregate-test PR committing {} file(s) for prId='{}'", committed, prId);
+
+        GitHubService.GitHubPrResult pr =
+                gitHubService.createPullRequest(title, body, branch, repoProps.getBranch());
+        if (pr == null) {
+            throw new IllegalStateException("GitHub API returned null for PR creation (head=" + branch + ")");
+        }
+
+        log.info("[TestPrService] Aggregate Test PR #{} created: {}", pr.prNumber(), pr.url());
+        return pr;
+    }
+
     // ─── Guard ────────────────────────────────────────────────────────────────
 
     private void requireConfigured() {
@@ -240,13 +318,32 @@ public class TestPrService {
         }
         sb.append("---\n\n### Generated Test Code\n\n```java\n")
           .append(script.getScriptContent()).append("\n```\n\n");
+        appendTestReviewChecklist(sb);
+        return sb.toString();
+    }
+
+    /**
+     * Body for the aggregate test PR: a short summary (file count) plus the standard review checklist.
+     * Deliberately does NOT inline any test source (sizes-only) — the files live in the PR diff.
+     */
+    private String buildAggregateTestPrBody(String prId, int fileCount) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("## \uD83E\uDD16 AI-Generated Test Code\n\n");
+        sb.append("**Source PR:** ").append(prId).append("\n");
+        sb.append("**Generated Test Files:** ").append(fileCount).append("\n");
+        sb.append("**Generated At:** ").append(LocalDateTime.now().format(FMT)).append("\n\n");
+        appendTestReviewChecklist(sb);
+        return sb.toString();
+    }
+
+    /** Appends the shared test-PR review checklist (used by both per-scenario and aggregate PRs). */
+    private void appendTestReviewChecklist(StringBuilder sb) {
         sb.append("---\n\n### \u2705 Review Checklist\n\n");
         sb.append("- [ ] Test logic matches the feature intent\n");
         sb.append("- [ ] Assertions are meaningful\n");
         sb.append("- [ ] No hardcoded secrets or environment values\n");
         sb.append("- [ ] Test is idempotent (can run multiple times)\n");
         sb.append("- [ ] Dependencies are correctly declared\n");
-        return sb.toString();
     }
 
     // ─── Exception ────────────────────────────────────────────────────────────

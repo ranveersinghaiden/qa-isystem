@@ -18,7 +18,7 @@ Consumer group: `feedback-service-group`
 |-------|----------------|
 | `FeedbackServiceApplication` | Spring Boot entry point — scans `nz.co.eroad.qaisystem` |
 | `FeedbackEventConsumer` | Kafka consumer — deserialises `FeedbackEvent`, delegates to `PrFeedbackService` |
-| `PrFeedbackService` | Core feedback logic: load prior conversation history from Redis (`{prId}:bdd` or `{prId}:test`), fetch GitHub review comments, classify (KNOWLEDGE_GAP vs STYLE_ONLY), update product expert, call `AiClient.completeWithHistory()` so the model has full context of all prior generation and rejection cycles, save updated history back to `ConversationStore`, create revised PR. On every rejection records REGRESSION + NEGATIVE classes per capability into the cross-PR `RejectionLedger` so recurring gaps are forced back into future coverage plans. |
+| `PrFeedbackService` | Core feedback logic: load prior conversation history from Redis (`{prId}:bdd` or `{prId}:test`), fetch GitHub review comments, classify (KNOWLEDGE_GAP vs STYLE_ONLY), update product expert, call `AiClient.completeWithHistory()` so the model has full context of all prior generation and rejection cycles, save updated history back to `ConversationStore`, create revised PR |
 
 ## Shared from `common`
 
@@ -84,10 +84,6 @@ aiqa.ai.openai.model:    ${OPENAI_MODEL:gpt-4o}
 aiqa.ai.copilot.token:    ${GITHUB_COPILOT_TOKEN:}   # GitHub token with Copilot access
 aiqa.ai.copilot.base-url: ${COPILOT_BASE_URL:https://api.githubcopilot.com}
 aiqa.ai.copilot.model:    ${COPILOT_MODEL:gpt-4o}
-
-# Cross-PR rejection ledger (RedisRejectionLedger; active only when spring.data.redis.host set)
-aiqa.feedback.recurrence-threshold: 2    # classes rejected >= N times become recurring → forced into plans
-aiqa.feedback.ledger-ttl-days:      90   # rejection counts expire after N days
 ```
 
 ## No Mocking Policy

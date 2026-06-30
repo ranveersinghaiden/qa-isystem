@@ -4,9 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nz.co.eroad.qaisystem.config.TraceProperties;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.stereotype.Service;
 
 import java.io.BufferedWriter;
 import java.io.Closeable;
@@ -39,8 +36,9 @@ import java.util.regex.Pattern;
  * plus a {@code meta.json} per trace and an appended summary line in
  * {@code trace-index.jsonl} at the trace root.
  *
- * <p>This bean exists <strong>only</strong> when {@code aiqa.trace.enabled=true}; when the
- * flag is unset there is no recorder and the pipeline is unaffected.
+ * <p>This is the {@code file} {@link TraceSink}, wired by {@link TraceConfig} only when
+ * {@code aiqa.trace.enabled=true} and {@code aiqa.trace.sink=file} (the default); when tracing is
+ * disabled there is no sink and the pipeline is unaffected.
  *
  * <p><strong>Reliability contract:</strong> every public method is best-effort. All I/O is
  * wrapped in try/catch, logged at WARN, and <em>never</em> throws — tracing must never break
@@ -52,11 +50,8 @@ import java.util.regex.Pattern;
  * is true. See {@link TraceProperties} for the privacy posture of the trace directory.
  */
 @Slf4j
-@Service
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "aiqa.trace.enabled", havingValue = "true")
-@EnableConfigurationProperties(TraceProperties.class)
-public class ContextTraceRecorder {
+public class ContextTraceRecorder implements TraceSink {
 
     private static final String LOG_PREFIX = "[ContextTraceRecorder]";
     private static final String REDACTED   = "***REDACTED***";
@@ -105,6 +100,7 @@ public class ContextTraceRecorder {
      *
      * @return an active handle, or {@link TraceHandle#disabled()} if tracing could not start
      */
+    @Override
     public TraceHandle begin(String boundary, String taskType, String prId, String agent, String prompt) {
         try {
             String  traceId  = UUID.randomUUID().toString();
@@ -135,7 +131,7 @@ public class ContextTraceRecorder {
             int promptChars = prompt == null ? 0 : prompt.length();
             log.debug("{} Trace started traceId={} boundary={} taskType={} prId={} dir='{}'",
                     LOG_PREFIX, traceId, boundary, taskType, prId, dir);
-            return new TraceHandle(true, traceId, dir, root, start,
+            return TraceHandle.forFile(traceId, dir, root, start,
                     boundary, taskType, prId, agent, rawWriter, promptChars);
 
         } catch (Exception e) {
@@ -149,6 +145,7 @@ public class ContextTraceRecorder {
      * Appends one raw stdout line to {@code raw-stream.jsonl}, honouring the per-trace character
      * cap. No-op when the handle is disabled or raw capture is off. Best-effort — never throws.
      */
+    @Override
     public void rawLine(TraceHandle h, String line) {
         if (h == null || !h.enabled || h.rawWriter == null) {
             return;
@@ -180,6 +177,7 @@ public class ContextTraceRecorder {
      * and appends a compact summary line to {@code trace-index.jsonl}. No-op for a disabled handle.
      * Best-effort — never throws.
      */
+    @Override
     public void finish(TraceHandle h, String finalOutput, int exitCode, boolean success) {
         if (h == null || !h.enabled) {
             return;
@@ -324,57 +322,7 @@ public class ContextTraceRecorder {
         return out;
     }
 
-    // ─── Handle + metadata types ─────────────────────────────────────────────────
-
-    /**
-     * Mutable per-invocation handle. Holds an open {@link BufferedWriter} and a running character
-     * counter, so it is intentionally <em>not</em> a record. A disabled handle (see
-     * {@link #disabled()}) makes every recorder method a no-op. Fields are package-private so the
-     * enclosing recorder and same-package tests can read them; external callers treat it as opaque.
-     */
-    public static final class TraceHandle {
-
-        final boolean        enabled;
-        final String         traceId;
-        final Path           dir;
-        final Path           root;
-        final Instant        start;
-        final String         boundary;
-        final String         taskType;
-        final String         prId;
-        final String         agent;
-        final BufferedWriter rawWriter;          // nullable
-        final int            promptChars;
-
-        long    rawStreamChars;                  // running count of chars written to raw stream
-        boolean truncationMarkerWritten;         // ensures the cap marker is written at most once
-
-        private TraceHandle(boolean enabled, String traceId, Path dir, Path root, Instant start,
-                            String boundary, String taskType, String prId, String agent,
-                            BufferedWriter rawWriter, int promptChars) {
-            this.enabled     = enabled;
-            this.traceId     = traceId;
-            this.dir         = dir;
-            this.root        = root;
-            this.start       = start;
-            this.boundary    = boundary;
-            this.taskType    = taskType;
-            this.prId        = prId;
-            this.agent       = agent;
-            this.rawWriter   = rawWriter;
-            this.promptChars = promptChars;
-        }
-
-        /** A no-op handle: every recorder method short-circuits on it. */
-        static TraceHandle disabled() {
-            return new TraceHandle(false, null, null, null, null, null, null, null, null, null, 0);
-        }
-
-        /** Whether this handle represents an active trace. */
-        public boolean isEnabled() {
-            return enabled;
-        }
-    }
+    // ─── Metadata types ──────────────────────────────────────────────────────────
 
     /**
      * Immutable per-trace metadata, serialised to {@code meta.json} and (compactly) to one line of

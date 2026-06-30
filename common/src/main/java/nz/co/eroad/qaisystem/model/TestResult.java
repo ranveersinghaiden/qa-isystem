@@ -32,4 +32,11 @@ public class TestResult {
     private boolean stabilized;
     private String finalScriptContent;
     private String prUrl;
+
+    /**
+     * Repo-relative path of the generated test file (e.g. {@code src/test/java/.../FooTest.java}).
+     * Surfaced by the one-shot codegen path so the gather aggregate-PR step and feedback
+     * reconstruction can locate the file. {@code null} on the always-on Kafka path.
+     */
+    private String testPath;
 }

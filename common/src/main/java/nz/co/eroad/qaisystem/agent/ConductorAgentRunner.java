@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import nz.co.eroad.qaisystem.config.AgentScalingProperties;
 import nz.co.eroad.qaisystem.config.AiProviderProperties;
 import nz.co.eroad.qaisystem.execution.WorkspacePool;
-import nz.co.eroad.qaisystem.trace.ContextTraceRecorder;
+import nz.co.eroad.qaisystem.trace.TraceSink;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -66,14 +66,14 @@ public class ConductorAgentRunner {
     private final ObjectMapper   objectMapper;
     private final WorkspacePool  workspacePool;
     private final Timer          latencyTimer;   // null when no MeterRegistry is present
-    private final ContextTraceRecorder traceRecorder; // null when aiqa.trace.enabled is unset
+    private final TraceSink      traceRecorder; // null when aiqa.trace.enabled is unset
 
     public ConductorAgentRunner(AiProviderProperties props,
                                 AgentScalingProperties scaling,
                                 WorkspacePool workspacePool,
                                 ObjectMapper objectMapper,
                                 ObjectProvider<MeterRegistry> meterRegistryProvider,
-                                ObjectProvider<ContextTraceRecorder> traceRecorderProvider) {
+                                ObjectProvider<TraceSink> traceRecorderProvider) {
         var cfg = props.getCopilotAgent();
         this.copilotCliPath        = cfg.getCopilotCliPath();
         this.agentTimeoutSeconds   = cfg.getAgentTimeoutSeconds();
@@ -136,7 +136,7 @@ public class ConductorAgentRunner {
      * workspace from the {@link WorkspacePool}, runs the monitored subprocess, then releases both.
      *
      * <p>{@code taskType} and {@code prId} are used only for off-by-default context-trace labelling
-     * (see {@link ContextTraceRecorder}); they have no effect on the subprocess invocation itself.
+     * (see {@link TraceSink}); they have no effect on the subprocess invocation itself.
      *
      * @param prompt   the prompt to execute via {@code -p}
      * @param taskType coarse task label for tracing (e.g. {@code BDD}, {@code CODEGEN}, {@code FIX-BDD})

@@ -8,7 +8,6 @@ import nz.co.eroad.qaisystem.model.TestStrategy.StrategyDecision;
 import nz.co.eroad.qaisystem.model.TestStrategy.TestRequirement;
 import nz.co.eroad.qaisystem.monitor.AiCostMonitor;
 import nz.co.eroad.qaisystem.service.E2ECoverageAnalyzer;
-import nz.co.eroad.qaisystem.service.CoveragePlanner;
 import nz.co.eroad.qaisystem.service.TestPrService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,21 +42,26 @@ public class StrategyAgent {
     private final BddGenerator        bddGenerator;
     private final TestPrService       testPrService;
     private final E2ECoverageAnalyzer e2eCoverageAnalyzer;
-    private final CoveragePlanner     coveragePlanner;
     private final AiCallGate          gate;
     private final AiCostMonitor       monitor;
 
     private static final double LOW_CONFIDENCE_THRESHOLD = 0.4;
 
     public TestStrategy decide(ImpactEnvelope envelope) {
+        return decideAndPlan(envelope).strategy();
+    }
+
+    /**
+     * Same analysis and side-effects as {@link #decide(ImpactEnvelope)} but additionally returns the
+     * generated {@link BddScenario} (null for SKIP) so callers — e.g. the {@code oneshot} runner —
+     * can persist per-scenario state without re-running the AI. The Kafka path keeps calling
+     * {@link #decide(ImpactEnvelope)}, which delegates here, so behaviour is unchanged.
+     */
+    public StrategyPlan decideAndPlan(ImpactEnvelope envelope) {
         log.info("[StrategyAgent] Evaluating strategy for PR '{}'", envelope.getPrId());
 
         // Perform real E2E/integration coverage analysis against the test repo.
         CoverageReport coverage = e2eCoverageAnalyzer.analyze(envelope);
-
-        // Turn component-level coverage into a scenario-class gap matrix.
-        coverage.setScenarioMatrix(coveragePlanner.plan(envelope, coverage));
-        envelope.setCoverageReport(coverage);
 
         // Evaluate the gate and log its advisory output — does not override computeDecision()
         AiCallGate.GateDecision gateDecision = gate.evaluate(envelope);
@@ -79,13 +83,23 @@ public class StrategyAgent {
                 strategy.isFullRegressionRequired(),
                 strategy.isExpandedScope());
 
-        switch (strategy.getDecision()) {
-            case SKIP         -> handleSkip(strategy);
+        BddScenario bddScenario = switch (strategy.getDecision()) {
+            case SKIP -> {
+                handleSkip(strategy);
+                yield null;
+            }
             case UPDATE_TESTS -> handleUpdateTests(strategy, envelope);
             case CREATE_TESTS -> bddGenerator.generate(strategy, envelope);
-        }
+        };
 
-        return strategy;
+        return new StrategyPlan(strategy, bddScenario);
+    }
+
+    /**
+     * Carrier returned by {@link #decideAndPlan(ImpactEnvelope)}: the strategy plus the generated
+     * BDD scenario (null when the decision is SKIP).
+     */
+    public record StrategyPlan(TestStrategy strategy, BddScenario bddScenario) {
     }
 
     // ─── Decision logic ────────────────────────────────────────────────────────
@@ -228,7 +242,7 @@ public class StrategyAgent {
 
     // ─── UPDATE_TESTS handler (merged from deleted TestUpdater) ───────────────
 
-    private void handleUpdateTests(TestStrategy strategy, ImpactEnvelope envelope) {
+    private BddScenario handleUpdateTests(TestStrategy strategy, ImpactEnvelope envelope) {
         log.info("[StrategyAgent] Generating update scenarios for {} test files in PR '{}'",
                 strategy.getTestsToUpdate().size(), envelope.getPrId());
 
@@ -249,6 +263,7 @@ public class StrategyAgent {
 
         testPrService.createBddPr(bddScenario);
         log.info("[StrategyAgent] BDD update PR created ({} scenarios)", scenarios.size());
+        return bddScenario;
     }
 
     private BddScenario.Scenario buildUpdateScenario(String testFile, ImpactEnvelope env) {

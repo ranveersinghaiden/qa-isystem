@@ -1,0 +1,20 @@
+{
+  "name": "QA-ISystem",
+  "url": "https://github.com/ranveersinghaiden/qa-isystem",
+  "hook_attributes": {
+    "url": "https://REPLACE-WITH-RECEIVER-URL.workers.dev",
+    "active": true
+  },
+  "redirect_url": "https://github.com/ranveersinghaiden/qa-control",
+  "public": false,
+  "default_events": [
+    "pull_request",
+    "pull_request_review"
+  ],
+  "default_permissions": {
+    "contents": "write",
+    "pull_requests": "write",
+    "metadata": "read"
+  },
+  "description": "QA-ISystem — autonomous QA pipeline. Listens for PR + review events on target repos and drives impact → strategy → BDD → codegen via scale-to-zero GitHub Actions runners. Each workflow job mints its own short-lived installation token; no long-lived tokens are stored or passed in payloads."
+}

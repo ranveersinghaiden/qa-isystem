@@ -39,7 +39,7 @@ nz/co/eroad/qaisystem/
 ├── execution/    CodegenService.java · ApiTestRunner.java · UITestRunner.java
 │                 MobileTestRunner.java · TestExecutionEngine.java · StabilizationLoop.java
 │                 RepoContext.java
-├── service/      E2ECoverageAnalyzer.java · CoveragePlanner.java · RepoContextService.java · TestPrService.java
+├── service/      E2ECoverageAnalyzer.java · RepoContextService.java · TestPrService.java
 └── controller/   StrategyController.java · GitHubWebhookController.java
 ```
 
@@ -52,9 +52,8 @@ Kafka: ImpactResultsQueue (ImpactEnvelope)
     │
     ▼ ImpactResultsConsumer → StrategyAgent.decide()
       ① E2ECoverageAnalyzer.analyze()   → real GOOD/PARTIAL/NONE coverage level
-      ② CoveragePlanner.plan()          → ScenarioMatrix (capability × class gaps)
-      ③ computeDecision()               → SKIP | UPDATE_TESTS | CREATE_TESTS
-      ④ BddGenerator.generate()         → fills PLANNED gap cells only
+      ② computeDecision()               → SKIP | UPDATE_TESTS | CREATE_TESTS
+      ③ BddGenerator.generate()         → BddScenario (AI or template)
       ④ TestPrService.createBddPr()     → GitHub PR (qa/bdd/*)
          PrTracker.trackBdd()
 
@@ -87,7 +86,7 @@ TEST REJECTED → PrFeedbackService.handleTestRejection() [virtual thread]
 | Class | Responsibility |
 |-------|----------------|
 | `StrategyAgent` | Decides SKIP/UPDATE_TESTS/CREATE_TESTS using E2E coverage + risk rules (see [decision logic](#strategy-decision-logic)). Builds `TestStrategy` with test types, scenario hints, confidence score, priority (P0–P3). |
-| `BddGenerator` | Delegates Gherkin generation to the target repository's **Conductor** agent via `ConductorAgentRunner` (monitored `copilot` subprocess running in the cloned repo dir). Prompt enumerates the `ScenarioMatrix` PLANNED gap cells (one scenario per capability × class), not open-ended. No AI API call, no `TestPlanner` phase, no template fallback — throws `IllegalStateException` on empty Conductor output. Adds `@api/@ui/@mobile`, `@pr-{prId}`, `@auto-generated`, `@smoke` (HIGH/CRITICAL risk). |
+| `BddGenerator` | Delegates Gherkin generation to the target repository's **Conductor** agent via `ConductorAgentRunner` (monitored `copilot` subprocess running in the cloned repo dir). No AI API call, no `TestPlanner` phase, no template fallback — throws `IllegalStateException` on empty Conductor output. Adds `@api/@ui/@mobile`, `@pr-{prId}`, `@auto-generated`, `@smoke` (HIGH/CRITICAL risk). |
 | `PrFeedbackService` | Handles BDD + TEST rejections. Fetches GitHub review comments → Conductor classifies (`KNOWLEDGE_GAP`/`STYLE_ONLY`) → if gap: updates `productExpert/` + creates knowledge-update PR → re-generates via Conductor with feedback + prior conversation → creates revised PR. Runs on virtual thread. |
 
 ### Execution Layer
@@ -104,7 +103,6 @@ TEST REJECTED → PrFeedbackService.handleTestRejection() [virtual thread]
 | Class | Responsibility |
 |-------|----------------|
 | `E2ECoverageAnalyzer` | Cross-references `ImpactEnvelope.impactedComponents` against the coverage index (from `RepoContextService`). Produces GOOD/PARTIAL/NONE `CoverageReport`. Returns UNKNOWN when no repo is configured. |
-| `CoveragePlanner` | Turns binary coverage into a `ScenarioMatrix` (capability × `ScenarioClass`). Maps each `ChangeType` → required classes; marks covered components COVERED, the rest PLANNED. Folds recurring rejection classes from `RejectionLedger` back into required. Gaps drive `BddGenerator`; `recall = covered / required`. |
 | `RepoContextService` | Clones/pulls the test repo, scans test files, builds coverage index. See [RepoContextService](#repocontextservice). |
 | `TestPrService` | Creates real GitHub PRs. `createBddPr()`: branch `qa/bdd/{prId}-{6chars}`, commits `.feature` file, title `[AI-QA] {prTitle}`. `createFinalTestPr()`: branch `qa/tests/…`, title `✅ [AI-QA] {prTitle}` / `⚠️ [NEEDS REVIEW] {prTitle}`. |
 
@@ -149,21 +147,12 @@ Phase 1 – impact-service / TestCoverageService
 Phase 2 – strategy-service / E2ECoverageAnalyzer
   Has cloned test repo + coverage index (componentName → test files).
   Replaces UNKNOWN with GOOD/PARTIAL/NONE based on real repo scan.
-
-Phase 3 – strategy-service / CoveragePlanner
-  Turns has-a-test into tested-well. Maps each ChangeType → required ScenarioClass
-  set; builds capability × class matrix marking COVERED/PLANNED. PLANNED = gaps.
-  Recurring rejections (RejectionLedger) force classes back in. recall=covered/required.
-  BddGenerator then writes one scenario per PLANNED cell, not open-ended.
+  StrategyAgent uses this real level for its decision.
 ```
 
 **Coverage index** (built by `RepoContextService`): inverted map `componentName → [testFiles]`.
 Integration/E2E files detected by: `.feature` extension, IT/IntegrationTest/E2ETest in name,
 or content contains `@SpringBootTest`, `RestAssured`, `MockMvc`, `WebTestClient`.
-
-**ScenarioClass taxonomy:** HAPPY_PATH, ALTERNATE, BOUNDARY, NEGATIVE, AUTH, ERROR,
-REGRESSION, COMPAT, DATA_INTEGRITY — selected deterministically per ChangeType (e.g.
-NEW_FEATURE→happy+alt+boundary+negative+auth+error; API_CHANGE→happy+negative+auth+compat+error).
 
 ---
 

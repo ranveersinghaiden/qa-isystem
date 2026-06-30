@@ -33,6 +33,23 @@ public class StabilizationLoop {
     private long retryDelayMs;
 
     public TestResult execute(TestScript script) {
+        return execute(script, true);
+    }
+
+    /**
+     * Runs the same Run→Fail→Fix stabilization loop, optionally skipping PR creation.
+     *
+     * <p>The always-on Kafka path calls {@link #execute(TestScript)} → {@code execute(script, true)},
+     * which is behaviorally identical to the original single-arg method (it opens the per-scenario
+     * test PR via {@link TestPrService#createFinalTestPr}). The K8s one-shot path calls
+     * {@code execute(script, false)} so NO per-scenario PR is opened (the gather step opens one
+     * aggregate PR instead). In both cases the returned {@link TestResult} is enriched with
+     * {@code finalScriptContent} (the final, post-fix script) so feedback reconstruction is faithful.
+     *
+     * @param openTestPr when {@code true} open the per-scenario test PR (Kafka behavior); when
+     *                   {@code false} skip PR creation (one-shot behavior)
+     */
+    public TestResult execute(TestScript script, boolean openTestPr) {
         log.info("[StabilizationLoop] Starting loop for script '{}' (max {} retries)",
                 script.getScriptId(), maxRetries);
 
@@ -48,7 +65,10 @@ public class StabilizationLoop {
                 log.info("[StabilizationLoop] Script '{}' PASSED on attempt {}",
                         script.getScriptId(), attempt);
 
-                testPrService.createFinalTestPr(script, lastResult);
+                if (openTestPr) {
+                    testPrService.createFinalTestPr(script, lastResult);
+                }
+                lastResult.setFinalScriptContent(script.getScriptContent());
                 return lastResult;
             }
 
@@ -71,7 +91,10 @@ public class StabilizationLoop {
         script.setStatus(TestScript.ScriptStatus.ABANDONED);
         lastResult.setStabilized(false);
 
-        testPrService.createFinalTestPr(script, lastResult);
+        if (openTestPr) {
+            testPrService.createFinalTestPr(script, lastResult);
+        }
+        lastResult.setFinalScriptContent(script.getScriptContent());
         return lastResult;
     }
 

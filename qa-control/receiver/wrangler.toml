@@ -1,0 +1,12 @@
+name = "qa-isystem-receiver"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+# Public vars (non-secret). Point these at the qa-control orchestration repo.
+[vars]
+QA_CONTROL_OWNER = "ranveersinghaiden"
+QA_CONTROL_REPO  = "qa-control"
+
+# Secrets are NOT stored here. Set them once per environment:
+#   wrangler secret put QA_WEBHOOK_SECRET   # same value as the GitHub App webhook secret
+#   wrangler secret put QA_DISPATCH_TOKEN   # fine-grained PAT or App token, contents:write on qa-control only

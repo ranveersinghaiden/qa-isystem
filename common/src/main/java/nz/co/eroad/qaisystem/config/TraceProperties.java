@@ -35,6 +35,9 @@ public class TraceProperties {
     /** Root directory for trace artifacts. Default {@code ./logs/context-traces} (gitignored). */
     private String dir = "./logs/context-traces";
 
+    /** Trace destination: "file" (default, writes ./logs/context-traces) or "postgres" (writes context_history). */
+    private String sink = "file";
+
     /**
      * Capture the full raw JSON-RPC stdout stream to {@code raw-stream.jsonl}. This is the
      * high-value artifact: today the runner caps stdout at {@code maxOutputChars} and discards

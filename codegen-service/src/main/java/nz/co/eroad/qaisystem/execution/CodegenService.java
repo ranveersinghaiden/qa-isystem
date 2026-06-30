@@ -41,9 +41,31 @@ public class CodegenService {
      * Processes one fanned-out scenario: dedup → Conductor generation → stabilisation → test PR,
      * then records PR-level completion.
      *
+     * <p>This is the always-on Kafka entry point and delegates to
+     * {@link #generateAndExecuteOne(TestScriptRequest, boolean, String)} with {@code openTestPr=true}
+     * (open the per-scenario PR) and no {@code targetDir} — behaviorally identical to the original.
+     *
      * @return the {@link TestResult}, or {@code null} when the scenario was a duplicate and skipped
      */
     public TestResult generateAndExecuteOne(TestScriptRequest req) {
+        return generateAndExecuteOne(req, true, null);
+    }
+
+    /**
+     * One-shot-aware variant of {@link #generateAndExecuteOne(TestScriptRequest)}.
+     *
+     * <p>When {@code openTestPr} is {@code false} (the K8s one-shot path) the per-scenario PR is NOT
+     * opened (the gather step opens a single aggregate PR instead) and the returned {@link TestResult}
+     * is enriched with the generated file's repo-relative {@code testPath} (honoring {@code targetDir}
+     * when supplied). When {@code openTestPr} is {@code true} (Kafka path) behavior is unchanged and
+     * {@code testPath} is left {@code null}.
+     *
+     * @param openTestPr {@code true} to open the per-scenario PR (Kafka), {@code false} to skip it (one-shot)
+     * @param targetDir  optional repo-relative output directory for the test file (one-shot only); when
+     *                   {@code null}/blank the default {@code src/test/java/{package}} path is used
+     * @return the {@link TestResult}, or {@code null} when the scenario was a duplicate and skipped
+     */
+    public TestResult generateAndExecuteOne(TestScriptRequest req, boolean openTestPr, String targetDir) {
         String scenarioId = req.getScenarioId();
 
         if (!progressTracker.claimScenario(scenarioId)) {
@@ -67,7 +89,18 @@ public class CodegenService {
                 .build();
 
         TestScript script = generateScript(scenario, parent, type);
-        TestResult result = stabilizationLoop.execute(script);
+        TestResult result = stabilizationLoop.execute(script, openTestPr);
+
+        if (result != null && !openTestPr) {
+            // One-shot: surface the generated file path (finalScriptContent is set by StabilizationLoop).
+            // fileName/targetPackage are stable across fixes, so deriving from the original script is correct.
+            String defaultPath = "src/test/java/"
+                    + script.getTargetPackage().replace('.', '/') + "/" + script.getFileName();
+            String path = (targetDir != null && !targetDir.isBlank())
+                    ? targetDir.replaceAll("/+$", "") + "/" + script.getFileName()
+                    : defaultPath;
+            result.setTestPath(path);
+        }
 
         int remaining = progressTracker.completeAndRemaining(req.getPrId(), req.getScenarioCount());
         if (remaining <= 0) {
