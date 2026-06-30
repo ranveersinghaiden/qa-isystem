@@ -2,7 +2,7 @@
 #
 # Triggered by the serverless receiver on PR opened / synchronized.
 # Run 1 of the 3-run pipeline: impact (deterministic, no AI) → strategy
-# (ContextSelector in-process) → opens the BDD PR → sets gate = awaiting_bdd_approval
+# (copilot-CLI Conductor agent gathers its own context in-process) → opens the BDD PR → sets gate = awaiting_bdd_approval
 # → pods vanish ($0 while the human reviews the BDD PR).
 #
 # Auth: NO tokens travel in dispatch payloads. Each job mints a fresh,
@@ -62,7 +62,7 @@ jobs:
           path: target
           retention-days: 1
 
-      - name: Generate BDD + open BDD PR (ContextSelector in-process)
+      - name: Generate BDD + open BDD PR (Conductor agent in-process)
         env:
           GH_APP_TOKEN: ${{ steps.tok.outputs.token }}
         run: >

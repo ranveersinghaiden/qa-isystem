@@ -77,7 +77,7 @@ jobs:
           java -jar /app/codegen.jar --mode oneshot
           --pr-id "${{ github.event.client_payload.prId }}"
           --scenario "${{ matrix.id }}" --target-dir target
-        # ContextSelector + StabilizationLoop in-process; writes per-scenario result to DB
+        # copilot-CLI Conductor agent + StabilizationLoop in-process; writes per-scenario result to DB
 
   gather:
     needs: codegen
