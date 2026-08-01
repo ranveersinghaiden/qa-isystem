@@ -1,0 +1,14 @@
+{
+  "products": {
+    "web": {
+      "surface": "web",
+      "modules": ["web/tests"],
+      "directory_keyword": "web"
+    },
+    "mobile": {
+      "surface": "mobile",
+      "modules": ["mobile/tests"],
+      "directory_keyword": "mobile"
+    }
+  }
+}
