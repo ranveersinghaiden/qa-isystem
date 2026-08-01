@@ -24,3 +24,6 @@ output/
 .DS_Store
 .idea/
 .vscode/
+
+
+/graphify-out/cache/
