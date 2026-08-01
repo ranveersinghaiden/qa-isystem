@@ -1,0 +1,95 @@
+name: QA-ISystem · Monthly local pattern updates
+
+on:
+  schedule:
+    - cron: "0 18 1 * *" # First UTC day monthly; NZ local date/time varies with daylight saving.
+  workflow_dispatch:
+
+concurrency:
+  group: qa-isystem-pattern-updates
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  update-patterns:
+    name: Update deterministic QA patterns
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    permissions:
+      contents: write
+      pull-requests: write
+      copilot-requests: write
+    steps:
+      - name: Checkout test-automation
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build weekly local evidence contract
+        env:
+          REPOSITORY: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p governance
+          git log --since="7 days ago" --format="%h %s" -- \
+            core360 mobile-test-automation myeroad \
+            > governance/recent-pattern-changes.txt
+          python3 .github/scripts/qa-isystem/run_local_generation.py \
+            --repo . \
+            --task-type VALIDATION_ONLY \
+            --task-id "weekly-patterns:$(git rev-parse HEAD)" \
+            --repository "$REPOSITORY" \
+            --branch "$BRANCH" \
+            --commit-sha "$(git rev-parse HEAD)" \
+            --impacted-component "QA automation patterns" \
+            --diff-summary-file governance/recent-pattern-changes.txt \
+            --output governance/local-generation.json
+
+      - name: Configure Git identity for agent commits
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Run QA engine maintainer
+        id: maintainer
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          copilot --agent Workflow_QaEngineMaintainer --allow-all-tools --no-ask-user \
+            -p "$(cat <<'PROMPT'
+            Maintain the deterministic QA-ISystem engine from the last seven days of
+            repository changes. Read governance/local-generation.json and
+            governance/recent-pattern-changes.txt before investigating anything else.
+            Follow Workflow_QaEngineMaintainer.agent.md exactly. Do not make a PR unless
+            you identify an evidence-backed local pattern that has focused regression
+            coverage and passes the required validation.
+            PROMPT
+            )" 2>&1 | tee agent-output.log
+
+      - name: Fail if the maintainer failed
+        if: steps.maintainer.outcome != 'success'
+        run: exit 1
+
+      - name: Publish summary
+        if: always()
+        run: |
+          {
+            echo "### Weekly QA-ISystem Pattern Update"
+            echo "- Analysed changes from the previous seven days."
+            echo "- Local evidence contract: \`governance/local-generation.json\`."
+            echo "- Copilot opens an \`AI_QA_ENGINE\` PR only for a validated, in-scope update."
+          } >> "$GITHUB_STEP_SUMMARY"

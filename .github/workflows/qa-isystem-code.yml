@@ -1,0 +1,403 @@
+name: QA-ISystem · Code generation
+
+# Human-merged `AI_BDD` PRs only. Product from changed `.feature` paths; Jira ID from PR title.
+# Use Copilot CLI + `GITHUB_TOKEN`; CLI blocks until `Workflow_WebCoder` / `Workflow_MobileCoder` finishes and opens `AI_CODE` PR.
+
+on:
+  pull_request:
+    types: [closed]
+
+concurrency:
+  group: qa-code-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  models: read
+  packages: read
+  copilot-requests: write
+
+jobs:
+  generate-code:
+    if: >-
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'AI_BDD')
+    runs-on: ubuntu-latest
+    timeout-minutes: 75  # cloud agent session cap (59 min) + overhead
+    steps:
+      - name: Checkout test-automation
+        uses: actions/checkout@v4
+        with:
+          repository: eroad/test-automation
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+
+      - name: Setup java
+        uses: eroad/github-actions-pipelines/actions/dist/java-init@v6.0
+        with:
+          java_version: "21"
+          nexus_username: "${{ secrets.NEXUS_USERNAME }}"
+          nexus_password: "${{ secrets.NEXUS_PASSWORD }}"
+          sonar_token: "${{ secrets.SONAR_TOKEN }}"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Governance preflight
+        run: |
+          python3 scripts/qa_isystem_governance.py preflight \
+            --repo . \
+            --workflow .github/workflows/qa-isystem-code.yml \
+            --out governance/preflight.json \
+            --summary "$GITHUB_STEP_SUMMARY"
+
+      - name: Set up GitHub CLI
+        run: |
+          if ! command -v gh >/dev/null 2>&1; then
+            type -p curl >/dev/null || sudo apt-get install -y curl
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+              | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+              | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
+            sudo apt-get update && sudo apt-get install -y gh
+          fi
+          gh --version
+
+      - name: Gather merged BDD PR facts
+        id: facts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          gh pr view "$PR_NUMBER" --json files --jq '.files[].path' \
+            | grep -E '\.feature$' > feature-files.txt || true
+          echo "----- feature files -----"; cat feature-files.txt || true
+
+          PRODUCT="$(python3 .github/scripts/qa-isystem/gather_context.py \
+            --infer-product-from feature-files.txt || echo '')"
+          echo "product=$PRODUCT" >> "$GITHUB_OUTPUT"
+          echo "Inferred product: $PRODUCT"
+
+          JIRA_ID="$(printf '%s' "$PR_TITLE" | grep -oE '[A-Z][A-Z0-9]+-[0-9]+' | head -1 || true)"
+          echo "jira_id=$JIRA_ID" >> "$GITHUB_OUTPUT"
+          echo "Jira ID: $JIRA_ID"
+
+          gh pr view "$PR_NUMBER" --json body --jq '.body' > bdd-body.md || true
+          DOMAIN="$(grep -iE '^[[:space:]]*Domain:' bdd-body.md | head -1 | sed -E 's/^[[:space:]]*[Dd]omain:[[:space:]]*//' || true)"
+          PRODUCT_NAME="$(grep -iE '^[[:space:]]*Product:' bdd-body.md | head -1 | sed -E 's/^[[:space:]]*[Pp]roduct:[[:space:]]*//' || true)"
+          echo "domain=$DOMAIN" >> "$GITHUB_OUTPUT"
+          echo "product_name=$PRODUCT_NAME" >> "$GITHUB_OUTPUT"
+          echo "Domain: $DOMAIN · Product: $PRODUCT_NAME"
+
+          # Include merged-PR review/comments; extra scenario reqs may live there, not in `.feature` files.
+          {
+            gh pr view "$PR_NUMBER" --json reviews \
+              --jq '.reviews[] | select(.body != "") | "### Review (" + .state + ") by @" + .author.login + "\n" + .body' \
+              || true
+            gh pr view "$PR_NUMBER" --json comments \
+              --jq '.comments[] | select(.body != "") | "### Comment by @" + .author.login + "\n" + .body' \
+              || true
+          } > pr-comments.txt
+          echo "----- PR comments -----"; cat pr-comments.txt || true
+
+      - name: Guard - product resolved
+        if: steps.facts.outputs.product == ''
+        run: |
+          echo "::error::Could not infer product from merged BDD PR .feature paths - aborting." >&2
+          exit 1
+
+      - name: Sync product experts (mvn initialize)
+        # Only first resolved module is built (mvn initialize) since sync writes
+        # to a shared repo-root dest; keep non-quiet so failed sync logs stay visible.
+        continue-on-error: false
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOMAIN: ${{ steps.facts.outputs.domain }}
+          PRODUCT_NAME: ${{ steps.facts.outputs.product_name }}
+        run: |
+          set -euo pipefail
+          MODULES="$(python3 .github/scripts/qa-isystem/gather_context.py \
+            --domain "$DOMAIN" \
+            --product-name "$PRODUCT_NAME" \
+            --emit-module)"
+          if [ -z "$MODULES" ]; then
+            echo "::error::Could not resolve a Maven module for product '$PRODUCT_NAME' (domain '$DOMAIN') to sync product-experts via."
+            exit 1
+          fi
+          IFS=',' read -r -a MODULE_ARR <<< "$MODULES"
+          for m in "${MODULE_ARR[@]}"; do
+            if [ ! -f "$m/pom.xml" ]; then
+              echo "::error::Resolved module '$m' has no pom.xml - cannot sync product-experts via Maven."
+              exit 1
+            fi
+            if ! grep -q '<id>sync-product-experts</id>' "$m/pom.xml"; then
+              echo "::error::Resolved module '$m' has no 'sync-product-experts' exec-maven-plugin binding in its pom.xml - mvn initialize would succeed without actually syncing product-experts. Wire the plugin into $m/pom.xml (see an already-wired module's pom.xml for the pattern) before routing this product here."
+              exit 1
+            fi
+          done
+          SYNC_MODULE="${MODULE_ARR[0]}"
+          echo "Building module '$SYNC_MODULE' (mvn initialize) to sync product-experts..."
+          mvn -pl "$SYNC_MODULE" initialize
+
+      - name: Fetch Jira details
+        env:
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_CLOUD_ID: ${{ secrets.JIRA_CLOUD_ID }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          FACTS_JIRA_ID: ${{ steps.facts.outputs.jira_id }}
+        run: |
+          .github/scripts/qa-isystem/fetch_jira_summary.sh \
+            -i "$FACTS_JIRA_ID" \
+            -c "$JIRA_CLOUD_ID" \
+            -e "$JIRA_EMAIL" \
+            -o jira-details.md
+          echo "Jira details written to jira-details.md ($(wc -l < jira-details.md) lines, $(wc -c < jira-details.md) bytes)."
+          if [ "${RUNNER_DEBUG:-0}" = "1" ]; then
+            echo "----- Jira details preview (debug logging enabled) -----"; head -40 jira-details.md
+          fi
+
+      - name: Build CODE task blob
+        env:
+          PRODUCT: ${{ steps.facts.outputs.product }}
+          DOMAIN: ${{ steps.facts.outputs.domain }}
+          PRODUCT_NAME: ${{ steps.facts.outputs.product_name }}
+          FACTS_JIRA_ID: ${{ steps.facts.outputs.jira_id }}
+          SOURCE_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          [ -f .github/scripts/qa-isystem/product-knowledge-instructions.md ] || { echo "missing product-knowledge-instructions.md" >&2; exit 1; }
+          {
+            echo "Implement step definitions and page objects for the following approved"
+            echo ".feature files, then raise a PR. Do not modify feature files, except when"
+            echo "a PR review comment below explicitly requests new/changed scenarios (see"
+            echo "the 'Additional scenarios and feedback from PR comments' section)."
+            echo
+            echo "## Approved .feature files"
+            cat feature-files.txt
+            echo
+            echo "## Approved scenarios (verbatim from the merged BDD PR)"
+            while IFS= read -r f; do
+              [ -f "$f" ] || continue
+              echo
+              echo "### $f"
+              echo '```gherkin'
+              cat "$f"
+              echo '```'
+            done < feature-files.txt
+
+            # PR comments may add/change scenarios missing from `.feature` files.
+            if [ -s pr-comments.txt ] && [ -n "$(tr -d '[:space:]' < pr-comments.txt)" ]; then
+              echo
+              echo "## Additional scenarios and feedback from PR comments"
+              echo "The following review bodies and comments were left on the BDD PR by"
+              echo "reviewers before it was merged. Treat them as supplementary requirements:"
+              echo "- If any comment contains Gherkin scenarios, implement them in addition"
+              echo "  to the .feature file content above (add them to the relevant .feature"
+              echo "  file first, then implement step definitions / page objects for them)."
+              echo "- If any comment requests changes to existing scenarios, apply them."
+              echo "- If any comment describes new test cases in plain English, convert them"
+              echo "  to scenarios and implement them."
+              echo
+              cat pr-comments.txt
+            fi
+
+            echo
+            cat .github/scripts/qa-isystem/product-knowledge-instructions.md
+          } > task-description.md
+          echo "----- task description preview -----"; head -60 task-description.md
+
+          python3 .github/scripts/qa-isystem/gather_context.py \
+            --product "$PRODUCT" \
+            --domain "$DOMAIN" \
+            --product-name "$PRODUCT_NAME" \
+            --jira-id "$FACTS_JIRA_ID" \
+            --jira-details @jira-details.md \
+            --source-repo "$SOURCE_REPO" \
+            --pr-number "$PR_NUMBER" \
+            --logic-change @bdd-body.md \
+            --task-description @task-description.md \
+            --output code-task.md
+          echo "----- code task preview -----"; head -40 code-task.md
+
+
+      - name: Resolve CODE agent
+        id: coder
+        env:
+          PRODUCT: ${{ steps.facts.outputs.product }}
+          DOMAIN: ${{ steps.facts.outputs.domain }}
+          PRODUCT_NAME: ${{ steps.facts.outputs.product_name }}
+        run: |
+          AGENT="Workflow_$(python3 .github/scripts/qa-isystem/gather_context.py \
+            --product "$PRODUCT" \
+            --domain "$DOMAIN" \
+            --product-name "$PRODUCT_NAME" \
+            --emit-agent)"
+          echo "agent=$AGENT" >> "$GITHUB_OUTPUT"
+          echo "Code agent: $AGENT"
+
+          MODULES="$(python3 .github/scripts/qa-isystem/gather_context.py \
+            --domain "$DOMAIN" \
+            --product-name "$PRODUCT_NAME" \
+            --emit-module)"
+          echo "modules=$MODULES" >> "$GITHUB_OUTPUT"
+          echo "Resolved module(s): ${MODULES:-<none>}"
+
+      - name: Run local-first code generation
+        env:
+          PRODUCT_NAME: ${{ steps.facts.outputs.product_name }}
+          JIRA_ID: ${{ steps.facts.outputs.jira_id }}
+          SOURCE_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          python3 .github/scripts/qa-isystem/run_local_generation.py \
+            --repo . \
+            --task-type TEST_SKELETON_GENERATION \
+            --task-id "jira:$JIRA_ID:code" \
+            --repository "$SOURCE_REPO" \
+            --branch "$GITHUB_REF_NAME" \
+            --commit-sha "$GITHUB_SHA" \
+            --pr-number "$PR_NUMBER" \
+            --product-context "$PRODUCT_NAME" \
+            --jira-context-file jira-details.md \
+            --diff-summary-file bdd-body.md \
+            --impacted-component "$PRODUCT_NAME" \
+            --target-test-type java-bdd \
+            --output governance/local-generation.json
+
+          python3 -m pip install --disable-pip-version-check -q pytest
+          python3 -m pytest .github/scripts/qa-isystem/tests -q
+
+      - name: Compress task blob
+        id: compress
+        run: |
+          python3 .github/scripts/qa-isystem/caveman_compress.py code-task.md > code-task-compressed.md
+          echo "----- compressed task blob preview -----"; head -40 code-task-compressed.md
+          echo "original_bytes=$(wc -c < code-task.md)" >> "$GITHUB_OUTPUT"
+          echo "compressed_bytes=$(wc -c < code-task-compressed.md)" >> "$GITHUB_OUTPUT"
+
+      - name: Record QA iSystem telemetry
+        env:
+          QA_ISYSTEM_TASK_ID: jira:${{ steps.facts.outputs.jira_id }}
+        run: |
+          python3 scripts/qa_isystem_governance.py start \
+            --out governance/agent-start.json \
+            --workflow qa-isystem-code.yml \
+            --stage generate-code \
+            --agent "${{ steps.coder.outputs.agent }}" \
+            --task-file code-task-compressed.md
+
+      - name: Configure git identity for agent commits
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Install browser/mobile automation tooling
+        run: |
+          set -euo pipefail
+          MODULES="${{ steps.coder.outputs.modules }}"
+          AGENT="${{ steps.coder.outputs.agent }}"
+          IFS=',' read -r -a MODULE_ARR <<< "$MODULES"
+
+          INSTALL_MOBILE=false
+          INSTALL_WEB=false
+          for m in "${MODULE_ARR[@]}"; do
+            if [ "$m" = "mobile-test-automation" ]; then
+              INSTALL_MOBILE=true
+            elif [ -n "$m" ]; then
+              INSTALL_WEB=true
+            fi
+          done
+          # No module map → fall back to agent type so needed tooling still installs.
+          if [ -z "$MODULES" ]; then
+            if [ "$AGENT" = "Workflow_MobileCoder" ]; then INSTALL_MOBILE=true; else INSTALL_WEB=true; fi
+          fi
+
+          if [ "$INSTALL_MOBILE" = "true" ]; then
+            echo "Installing Appium (mobile-test-automation)..."
+            npm install -g appium@2
+            appium driver install uiautomator2
+          fi
+
+          if [ "$INSTALL_WEB" = "true" ]; then
+            for m in "${MODULE_ARR[@]}"; do
+              if [ -n "$m" ] && [ "$m" != "mobile-test-automation" ] && [ -d "$m" ]; then
+                if ! grep -q '<artifactId>playwright</artifactId>' "$m/pom.xml" 2>/dev/null; then
+                  echo "Skipping Playwright browser install for module '$m' - no playwright dependency in its pom.xml."
+                  continue
+                fi
+                echo "Installing Playwright browsers for module: $m"
+                mvn -q -pl "$m" exec:java \
+                  -Dexec.mainClass=com.microsoft.playwright.CLI \
+                  -Dexec.args="install --with-deps" || \
+                  echo "::warning::Playwright install failed for module '$m' - the coder agent's own compile-verify step will surface any missing dependency."
+              fi
+            done
+            if [ "$INSTALL_MOBILE" != "true" ] && [ -z "$MODULES" ]; then
+              echo "::warning::No test module resolved for this product - skipping module-scoped Playwright install."
+            fi
+          fi
+
+      - name: Run coder agent via Copilot CLI
+        id: run_agent
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -o pipefail
+          copilot --agent "${{ steps.coder.outputs.agent }}" --allow-all-tools --no-ask-user \
+            -p "$(cat code-task-compressed.md; printf '\n\n## Local-first generation contract\n'; cat governance/local-generation.json)" \
+            2>&1 | tee agent-output.log
+
+      - name: Record QA iSystem telemetry outcome
+        if: always()
+        run: |
+          python3 scripts/qa_isystem_governance.py finish \
+            --start governance/agent-start.json \
+            --out governance/agent-finish.json \
+            --status "${{ steps.run_agent.outcome }}" \
+            --log-file agent-output.log \
+            --summary "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish QA iSystem governance evidence
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: qa-isystem-governance-code-${{ github.run_id }}-${{ github.run_attempt }}
+          path: governance/*.json
+          if-no-files-found: error
+
+      - name: Fail if coder agent failed
+        if: always() && steps.run_agent.outcome != 'success'
+        run: exit 1
+
+      # CLI blocks until coder finishes; no polling/discovery step needed here.
+
+      - name: Summary
+        if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PRODUCT: ${{ steps.facts.outputs.product }}
+          FACTS_JIRA_ID: ${{ steps.facts.outputs.jira_id }}
+          CODER_AGENT: ${{ steps.coder.outputs.agent }}
+          ORIGINAL_BYTES: ${{ steps.compress.outputs.original_bytes }}
+          COMPRESSED_BYTES: ${{ steps.compress.outputs.compressed_bytes }}
+        run: |
+          {
+            echo "### QA-ISystem · Code generation"
+            echo "- Merged BDD PR: #$PR_NUMBER"
+            echo "- Product: \`$PRODUCT\`"
+            echo "- Jira: \`$FACTS_JIRA_ID\`"
+            echo "- Coder agent: \`$CODER_AGENT\`"
+            echo "- Task blob: $ORIGINAL_BYTES bytes -> $COMPRESSED_BYTES bytes compressed"
+            echo ""
+            echo "Coder agent (Copilot CLI, GITHUB_TOKEN) ran synchronously and should have opened a code PR itself, labelled \`AI_CODE\`."
+            echo "\`pr-reviewer-assignment.yml\` assigns QA reviewers once that PR/label appears."
+          } >> "$GITHUB_STEP_SUMMARY"

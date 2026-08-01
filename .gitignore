@@ -1,70 +1,26 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# Python environments and caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Test and generated output
+coverage.xml
+.coverage
+htmlcov/
+reports/
+output/
+*.log
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
-
-# Environment variable files (never commit secrets)
+# Local configuration
 .env
-.env.local
-.env.production
-*.env
+.env.*
+!.env.example
 
-# Local test payloads — may contain real diff content, repo names, or author info
-pr-webhook-sample.json
-
-# macOS filesystem metadata
+# OS and editor files
 .DS_Store
-**/.DS_Store
-
-
-# Conductor agent state files (tooling artifacts — not for version control)
-.agents/state/
-
-# Graphify outputs and parallel chunking files (all local-only tooling artifacts)
-.graphify_cache/
-.graphify_cache/*.json
-extract_ast.py
-generate_extraction_prompts.py
-prepare_chunks.py
-prepare_extraction.py
-*prepare_chunks*
-*prepare_extraction*
-*.graphify_ast.json
-
-# Skills lock file (machine-local, not shared)
-skills-lock.json
-
-# Runtime logs
-logs/
-
-# Webhook sample payloads — may contain real diff content, repo names, or author info
-pr-webhook-sample-1.json
+.idea/
+.vscode/

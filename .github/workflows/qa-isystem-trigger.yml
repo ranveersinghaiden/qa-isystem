@@ -1,0 +1,377 @@
+name: Trigger QA iSystem
+# SAMPLE / REFERENCE WORKFLOW - disabled by default (see `if:` guard below).
+# Documents the pattern for other repos (e.g. eroad/eruc):
+# distill a merged PR's diff into functional changes, summarize via Copilot
+# CLI, validate the summary matches the PR's stated scope, then dispatch
+# qa-isystem-bdd.yml with a GitHub App installation token.
+#
+# Devs are responsible for ensuring this only triggers on genuine feature
+# PRs (not chores/docs/infra-only PRs) and that the PR title/description
+# gives a meaningful, accurate change summary - the scope-consistency check
+# below relies on the PR description actually describing what changed.
+
+on:
+  pull_request:
+    types: [closed]
+
+concurrency:
+  group: pr-functional-bdd-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+  models: read
+  copilot-requests: write
+
+jobs:
+  extract:
+    # Disabled by default - this is a sample/reference workflow. Remove this
+    # guard (and adjust the merged/base-branch condition to fit your repo)
+    # once you've reviewed and adopted the pattern for real use.
+    if: >-
+      false &&
+      github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      product_name: ${{ steps.facts.outputs.product_name }}
+      pr_title: ${{ steps.facts.outputs.pr_title }}
+      pr_body: ${{ steps.facts.outputs.pr_body }}
+      jira_id: ${{ steps.facts.outputs.jira_id }}
+      pr_number: ${{ github.event.pull_request.number }}
+      logic_change: ${{ steps.cli_summary.outputs.summary }}
+      matches_scope: ${{ steps.scope_check.outputs.matches_scope }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up GitHub CLI
+        run: |
+          if ! command -v gh >/dev/null 2>&1; then
+            type -p curl >/dev/null || sudo apt-get install -y curl
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+              | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+              | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
+            sudo apt-get update && sudo apt-get install -y gh
+          fi
+          gh --version
+
+      - name: Gather PR facts
+        id: facts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          gh pr diff "$PR_NUMBER" > pr.diff || true
+          echo "diff_bytes=$(wc -c < pr.diff)" >> "$GITHUB_OUTPUT"
+
+          gh pr view "$PR_NUMBER" --json title --jq '.title' > pr-title.txt || true
+          gh pr view "$PR_NUMBER" --json body --jq '.body' > pr-body.txt || true
+          gh pr view "$PR_NUMBER" --json files --jq '.files[].path' > changed-files.txt || true
+          echo "----- changed files -----"; cat changed-files.txt || true
+
+          COARSE_PRODUCT="$(python3 .github/scripts/qa-isystem/gather_context.py \
+            --infer-product-from changed-files.txt || echo '')"
+          echo "Coarse product key: $COARSE_PRODUCT"
+
+          case "$COARSE_PRODUCT" in
+            drive) PRODUCT_NAME="drive" ;;
+            eruc|eruc-mobile) PRODUCT_NAME="eruc b2c" ;;
+            "") PRODUCT_NAME="unknown" ;;
+            *) PRODUCT_NAME="$COARSE_PRODUCT" ;;
+          esac
+          echo "product_name=$PRODUCT_NAME" >> "$GITHUB_OUTPUT"
+          echo "Resolved product_name: $PRODUCT_NAME"
+
+          JIRA_ID="$(grep -oE '[A-Z][A-Z0-9]+-[0-9]+' pr-title.txt | head -1 || true)"
+          if [ -z "$JIRA_ID" ]; then
+            JIRA_ID="NOTICKET-0"
+          fi
+          echo "jira_id=$JIRA_ID" >> "$GITHUB_OUTPUT"
+          echo "Resolved jira_id: $JIRA_ID"
+
+          DELIM_TITLE="PR_TITLE_$(openssl rand -hex 16)"
+          {
+            echo "pr_title<<${DELIM_TITLE}"
+            cat pr-title.txt
+            echo "${DELIM_TITLE}"
+          } >> "$GITHUB_OUTPUT"
+
+          DELIM_BODY="PR_BODY_$(openssl rand -hex 16)"
+          {
+            echo "pr_body<<${DELIM_BODY}"
+            cat pr-body.txt
+            echo "${DELIM_BODY}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Distill functional changes from diff (tech-agnostic)
+        id: distill
+        run: |
+          python3 - <<'PYEOF'
+          import dataclasses
+          import re
+          import uuid
+          import os
+
+          MAX_ADDED_LINES_PER_FILE = 40
+          MAX_REMOVED_LINES_PER_FILE = 15
+          MAX_FILES = 60
+          MAX_FUNCTIONAL_CHANGES_CHARS = 12000
+
+          NOISE_PATH_RE = re.compile(
+              r"(^|/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|.*\.min\.(js|css)|"
+              r".*\.(png|jpg|jpeg|gif|svg|ico|pdf|lock)|target/|node_modules/|dist/|build/)",
+              re.IGNORECASE,
+          )
+
+          @dataclasses.dataclass
+          class FileChange:
+              path: str
+              hunks: list = dataclasses.field(default_factory=list)
+              added: list = dataclasses.field(default_factory=list)
+              removed: list = dataclasses.field(default_factory=list)
+              binary: bool = False
+
+          def parse_unified_diff(diff: str) -> list:
+              changes = []
+              current = None
+              for line in diff.splitlines():
+                  if line.startswith("diff --git"):
+                      m = re.search(r" b/(.+)$", line)
+                      path = m.group(1) if m else "unknown"
+                      current = FileChange(path=path)
+                      if NOISE_PATH_RE.search(path):
+                          current = None
+                          continue
+                      changes.append(current)
+                  elif current is None:
+                      continue
+                  elif line.startswith("Binary files"):
+                      current.binary = True
+                  elif line.startswith("@@"):
+                      current.hunks.append(line.strip())
+                  elif line.startswith("+") and not line.startswith("+++"):
+                      body = line[1:].rstrip()
+                      if body.strip():
+                          current.added.append(body)
+                  elif line.startswith("-") and not line.startswith("---"):
+                      body = line[1:].rstrip()
+                      if body.strip():
+                          current.removed.append(body)
+              return changes
+
+          def render_functional_changes(changes: list, budget: int = MAX_FUNCTIONAL_CHANGES_CHARS) -> str:
+              if not changes:
+                  return "_No functional (non-noise) changes detected in the diff._"
+
+              capped = changes[:MAX_FILES]
+              out = []
+              budget -= 0
+
+              omitted_detail = 0
+              for fc in capped:
+                  section = [f"### `{fc.path}`"]
+                  if fc.binary:
+                      section.append("_binary change - skipped_")
+                      section.append("")
+                  else:
+                      if fc.hunks:
+                          section.append("Scope: " + "; ".join(fc.hunks[:6]))
+                      if fc.added:
+                          shown = fc.added[:MAX_ADDED_LINES_PER_FILE]
+                          section.append("New/changed logic:")
+                          section.append("```")
+                          section.extend(shown)
+                          if len(fc.added) > MAX_ADDED_LINES_PER_FILE:
+                              section.append(f"...[+{len(fc.added) - MAX_ADDED_LINES_PER_FILE} more added lines]")
+                          section.append("```")
+                      if fc.removed:
+                          shown = fc.removed[:MAX_REMOVED_LINES_PER_FILE]
+                          section.append(f"Removed logic ({len(fc.removed)} lines, first {len(shown)}):")
+                          section.append("```")
+                          section.extend(shown)
+                          section.append("```")
+                      section.append("")
+
+                  section_text = "\n".join(section)
+                  if len(section_text) + 1 > budget:
+                      omitted_detail += 1
+                      continue
+                  out.append(section_text)
+                  budget -= len(section_text) + 1
+
+              if omitted_detail:
+                  out.append(
+                      f"_...[detailed diff for {omitted_detail} more file(s) omitted to fit "
+                      "the prompt budget]_"
+                  )
+              if len(changes) > MAX_FILES:
+                  out.append(f"_...[+{len(changes) - MAX_FILES} more changed files omitted entirely]_")
+              return "\n".join(out)
+
+          with open("pr.diff", encoding="utf-8", errors="replace") as fh:
+              diff_text = fh.read()
+
+          changes = parse_unified_diff(diff_text)
+          rendered = render_functional_changes(changes)
+
+          with open("functional-changes.md", "w", encoding="utf-8") as fh:
+              fh.write(rendered)
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              delim1 = f"EOF_{uuid.uuid4().hex}"
+              out.write(f"functional_changes<<{delim1}\n{rendered}\n{delim1}\n")
+              out.write(f"file_count={len(changes)}\n")
+          PYEOF
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Summarize functional changes via Copilot CLI (plain text)
+        id: cli_summary
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          copilot --model gpt-5-mini --no-ask-user \
+            -p "Summarize the following distilled functional changes from a PR diff in plain English prose (no markdown, no code blocks, no file list) in 5 sentences or fewer, focused on what changed functionally and why it likely matters:
+
+          $(cat functional-changes.md)" > change-summary.txt
+
+          echo "----- plain-text change summary -----"
+          # Prefix avoids "::" in model output being parsed as a workflow command.
+          sed 's/^/[change-summary] /' change-summary.txt
+
+          DELIM_SUMMARY="EOF_SUMMARY_$(openssl rand -hex 16)"
+          {
+            echo "summary<<${DELIM_SUMMARY}"
+            cat change-summary.txt
+            echo "${DELIM_SUMMARY}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Validate functional change matches PR description
+        id: scope_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          {
+            echo "You are a scope-consistency check, not a code reviewer. Decide whether"
+            echo "the DISTILLED FUNCTIONAL CHANGE below is actually described (even at a"
+            echo "higher, less detailed level) by the PR TITLE/DESCRIPTION. Tolerate the PR"
+            echo "description being less detailed than the diff - that is normal. Only"
+            echo "answer NO_MATCH if the diff does something materially different from,"
+            echo "unrelated to, or contradicting what the title/description claims (e.g."
+            echo "wrong PR pasted, mislabeled scope, unrelated drive-by change bundled in)."
+            echo
+            echo "Respond with EXACTLY one line: either 'MATCH' or 'NO_MATCH: <one-sentence reason>'."
+            echo "Do not include any other text."
+            echo
+            echo "## PR title"
+            cat pr-title.txt
+            echo
+            echo "## PR description"
+            cat pr-body.txt
+            echo
+            echo "## Distilled functional change (from diff)"
+            cat functional-changes.md
+          } > scope-check-prompt.md
+
+          copilot --model gpt-5-mini --no-ask-user -p "$(cat scope-check-prompt.md)" > scope-check-result.txt
+
+          RESULT="$(head -1 scope-check-result.txt)"
+          # Fixed prefix avoids "::" in model output being parsed as a workflow command.
+          printf 'Scope check result: %s\n' "$RESULT"
+          if [ "$RESULT" = "MATCH" ]; then
+            echo "matches_scope=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matches_scope=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          DELIM_REASON="SCOPE_REASON_$(openssl rand -hex 16)"
+          {
+            printf 'reason<<%s\n' "$DELIM_REASON"
+            printf '%s\n' "$RESULT"
+            printf '%s\n' "$DELIM_REASON"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Summary
+        if: always()
+        env:
+          PRODUCT_NAME: ${{ steps.facts.outputs.product_name }}
+          JIRA_ID: ${{ steps.facts.outputs.jira_id }}
+          MATCHES_SCOPE: ${{ steps.scope_check.outputs.matches_scope }}
+          SCOPE_REASON: ${{ steps.scope_check.outputs.reason }}
+        run: |
+          {
+            echo "### PR · Functional-change BDD trigger"
+            printf -- '- Inferred product_name: `%s`\n' "$PRODUCT_NAME"
+            printf -- '- Jira ID: `%s`\n' "$JIRA_ID"
+            printf -- '- Scope check: `%s`\n' "$MATCHES_SCOPE"
+            printf -- '  - %s\n' "$SCOPE_REASON"
+            if [ "$MATCHES_SCOPE" != "true" ]; then
+              echo ""
+              echo "**BDD generation was skipped** - the distilled functional change does not"
+              echo "appear to match this PR's title/description. Update the PR description"
+              echo "(or diff) so they agree, then re-run this job manually (Actions tab ->"
+              echo "Trigger QA iSystem -> Re-run jobs) to re-check."
+            fi
+            echo ""
+            echo "#### Plain-text change summary"
+            cat change-summary.txt || echo "_(summary unavailable)_"
+            echo ""
+            echo "#### Distilled functional changes"
+            cat functional-changes.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  call-bdd:
+    permissions:
+      contents: read
+    needs: [extract]
+    if: needs.extract.outputs.matches_scope == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      # GitHub App token used (not GITHUB_TOKEN) since GITHUB_TOKEN cannot
+      # dispatch a workflow in another repo; App needs `actions: write` here.
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: eroad
+          repositories: test-automation
+
+      - name: Dispatch qa-isystem-bdd.yml
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          PRODUCT_NAME: ${{ needs.extract.outputs.product_name }}
+          SOURCE_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ needs.extract.outputs.pr_number }}
+          PR_TITLE: ${{ needs.extract.outputs.pr_title }}
+          PR_BODY: ${{ needs.extract.outputs.pr_body }}
+          JIRA_ID: ${{ needs.extract.outputs.jira_id }}
+          # logic_change = plain-English functional-change summary, not raw diff.
+          LOGIC_CHANGE: ${{ needs.extract.outputs.logic_change }}
+        run: |
+          gh workflow run qa-isystem-bdd.yml \
+            --repo "eroad/test-automation" \
+            --ref main \
+            -f domain="" \
+            -f product_name="$PRODUCT_NAME" \
+            -f source_repo="$SOURCE_REPO" \
+            -f pr_number="$PR_NUMBER" \
+            -f pr_title="$PR_TITLE" \
+            -f pr_body="$PR_BODY" \
+            -f jira_id="$JIRA_ID" \
+            -f logic_change="$LOGIC_CHANGE"
+

@@ -1,0 +1,295 @@
+name: QA-ISystem · I360 regression autofix
+
+# Weekly autonomous fix pipeline for i360 web regression failures. Consumes
+# i360_regression_tests.yml's classify_i360_failures.py output; fixes only
+# `consistently_failing` tests, batched (up to 10) to parallel
+# Workflow_Conductor CLI jobs, one PR per batch.
+#
+# Same GITHUB_TOKEN + Copilot CLI pattern as qa-isystem-code/bdd.yml.
+# Workflow_Conductor = CI-only unattended variant of Conductor.agent.md:
+# commits/pushes/opens its own PR (AI_CODE + AI_AUTOFIX labels), no human gate.
+#
+# AUTOFIX SCOPE (hard allow-list, see Workflow_Conductor.agent.md): only
+# locator/UI changes and missing test data may be silently fixed. Anything
+# else (assertion drift, behavior/product change) must be flagged, not fixed
+# — reported under "## Flagged for human review" with AI_AUTOFIX_NEEDS_REVIEW
+# label. This pipeline never opens GitHub issues: a batch with zero safe
+# fixes fails its job (evidence in job log/step summary) instead of opening
+# a PR or a tracking issue; other batches are unaffected (fail-fast: false).
+#
+# Schedule: Sunday ~06:00 NZST (fixed UTC+12 offset, no NZDT adjustment).
+
+on:
+  schedule:
+    - cron: '0 18 * * 6' # ~Sunday 06:00 NZST (UTC+12)
+  workflow_dispatch:
+    inputs:
+      batches:
+        description: 'Number of parallel fix batches/jobs'
+        required: false
+        default: '10'
+        type: string
+      classification_lookback_days:
+        description: 'Lookback window (days) for the failure classification pass'
+        required: false
+        default: '7'
+        type: string
+
+concurrency:
+  group: qa-isystem-i360-autofix
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  gather-failures:
+    name: Gather & Batch Failures
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write # required by actions/upload-artifact@v5 to create/upload the batch artifact
+    outputs:
+      matrix: ${{ steps.batch.outputs.matrix }}
+      active_batches: ${{ steps.batch.outputs.active_batches }}
+      source_run_id: ${{ steps.batch.outputs.source_run_id }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate failure classification report
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          LOOKBACK_DAYS: ${{ github.event_name == 'workflow_dispatch' && inputs.classification_lookback_days || '7' }}
+        run: |
+          mkdir -p reports
+          python .github/scripts/qa-isystem/classify_i360_failures.py \
+            --owner eroad \
+            --repo test-automation \
+            --workflow i360_regression_tests.yml \
+            --lookback-days "$LOOKBACK_DAYS" \
+            --history-event schedule \
+            --filter-selected-only \
+            --suite "NAPP Legacy (Cloud QA)" \
+            --suite "NAPP Phoenix (Cloud QA)" \
+            --suite "USCPP Phoenix" \
+            --out-json reports/i360_failure_classification.json \
+            --out-csv reports/i360_failure_classification.csv
+
+      - name: Gather actionable failures & split into batches
+        id: batch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BATCHES: ${{ github.event_name == 'workflow_dispatch' && inputs.batches || '10' }}
+        run: |
+          python .github/scripts/qa-isystem/gather_i360_autofix_batches.py \
+            --owner eroad \
+            --repo test-automation \
+            --workflow i360_regression_tests.yml \
+            --classification-report reports/i360_failure_classification.json \
+            --run-lookback-days 3 \
+            --batches "$BATCHES" \
+            --out-dir autofix-batches | tee batch-summary.txt
+
+          {
+            grep '^matrix=' batch-summary.txt | sed 's/^matrix=/matrix=/'
+            grep '^active_batches=' batch-summary.txt
+            grep '^source_run_id=' batch-summary.txt
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### I360 Regression AutoFix - Gather & Batch"
+            echo "- Source run: \`${{ steps.batch.outputs.source_run_id }}\`"
+            echo "- Active fix batches: \`${{ steps.batch.outputs.active_batches }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload batch files
+        uses: actions/upload-artifact@v5
+        with:
+          name: i360-autofix-batches
+          path: autofix-batches/*
+          if-no-files-found: error
+
+  fix-tests:
+    name: Fix Batch ${{ matrix.batch }}
+    needs: gather-failures
+    runs-on: ubuntu-latest
+    timeout-minutes: 75 # cloud agent session cap (59 min) + overhead
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix: ${{ fromJson(needs.gather-failures.outputs.matrix) }}
+    permissions:
+      contents: write
+      pull-requests: write
+      models: read
+      packages: read
+      copilot-requests: write
+      actions: write # required to dispatch + poll i360_regression_manual.yml for Stage 2.5 live PR-branch verification (gh workflow run / gh run list / gh run view)
+    steps:
+      - name: No-op (empty batch set)
+        if: matrix.batch == -1
+        run: echo "No actionable (consistently_failing) tests found this run - nothing to fix."
+
+      - name: Checkout test-automation
+        if: matrix.batch != -1
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        if: matrix.batch != -1
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Governance preflight
+        if: matrix.batch != -1
+        run: |
+          python3 scripts/qa_isystem_governance.py preflight \
+            --repo . \
+            --workflow .github/workflows/qa-isystem-i360-autofix.yml \
+            --out governance/preflight.json \
+            --summary "$GITHUB_STEP_SUMMARY"
+
+      - name: Set up GitHub CLI
+        if: matrix.batch != -1
+        run: |
+          if ! command -v gh >/dev/null 2>&1; then
+            type -p curl >/dev/null || sudo apt-get install -y curl
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+              | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+              | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
+            sudo apt-get update && sudo apt-get install -y gh
+          fi
+          gh --version
+
+      - name: Download batch file
+        if: matrix.batch != -1
+        uses: actions/download-artifact@v5
+        with:
+          name: i360-autofix-batches
+          path: autofix-batches
+
+      - name: Build fix task blob
+        if: matrix.batch != -1
+        id: task
+        run: |
+          python3 - "autofix-batches/batch-${{ matrix.batch }}.json" <<'PYEOF' > task-description.md
+          import json, sys
+          data = json.load(open(sys.argv[1]))
+          batch = data["batch"]
+          run_id = data["run_id"]
+          tests = data["tests"]
+          print(f"# I360 Regression AutoFix - Batch {batch} (source run {run_id})")
+          print()
+          print("Fix the following WEB regression test failures. These come from the")
+          print("i360_regression_tests.yml scheduled run's failure classification -")
+          print("each one is `consistently_failing`, i.e. it failed in every")
+          print("observed run over the lookback window, not flaky noise.")
+          print()
+          print("Follow Workflow_Conductor.agent.md in full: delegate the actual fix")
+          print("to Workflow_WebCoder, which classifies each test's root cause against")
+          print("a hard allow-list - only locator/UI changes and missing test data may")
+          print("be silently fixed. Everything else (timing, assertion drift, code bugs,")
+          print("product behavior changes) must be flagged for human review, not fixed.")
+          print("Then run Security + CodeReviewer + Documentation before committing.")
+          print()
+          print(f"Branch: `autofix/i360-regression/batch-{batch}-run{run_id}`")
+          print()
+          print("## Failing tests")
+          for t in tests:
+              print()
+              print(f"### {t.get('test_key')}")
+              print(f"- Suite: {t.get('suite')}")
+              print(f"- Owner tag: {t.get('owner')}")
+              print(f"- Classification: {t.get('classification')}")
+              print(f"- Feature file (best-effort): {t.get('feature_file')}")
+              print(f"- Failed step: {t.get('failed_step')}")
+              print(f"- Fail rate (history): {t.get('fail_rate')}")
+              err = t.get('error_message') or '(no error message captured)'
+              print("- Error message:")
+              print("```")
+              print(err)
+              print("```")
+          PYEOF
+          echo "----- task blob preview -----"; head -60 task-description.md
+          TEST_COUNT=$(python3 -c 'import json,sys;print(len(json.load(open(sys.argv[1]))["tests"]))' "autofix-batches/batch-${{ matrix.batch }}.json")
+          echo "test_count=$TEST_COUNT" >> "$GITHUB_OUTPUT"
+
+      - name: Record QA iSystem telemetry
+        if: matrix.batch != -1
+        env:
+          QA_ISYSTEM_TASK_ID: i360-source:${{ needs.gather-failures.outputs.source_run_id }}:batch:${{ matrix.batch }}
+        run: |
+          python3 scripts/qa_isystem_governance.py start \
+            --out governance/agent-start.json \
+            --workflow qa-isystem-i360-autofix.yml \
+            --stage fix-tests \
+            --agent Workflow_Conductor \
+            --task-file task-description.md
+
+      - name: Configure git identity for agent commits
+        if: matrix.batch != -1
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install Copilot CLI
+        if: matrix.batch != -1
+        run: npm install -g @github/copilot
+
+      - name: Run Workflow_Conductor via Copilot CLI
+        if: matrix.batch != -1
+        id: run_agent
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -o pipefail
+          copilot --agent Workflow_Conductor --allow-all-tools --no-ask-user \
+            -p "$(cat task-description.md)" 2>&1 | tee agent-output.log
+
+      - name: Record QA iSystem telemetry outcome
+        if: always() && matrix.batch != -1
+        run: |
+          python3 scripts/qa_isystem_governance.py finish \
+            --start governance/agent-start.json \
+            --out governance/agent-finish.json \
+            --status "${{ steps.run_agent.outcome }}" \
+            --log-file agent-output.log \
+            --summary "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish QA iSystem governance evidence
+        if: always() && matrix.batch != -1
+        uses: actions/upload-artifact@v5
+        with:
+          name: qa-isystem-governance-autofix-${{ matrix.batch }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: governance/*.json
+          if-no-files-found: error
+
+      - name: Fail if Workflow_Conductor failed
+        if: always() && matrix.batch != -1 && steps.run_agent.outcome != 'success'
+        run: exit 1
+
+      - name: Summary
+        if: always() && matrix.batch != -1
+        run: |
+          {
+            echo "### I360 Regression AutoFix - Batch ${{ matrix.batch }}"
+            echo "- Source run: \`${{ needs.gather-failures.outputs.source_run_id }}\`"
+            echo "- Tests in batch: \`${{ steps.task.outputs.test_count }}\`"
+            echo "- Workflow_Conductor (Copilot CLI, GITHUB_TOKEN) ran synchronously - delegated the fix to Workflow_WebCoder, ran Security + CodeReviewer + Documentation, and should have opened a PR labelled \`AI_CODE\` + \`AI_AUTOFIX\`."
+          } >> "$GITHUB_STEP_SUMMARY"
